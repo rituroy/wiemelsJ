@@ -2,7 +2,8 @@
 
 dirSrc="/Users/royr/UCSF/"
 dirSrc2=dirSrc
-dirSrc3=paste("code/",sep="")
+dirSrc3=paste("code_/",sep="")
+dirSrc3="/Users/royr/Downloads/wiemelsJ-all/"
 setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
 
 ##############################################
@@ -12,10 +13,19 @@ computerFlag=""
 
 ##############################################
 
+setFlag=""
+subsetFlag=""
+
+##############################################
+
 source(paste(dirSrc3,"funcs.R",sep=""))
-res=getClinData()
+res=getClinData(setFlag=setFlag,subsetFlag=subsetFlag)
 clin1=res$clin1
 clin2=res$clin2
+datadir11=res$dirClin1
+datadir21=res$dirClin2
+datadir12=res$dirMeth1
+datadir22=res$dirMeth2
 rm(res)
 
 ##############################################
@@ -101,6 +111,7 @@ tbl=rbind(tbl,tmp)
 clin=cbind(clin,tbl[match(clin$id,tbl$id),grep("epistr",names(tbl))])
 clin2=clin
 
+## ----------------------------------
 for (plotType in c("qqplot_","densityPlot_")) {
     for (varType in c("","logit_")) {
         for (varName in c("Adult")) {
@@ -484,18 +495,101 @@ clin=clin2
 summary(lm(adult~caco+ch_ageref,data=clin))
 summary(lm(adultLogit~caco+ch_ageref,data=clin))
 
+## ------------------------------------
+## ------------------------------------
 library(MASS)
 colId=c("adult","caco","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_3months_N","smoke_mo_preg_N","smoke_mo_bf_N","smoke_mo_after_N","smoke_fa_3months_N","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","t1221","mll","hyperdiploid_51to67","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","ch_hispanic_bc","int_ch_race","birthWt","Subtype","hispNoHispWt","hyperdipCtrl","telamlCtrl","nonHypTelamlCtrl","hyperdipTelaml","hyperdipNonHypTelaml","telamlNonHypTelaml","hyperdipTelamlOther","hyperdipTelamlVsOther","dbirwt","pred_btw","pobw","DFE_foodCat","DFE_natCat","DFE_totCat","DFE_supCat","smoke_mo_3months","smoke_mo_after","smoke_mo_bf","smoke3","smoke2","race3","epistr1","epistr2","epistr3","epistr4","epistr5")
 colId=c("adult","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_3months_N","smoke_mo_preg_N","smoke_mo_bf_N","smoke_mo_after_N","smoke_fa_3months_N","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","t1221","mll","hyperdiploid_51to67","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","ch_hispanic_bc","int_ch_race","birthWt","Subtype","hispNoHispWt","hyperdipCtrl","telamlCtrl","nonHypTelamlCtrl","hyperdipTelaml","hyperdipNonHypTelaml","telamlNonHypTelaml","hyperdipTelamlOther","hyperdipTelamlVsOther","dbirwt","pred_btw","pobw","DFE_foodCat","DFE_natCat","DFE_totCat","DFE_supCat","smoke_mo_3months","smoke_mo_after","smoke_mo_bf","smoke3","smoke2","race3","epistr1","epistr2","epistr3","epistr4","epistr5")
 colId=c("adult","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","int_ch_race","birthWt","Subtype","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
-j=which(clin2$caco==0)
-clin=clin2[,colId]
+colId=colId[!colId%in%c("birthWt")]
+
+clin=clin2
+j=which(clin$caco==0)
+kk=c()
+for (k in match(colId,names(clin))) {
+    jj=j[!is.na(clin[j,k])]
+    if (sum(jj)==0) {
+        kk=c(kk,k)
+    } else if (sum(!duplicated(clin[jj,k]))<2) {
+        kk=c(kk,k)
+    }
+}
+if (length(kk)!=0) colId=colId[which(!colId%in%names(clin)[kk])]
+
+clin=clin2
+j=which(clin$caco==0)
+clin=clin[j,colId]
+j=1:nrow(clin)
+for (k in 1:ncol(clin)) {
+    if (sum(!is.na(clin[j,k]))==0) cat(k,": ",names(clin)[k],"\n")
+    j=j[which(!is.na(clin[j,k]))]
+}
+clin=clin[j,]
+clin21=clin
+
+clin=clin1
+names(clin)[match(c("adultG"),names(clin))]=c("adult")
+j=which(clin$caco==0)
+clin=clin[j,colId]
 j=1:nrow(clin)
 for (k in 1:ncol(clin)) {
     j=j[which(!is.na(clin[j,k]))]
 }
 clin=clin[j,]
+clin11=clin
+
+## ------------------------------------
+clin=clin21
 fit <- lm(adult ~ ., data = clin)
 fit2 <- stepAIC(fit, k=log(nrow(clin)), trace = FALSE)
 fit2$anova
+
+modelThis="adult ~ sex + birthWt + pobw"
+modelThis="adult ~ sex*pobw"
+modelThis="adult ~ sex*birthWt"
+
+modelThis="adult ~ sex+pobw"
+modelThis="adult ~ sex+birthWt"
+modelThis="adult ~ sex+birthWt+gestage"
+
+modelThis="adult ~ sex + gestage + smoke_mo_ever + DFE_tot"
+modelThis="adult ~ sex + gestage + smoke_fa_ever + DFE_tot"
+modelThis="adult ~ sex + gestage + smoke_fa_ever + DFE_fort"
+modelThis="adult ~ sex + gestage + DFE_fort"
+modelThis="adult ~ sex + gestage"
+
+fit <- lm(as.formula(modelThis), data = clin)
+summary(fit)
+fit2=fit
+
+clin=clin11
+fit <- lm(as.formula(modelThis), data = clin)
+summary(fit)
+fit1=fit
+
+summary(fit1)$coef
+summary(fit2)$coef
+
+##############################################
+
+library(partDSA)
+
+colId=c("sex","mo_age","fa_age","gestage")
+colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","fa_race","mo_race","int_ch_ethnicity","ch_ageref","income","int_ch_race","birthWt","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
+colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","fa_race","mo_race","ch_ageref","income","dbirwt","pred_btw","pobw")
+colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","Batch","fa_race","mo_race","int_ch_ethnicity","ch_ageref","income","int_ch_race","birthWt","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
+clin=clin1
+for (k in colId) {
+    if (!is.numeric(clin[,k])) print(k)
+    if (sum(!is.na(clin[,k]))==0) print(k)
+}
+
+clin11=clin1
+names(clin11)[match(c("adultG"),names(clin11))]=c("adult")
+clin21=clin2
+
+ctrl=DSA.control(missing="impute.at.split")
+res=partDSA(x=clin21[,colId], y=clin21$adult, x.test=clin11[,colId], y.test=clin11$adult, control=ctrl)
+
+
 ##############################################

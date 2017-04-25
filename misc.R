@@ -1228,10 +1228,24 @@ computerFlag=""
 
 ##############################################
 
+setFlag="set2"
+setFlag=""
+
+subsetFlag="propOfCacoEthnAsInSet2"
+subsetFlag="case"
+subsetFlag="ctrl"
+subsetFlag=""
+
+##############################################
+
 source(paste(dirSrc3,"funcs.R",sep=""))
-res=getClinData()
+res=getClinData(setFlag=setFlag,subsetFlag=subsetFlag)
 clin1=res$clin1
 clin2=res$clin2
+datadir11=res$dirClin1
+datadir21=res$dirClin2
+datadir12=res$dirMeth1
+datadir22=res$dirMeth2
 rm(res)
 
 ##############################################

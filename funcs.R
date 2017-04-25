@@ -3,40 +3,20 @@
 ########################################################################
 ########################################################################
 ########################################################################
-## Compare set1 & set2 clinical information & beta values
 
-dirSrc="/Users/royr/UCSF/"
-dirSrc2=dirSrc
-setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
-
-##############################################
-
-computerFlag="cluster"
-computerFlag=""
-
-##############################################
-
-getClinData=function() {
+getClinData=function(setFlag,subsetFlag) {
 
     normFlag=""
     normFlag="_funNorm"
     normFlag="_bmiq"
-
-    setFlag="set2"
-    setFlag=""
-
-    subsetFlag="propOfCacoEthnAsInSet2"
-    subsetFlag="case"
-    subsetFlag="ctrl"
-    subsetFlag=""
 
     ## ---------------------------------
 
     if (computerFlag=="cluster") {
         datType2="allGuthSet2"
         datName2="ALL Guthrie, set2"
-        datadir21="data/set2/"
-        datadir22=datadir21
+        dirClin2="data/set2/"
+        dirMeth2=dirClin2
         #fileList2=c("mDat_funNorm_set2","beta_funNorm_set2","beta_bmiq_allGuthSet2","wbcAdjustedMDat_allGuthSet2_leukChip","wbcAdjustedData_allGuthSet2_leukChip")
         #fName22="clin_guthrieSet2_20140619"
         fileList2=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2","_allGuthSet2"),sep="")
@@ -44,8 +24,8 @@ getClinData=function() {
         
         datType1="allGuth"
         datName1="ALL Guthrie, set1"
-        datadir11="data/set1/"
-        datadir12=datadir11
+        dirClin1="data/set1/"
+        dirMeth1=dirClin1
         #fileList1=c("mDat_funNorm_set1","beta_funNorm_set1","beta_bmiq_allGuthSet1","wbcAdjustedMDat_allGuthSet1_leukChip","wbcAdjustedData_allGuthSet1_leukChip")
         #fName12="final"
         fileList1=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1","_allGuthSet1"),sep="")
@@ -68,8 +48,8 @@ getClinData=function() {
         
         datType2="allGuthSet2"
         datName2="ALL Guthrie, set2"
-        datadir21="docs/all/set2/"
-        datadir22=datadir21
+        dirClin2="docs/all/set2/"
+        dirMeth2=dirClin2
         #fileList=c("beta_funNorm_set2")
         #fName22="clin_guthrieSet2_20140619"
         fileList2=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2","_allGuthSet2"),sep="")
@@ -77,8 +57,8 @@ getClinData=function() {
         
         datType1="allGuth"
         datName1="ALL Guthrie, set1"
-        datadir11="docs/all/set1/"
-        datadir12=datadir11
+        dirClin1="docs/all/set1/"
+        dirMeth1=dirClin1
         #fileList=c("beta_funNorm_set1")
         #fName12="final"
         fileList1=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1","_allGuthSet1"),sep="")
@@ -109,21 +89,21 @@ getClinData=function() {
     varOut=c("moEver","moPreg","mo3m","mo3mN","moPregN","moAfter","moAfterN","faEver","fa3m","fa3mN","moBf","moBfN","smoke3","smoke2"),stringsAsFactors=F)
 
     ## -------------------------------------------
-    clin1=read.table(paste(datadir11,"final.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-    clin14=read.table(paste(datadir11,"matches.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    clin1=read.table(paste(dirClin1,"final.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    clin14=read.table(paste(dirClin1,"matches.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     if (computerFlag=="cluster") {
-        clin12=read.table(paste(datadir11,"i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        clin13=read.table(paste(datadir11,"Ritu_birthweight_dataset - covariate data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin12=read.table(paste(dirClin1,"i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin13=read.table(paste(dirClin1,"Ritu_birthweight_dataset - covariate data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         bw=read.table(paste("data/pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     } else {
-        clin12=read.table(paste(datadir11,"LEU.data/i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        clin13=read.table(paste(datadir11,"birthWeight/Ritu_birthweight_dataset - covariate data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin12=read.table(paste(dirClin1,"LEU.data/i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin13=read.table(paste(dirClin1,"birthWeight/Ritu_birthweight_dataset - covariate data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         bw=read.table(paste("docs/birthWeight/pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     }
     names(clin12)[match("Subject_ID",names(clin12))]=c("subjectId")
     names(clin12)[match(c("Plate","Sentrix_ID","Sentrix_Position"),names(clin12))]=c("Batch","Beadchip","Position")
-    #clin2=read.table(paste(datadir21,"clinGuthrieReplJune2012.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-    clin2=read.table(paste(datadir21,"clin_guthrieSet2_20140619.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    #clin2=read.table(paste(dirClin2,"clinGuthrieReplJune2012.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    clin2=read.table(paste(dirClin2,"clin_guthrieSet2_20140619.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 
     names(bw)[match("SubjectID",names(bw))]=c("subjectId")
 
@@ -249,8 +229,8 @@ getClinData=function() {
     tbl=rbind(cbind(clin1[,k1],set=rep("set1",nrow(clin1))),cbind(clin2[,k2],set=rep("set2",nrow(clin2))))
     write.table(tbl,file="clin_guthrieSet1Set2_20140619.txt", sep="\t", col.names=T, row.names=F, quote=F)
 
-    beta1=read.table(paste(datadir12,fileList1[1],".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=10)
-    beta2=read.table(paste(datadir22,fileList2[1],".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=10)
+    beta1=read.table(paste(dirMeth1,fileList1[1],".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=10)
+    beta2=read.table(paste(dirMeth2,fileList2[1],".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=10)
     clin1=clin1[match(colnames(beta1)[-1],clin1$id),]
     clin2=clin2[match(colnames(beta2)[-1],clin2$id),]
 
@@ -345,7 +325,7 @@ getClinData=function() {
         write.table(tbl,file=paste("guthrieId_",subsetFlag,"_set1.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
     }
 
-    invisible(list(clin1=clin1,clin2=clin2))
+    invisible(list(clin1=clin1,clin2=clin2,dirClin1=dirClin1,dirClin2=dirClin2,dirMeth1,dirMeth2))
 }
 
 ##############################################
