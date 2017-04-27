@@ -498,10 +498,20 @@ summary(lm(adultLogit~caco+ch_ageref,data=clin))
 ## ------------------------------------
 ## ------------------------------------
 library(MASS)
-colId=c("adult","caco","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_3months_N","smoke_mo_preg_N","smoke_mo_bf_N","smoke_mo_after_N","smoke_fa_3months_N","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","t1221","mll","hyperdiploid_51to67","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","ch_hispanic_bc","int_ch_race","birthWt","Subtype","hispNoHispWt","hyperdipCtrl","telamlCtrl","nonHypTelamlCtrl","hyperdipTelaml","hyperdipNonHypTelaml","telamlNonHypTelaml","hyperdipTelamlOther","hyperdipTelamlVsOther","dbirwt","pred_btw","pobw","DFE_foodCat","DFE_natCat","DFE_totCat","DFE_supCat","smoke_mo_3months","smoke_mo_after","smoke_mo_bf","smoke3","smoke2","race3","epistr1","epistr2","epistr3","epistr4","epistr5")
-colId=c("adult","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_3months_N","smoke_mo_preg_N","smoke_mo_bf_N","smoke_mo_after_N","smoke_fa_3months_N","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","t1221","mll","hyperdiploid_51to67","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","ch_hispanic_bc","int_ch_race","birthWt","Subtype","hispNoHispWt","hyperdipCtrl","telamlCtrl","nonHypTelamlCtrl","hyperdipTelaml","hyperdipNonHypTelaml","telamlNonHypTelaml","hyperdipTelamlOther","hyperdipTelamlVsOther","dbirwt","pred_btw","pobw","DFE_foodCat","DFE_natCat","DFE_totCat","DFE_supCat","smoke_mo_3months","smoke_mo_after","smoke_mo_bf","smoke3","smoke2","race3","epistr1","epistr2","epistr3","epistr4","epistr5")
-colId=c("adult","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","int_ch_race","birthWt","Subtype","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
+
+
+varFlag="_allVars"
+varFlag="_noPobw"
+colId=c("caco","sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_3months_N","smoke_mo_preg_N","smoke_mo_bf_N","smoke_mo_after_N","smoke_fa_3months_N","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","t1221","mll","hyperdiploid_51to67","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","ch_hispanic_bc","int_ch_race","birthWt","Subtype","hispNoHispWt","hyperdipCtrl","telamlCtrl","nonHypTelamlCtrl","hyperdipTelaml","hyperdipNonHypTelaml","telamlNonHypTelaml","hyperdipTelamlOther","hyperdipTelamlVsOther","dbirwt","pred_btw","pobw","DFE_foodCat","DFE_natCat","DFE_totCat","DFE_supCat","smoke_mo_3months","smoke_mo_after","smoke_mo_bf","smoke3","smoke2","race3","epistr1","epistr2","epistr3","epistr4","epistr5")
+colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_3months_N","smoke_mo_preg_N","smoke_mo_bf_N","smoke_mo_after_N","smoke_fa_3months_N","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","t1221","mll","hyperdiploid_51to67","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","ch_hispanic_bc","int_ch_race","birthWt","Subtype","hispNoHispWt","hyperdipCtrl","telamlCtrl","nonHypTelamlCtrl","hyperdipTelaml","hyperdipNonHypTelaml","telamlNonHypTelaml","hyperdipTelamlOther","hyperdipTelamlVsOther","dbirwt","pred_btw","pobw","DFE_foodCat","DFE_natCat","DFE_totCat","DFE_supCat","smoke_mo_3months","smoke_mo_after","smoke_mo_bf","smoke3","smoke2","race3","epistr1","epistr2","epistr3","epistr4","epistr5")
+colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","rs1801131_1","rs1801131_2","rs1801133_1","rs1801133_2","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","wbc","Batch","Position","fa_race","mo_race","int_ch_ethnicity","Beadchip","ch_ageref","income","int_ch_race","birthWt","Subtype","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
+colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","Batch","fa_race","mo_race","ch_ageref","income","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
 colId=colId[!colId%in%c("birthWt")]
+switch(varFlag,
+"_allVars"={colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","Batch","fa_race","mo_race","ch_ageref","income","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")},
+"_noPobw"={colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","Batch","fa_race","mo_race","ch_ageref","income","epistr1","epistr2","epistr3","epistr4","epistr5")}
+)
+colId=c("adult",colId)
 
 clin=clin2
 j=which(clin$caco==0)
@@ -539,6 +549,35 @@ clin=clin[j,]
 clin11=clin
 
 ## ------------------------------------
+modelThis="adult ~ pobw"
+
+clin=clin21
+fit <- lm(as.formula(modelThis), data = clin)
+summary(fit)
+fit2=fit
+
+clin=clin11
+fit <- lm(as.formula(modelThis), data = clin)
+summary(fit)
+fit1=fit
+
+round(summary(fit2)$coef,2)
+round(summary(fit1)$coef,2)
+
+"
+ALL Guthrie Set2, case+ctrl:
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)     2.25       1.78    1.27     0.21
+pobw            9.33       1.75    5.33     0.00
+
+ALL Guthrie Set1, case+ctrl:
+
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)    14.36       1.87    7.67     0.00
+pobw            1.06       1.80    0.59     0.56
+"
+
+## ------------------------------------
 clin=clin21
 fit <- lm(adult ~ ., data = clin)
 fit2 <- stepAIC(fit, k=log(nrow(clin)), trace = FALSE)
@@ -558,6 +597,11 @@ modelThis="adult ~ sex + gestage + smoke_fa_ever + DFE_fort"
 modelThis="adult ~ sex + gestage + DFE_fort"
 modelThis="adult ~ sex + gestage"
 
+modelThis="adult ~ sex + gestage + pobw"
+modelThis="adult ~ sex + gestage"
+modelThis="adult ~ sex * gestage"
+
+clin=clin21
 fit <- lm(as.formula(modelThis), data = clin)
 summary(fit)
 fit2=fit
@@ -567,17 +611,105 @@ fit <- lm(as.formula(modelThis), data = clin)
 summary(fit)
 fit1=fit
 
-summary(fit1)$coef
-summary(fit2)$coef
+cat("ALL Guthrie Set2, case+ctrl:\n")
+round(summary(fit2)$coef,2)
+cat("ALL Guthrie Set1, case+ctrl:\n")
+round(summary(fit1)$coef,2)
+
+"
+Training set: ALL Guthrie Set2, case+ctrl
+Stepwise Model Path
+Analysis of Deviance Table
+
+Initial Model:
+adult ~ sex + mo_age + fa_age + gestage + smoke_mo_ever + smoke_fa_ever +
+DFE_tot + Batch + fa_race + mo_race + ch_ageref + income +
+pobw + epistr1 + epistr2 + epistr3 + epistr4 + epistr5
+
+Final Model:
+adult ~ sex + gestage + pobw
+
+ALL Guthrie Set2, case+ctrl:
+> round(summary(fit2)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -24.67       5.62   -4.39     0.00
+sex             3.62       0.74    4.87     0.00
+gestage         0.61       0.14    4.25     0.00
+pobw            7.29       2.65    2.75     0.01
+> cat("ALL Guthrie Set1, case+ctrl:\n")
+ALL Guthrie Set1, case+ctrl:
+> round(summary(fit1)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -23.44       7.65   -3.06     0.00
+sex             2.93       0.85    3.44     0.00
+gestage         0.92       0.20    4.52     0.00
+pobw           -1.71       2.56   -0.67     0.51
+
+
+## -------------------------------------
+
+Training set: ALL Guthrie Set2, case+ctrl
+Stepwise Model Path
+Analysis of Deviance Table
+
+Initial Model:
+adult ~ sex + mo_age + fa_age + gestage + smoke_mo_ever + smoke_fa_ever +
+DFE_tot + Batch + fa_race + mo_race + ch_ageref + income +
+epistr1 + epistr2 + epistr3 + epistr4 + epistr5
+
+Final Model:
+adult ~ sex + gestage
+
+ALL Guthrie Set2, case+ctrl:
+> round(summary(fit2)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -20.81       5.62   -3.70        0
+sex             3.53       0.76    4.67        0
+gestage         0.70       0.14    4.95        0
+> cat("ALL Guthrie Set1, case+ctrl:\n")
+ALL Guthrie Set1, case+ctrl:
+> round(summary(fit1)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -23.63       7.59   -3.11        0
+sex             3.04       0.84    3.61        0
+gestage         0.88       0.20    4.47        0
+
+"
+
+## -------------------------------------
+## Model: adult ~ sex * gestage
+
+ALL Guthrie Set2, case+ctrl:
+> round(summary(fit2)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -42.30      16.62   -2.54     0.01
+sex            19.37      11.56    1.68     0.10
+gestage         1.25       0.43    2.95     0.00
+sex:gestage    -0.41       0.30   -1.37     0.17
+> cat("ALL Guthrie Set1, case+ctrl:\n")
+ALL Guthrie Set1, case+ctrl:
+> round(summary(fit1)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)   -41.53      23.04   -1.80     0.07
+sex            16.73      16.66    1.00     0.32
+gestage         1.34       0.59    2.26     0.03
+sex:gestage    -0.35       0.43   -0.82     0.41
 
 ##############################################
 
 library(partDSA)
 
+varFlag="_allVars"
+varFlag="_noPobw"
+
 colId=c("sex","mo_age","fa_age","gestage")
 colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","fa_race","mo_race","int_ch_ethnicity","ch_ageref","income","int_ch_race","birthWt","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
 colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","fa_race","mo_race","ch_ageref","income","dbirwt","pred_btw","pobw")
 colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_Food","DFE_fort","DFE_nat","DFE_sup","DFE_tot","Batch","fa_race","mo_race","int_ch_ethnicity","ch_ageref","income","int_ch_race","birthWt","dbirwt","pred_btw","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")
+switch(varFlag,
+    "_allVars"={colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","Batch","fa_race","mo_race","ch_ageref","income","pobw","epistr1","epistr2","epistr3","epistr4","epistr5")},
+    "_noPobw"={colId=c("sex","mo_age","fa_age","gestage","smoke_mo_ever","smoke_fa_ever","DFE_tot","Batch","fa_race","mo_race","ch_ageref","income","epistr1","epistr2","epistr3","epistr4","epistr5")}
+)
 clin=clin1
 for (k in colId) {
     if (!is.numeric(clin[,k])) print(k)
@@ -591,5 +723,144 @@ clin21=clin2
 ctrl=DSA.control(missing="impute.at.split")
 res=partDSA(x=clin21[,colId], y=clin21$adult, x.test=clin11[,colId], y.test=clin11$adult, control=ctrl)
 
+modelThis="adult ~ pobw"
+modelThis="adult ~ grp"
+
+clin=clin21
+clin$grp=NA
+switch(varFlag,
+"_allVars"={
+    clin$grp[which((clin$sex <= 1.000000) & (clin$pobw <= 0.884756))]=0
+    clin$grp[which((clin$sex > 1.000000))]=1
+    clin$grp[which((clin$sex <= 1.000000) & (clin$pobw > 0.884756))]=2
+},
+"_noPobw"={
+    clin$grp[which((clin$sex <= 1.000000) & (clin$gestage <= 38.000000))]=0
+    clin$grp[which((clin$sex > 1.000000))]=1
+    clin$grp[which((clin$sex <= 1.000000) & (clin$gestage > 38.000000))]=2
+}
+)
+clin$grp=as.factor(clin$grp)
+fit <- lm(as.formula(modelThis), data = clin)
+summary(fit)
+fit2=fit
+
+clin=clin11
+clin$grp=NA
+switch(varFlag,
+"_allVars"={
+    clin$grp[which((clin$sex <= 1.000000) & (clin$pobw <= 0.884756))]=0
+    clin$grp[which((clin$sex > 1.000000))]=1
+    clin$grp[which((clin$sex <= 1.000000) & (clin$pobw > 0.884756))]=2
+},
+"_noPobw"={
+    clin$grp[which((clin$sex <= 1.000000) & (clin$gestage <= 38.000000))]=0
+    clin$grp[which((clin$sex > 1.000000))]=1
+    clin$grp[which((clin$sex <= 1.000000) & (clin$gestage > 38.000000))]=2
+}
+)
+clin$grp=as.factor(clin$grp)
+fit <- lm(as.formula(modelThis), data = clin)
+summary(fit)
+fit1=fit
+
+cat("ALL Guthrie Set2, case+ctrl:\n")
+round(summary(fit2)$coef,2)
+anova(fit1)[1,]
+cat("ALL Guthrie Set1, case+ctrl:\n")
+round(summary(fit1)$coef,2)
+anova(fit2)[1,]
+
+"
+
+## -------------------------------------
+With POBW
+
+Training set: ALL Guthrie Set2, case+ctrl
+
+Best 3 partitions
+Partition 1 [of 3]:
+(sex <= 1.000000) && (pobw <= 0.884756)
+Partition 2 [of 3]:
+(1.000000 < sex)
+Partition 3 [of 3]:
+(sex <= 1.000000) && (0.884756 < pobw)
+
+ALL Guthrie Set2, case+ctrl:
+> round(summary(fit2)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)     6.37       0.68    9.39        0
+grp1            7.69       0.77    9.99        0
+grp2            4.36       0.77    5.68        0
+> anova(fit1)[1,]
+Analysis of Variance Table
+
+Response: adult
+Df Sum Sq Mean Sq F value    Pr(>F)
+grp  2 1731.5  865.75  26.991 8.274e-12 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> cat("ALL Guthrie Set1, case+ctrl:\n")
+ALL Guthrie Set1, case+ctrl:
+> round(summary(fit1)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)    13.85       0.85   16.22     0.00
+grp1            3.96       0.94    4.20     0.00
+grp2            0.06       0.94    0.07     0.95
+> anova(fit2)[1,]
+Analysis of Variance Table
+
+Response: adult
+Df Sum Sq Mean Sq F value    Pr(>F)
+grp  2 2802.4  1401.2  55.429 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+## -------------------------------------
+Without POBW
+
+Training set: ALL Guthrie Set2, case+ctrl
+
+Best 3 partitions
+Partition 1 [of 3]:
+(sex <= 1.000000) && (gestage <= 38.000000)
+Partition 2 [of 3]:
+(1.000000 < sex)
+Partition 3 [of 3]:
+(sex <= 1.000000) && (38.000000 < gestage)
+
+ALL Guthrie Set2, case+ctrl:
+> round(summary(fit2)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)     7.17        0.6   12.03        0
+grp1            6.88        0.7    9.84        0
+grp2            3.65        0.7    5.18        0
+> anova(fit1)[1,]
+Analysis of Variance Table
+
+Response: adult
+Df Sum Sq Mean Sq F value    Pr(>F)
+grp  2 2531.1  1265.5  41.918 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> cat("ALL Guthrie Set1, case+ctrl:\n")
+ALL Guthrie Set1, case+ctrl:
+> round(summary(fit1)$coef,2)
+Estimate Std. Error t value Pr(>|t|)
+(Intercept)    11.27       0.61   18.35        0
+grp1            6.53       0.73    8.98        0
+grp2            3.73       0.73    5.09        0
+> anova(fit2)[1,]
+Analysis of Variance Table
+
+Response: adult
+Df Sum Sq Mean Sq F value    Pr(>F)
+grp  2 2672.1    1336  52.201 < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+"
 
 ##############################################
