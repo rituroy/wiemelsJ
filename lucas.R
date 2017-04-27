@@ -617,7 +617,10 @@ cat("ALL Guthrie Set1, case+ctrl:\n")
 round(summary(fit1)$coef,2)
 
 "
+With POBW
+
 Training set: ALL Guthrie Set2, case+ctrl
+
 Stepwise Model Path
 Analysis of Deviance Table
 
@@ -647,6 +650,8 @@ pobw           -1.71       2.56   -0.67     0.51
 
 
 ## -------------------------------------
+Without POBW
+
 
 Training set: ALL Guthrie Set2, case+ctrl
 Stepwise Model Path
