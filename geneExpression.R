@@ -541,11 +541,20 @@ for (datType in c("_leuk","_allGuthSet1")) {
 load("tmp_expr.RData")
 
 nProbe=-1
-phenE=read.table(paste(dirClin,"i.LEU.exp.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-expr=read.table(paste(dirClin,"d.LEU.exp.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+phenE=read.table(paste(dirMethLeuk,"i.LEU.exp.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+expr=read.table(paste(dirMethLeuk,"d.LEU.exp.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
 phen=as.data.frame(t(sapply(names(expr)[2:118],function(x) strsplit(x,"_")[[1]],USE.NAMES=F)),stringsAsFactors=F)
 names(phen)=c("id","subtype")
 phenE$id=paste("X",phenE$Sample,sep="")
+
+exprP=read.table(paste(dirMethLeuk,"BCELL.expression.data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+exprP=exprP[,-1]
+phenP=as.data.frame(t(sapply(names(exprP),function(x) strsplit(x,".",fixed=T)[[1]][1:2],USE.NAMES=F)),stringsAsFactors=F)
+names(phenP)=c("id","subtype")
+names(exprP)=paste(phenP$id,"_",phenP$subtype,sep="")
+expr=cbind(expr,exprP)
+phen=rbind(phen,phenP)
+rm(exprP,phenP)
 
 if (F) {
     datadir="/Users/royr/Downloads/HuGene-1_0-st-v1-na36-hg19-probeset-csv/"
@@ -619,16 +628,21 @@ annE$chr[which(annE$chr=="Y")]="24"
 annE$chr=as.integer(annE$chr)
 i=match(expr$probe.ID,annE$transcript_cluster_id)
 annE=annE[i,]
-expr=as.matrix(expr[,2:118])
+#expr=as.matrix(expr[,2:118])
+expr=as.matrix(expr[,match(paste(phen$id,"_",phen$subtype,sep=""),colnames(expr))])
 candGene=c("APOBEC1","APOBEC2","APOBEC3A","APOBEC3B","APOBEC3C","APOBEC3D","APOBEC3E","APOBEC3F","APOBEC3G","APOBEC3H","APOBEC4","AICDA","AID","ARP2","CDA2","HIGM2","HEL-S-284")
 iC=grep(paste(candGene,collapse="|"),annE$geneSym)
 sort(annE$geneSym[iC][! annE$geneSym[iC]%in%candGene])
 sort(candGene)
 iC=iC[which(!annE$geneSym[iC]%in%c("AIDA","ATRAID","FARP2","PARP2"))]
+iCA=iC
+candGene=c("IKZF2","IKZF3","IKZF4","IKZF5")
+iC=grep(paste(candGene,collapse="|"),annE$geneSym)
 annE[iC,c("seqname","start","stop","geneSym")]
+iCI=iC
 #phenE
 
-#save(expr,phen,annE,iC,file="tmp_expr2.RData")
+#save(expr,phen,annE,iCA,iCI,file="tmp_expr2.RData")
 
 ## -------------------------------------------
 ## -------------------------------------------
@@ -637,11 +651,18 @@ load(file="tmp_expr2.RData")
 load("annAll.RData")
 #load("ann.RData")
 ann=ann[match(rownames(methG),ann$IlmnID),]
-i1=c()
-i21=c()
+if (F) {
+    i1=c(); i21=c()
+    for (i2 in which(annE$chr%in%unique(annE$chr[iC]))) {
+        i=which(ann$CHR==annE$chr[i2])
+        i1=c(i1,which.min(abs(ann$MAPINFO[i]-annE$start[i2])))
+        i21=c(i21,i2)
+    }
+}
+i1=c(); i21=c()
 for (i2 in which(annE$chr%in%unique(annE$chr[iC]))) {
     i=which(ann$CHR==annE$chr[i2])
-    i1=c(i1,which.min(abs(ann$MAPINFO[i]-annE$start[i2])))
+    i1=c(i1,i[which.min(abs(ann$MAPINFO[i]-annE$start[i2]))])
     i21=c(i21,i2)
 }
 tmp=rep(NA,length(i21))
@@ -650,11 +671,13 @@ map=data.frame(probeId=annE$transcript_cluster_id[i21],cpgId=ann$IlmnID[i1],apob
 methG=methG[i1,]
 methL=methL[i1,]
 #save(phenG,methG,phenL,methL,map,file="tmp_expr_apobec.RData")
-i1=c()
-for (i2 in iC) {
-    i=which(ann$CHR==annE$chr[i2])
-    i1=c(i1,which.min(abs(ann$MAPINFO[i]-annE$start[i2])))
-}
+
+i1=which(ann[,1]=="cg02051562"); i2=which(annE[,2]==7922804)
+i1=which(ann[,1]=="cg06897860"); i2=which(annE[,2]==8119403)
+i=1000
+i1=which(ann[,1]==map$cpgId[i]); i2=which(annE[,2]==map$probeId[i])
+table(ann$CHR[i1]==annE$chr[i2])
+(ann$MAPINFO[i1]-annE$start[i2])
 
 ## -------------------------------------------
 ## -------------------------------------------
@@ -663,14 +686,20 @@ load("tmp_expr_apobec.RData")
 library(qvalue)
 pThres=0.05
 
-varName1=c("grp")
 varName1=c("grp","meth")
+varName1=c("grp")
 
 transformFlag="_mVal"
 transformFlag=""
 
+iC=iCA
+parInfo=list(name="_apobec",mfcol=c(2,3),pv=T,outFormat="png")
+
+iC=iCI; iC=iC[order(annE$geneSym[iC])]
+parInfo=list(name="_ikzf",mfcol=c(1,1),pv=F,outFormat="pdf")
+
 for (vId1 in 1:length(varName1)) {
-    for (transformFlag in c("","_mVal")) {
+    for (transformFlag in c("_mVal","")) {
         if (varName1[vId1]=="grp" & transformFlag=="_mVal") next
         load("tmp_expr_apobec.RData")
         j=match(phen$id,colnames(methL)); jE=which(!is.na(j)); jM=j[jE]
@@ -694,16 +723,39 @@ for (vId1 in 1:length(varName1)) {
         colId=2
         phen$grp=phen$subtype
         phen$grp[which(phen$grp=="t1221")]="telaml"
-        phen$grp[which(!phen$grp%in%c("hyperdiploid","telaml","others"))]=NA
+        phen$grp[which(!phen$grp%in%c("hyperdiploid","telaml","others","S1","S2","S3","S4"))]=NA
+        phen$grp[which(phen$grp=="hyperdiploid")]="1:hyperdiploid"
+        phen$grp[which(phen$grp=="telaml")]="2:telaml"
+        phen$grp[which(phen$grp=="others")]="3:others"
+        phen$grp[which(phen$grp=="S1")]="4:S1"
+        phen$grp[which(phen$grp=="S2")]="5:S2"
+        phen$grp[which(phen$grp=="S3")]="6:S3"
+        phen$grp[which(phen$grp=="S4")]="7:S4"
+        grpUniq=sort(unique(phen$grp))
+        grpInfo=matrix("",nrow=length(grpUniq)*(length(grpUniq)-1)/2,ncol=2)
+        k=1
+        for (k1 in 1:(length(grpUniq)-1)) {
+            for (k2 in (k1+1):length(grpUniq)) {
+                grpInfo[k,1]=grpUniq[k1]
+                grpInfo[k,2]=grpUniq[k2]
+                k=k+1
+            }
+        }
         tmp=rep(NA,length(iC))
         tmpC=rep("",length(iC))
-        tbl=data.frame(probeId=tmp,cpgId=tmp,geneSym=tmpC,model=tmpC,coef=tmp,pv_12=tmp,pv_13=tmp,pv_23=tmp,stringsAsFactors=F)
-        tbl2=matrix(nrow=length(iC),ncol=6)
+        tbl=matrix(nrow=length(iC),ncol=nrow(grpInfo))
+        colnames(tbl)=paste("pv_",grpInfo[,2],"V",grpInfo[,1],sep="")
+        tbl=data.frame(probeId=tmp,cpgId=tmp,geneSym=tmpC,model=tmpC,coef=tmp,tbl,stringsAsFactors=F)
+        tbl2=matrix(nrow=length(iC),ncol=2*length(grpUniq))
         colnames(tbl2)=paste(rep(c("expr","meth"),each=length(sort(unique(phen$grp)))),"_",sort(unique(phen$grp)),sep="")
         for (subset1Flag in c("")) {
             cat("\n\n=================== ",varName1[vId1],", ",transformFlag," ============\n",sep="")
-            png(paste("plot_expr_",varName1[vId1],subset1Flag,"_%02d.png",sep=""),width=3*240, height=2*240)
-            par(mfcol=c(2,3))
+            if (parInfo$outFormat=="png") {
+                png(paste("plot_expr",parInfo$name,ifelse(varName1[vId1]=="grp","",varName1[vId1]),subset1Flag,"_%02d.png",sep=""),width=3*240, height=2*240)
+            } else {
+                pdf(paste("plot_expr",parInfo$name,ifelse(varName1[vId1]=="grp","",varName1[vId1]),subset1Flag,".pdf",sep=""))
+            }
+            par(mfcol=parInfo$mfcol)
             xlim=NULL
             for (hId in 1:length(iC)) {
                 #for (hId in 1) {
@@ -750,7 +802,7 @@ for (vId1 in 1:length(varName1)) {
                                 colId=2
                             }
                             tbl$coef[hId]=res[colId,"Estimate"]
-                            tbl[hId,paste("pv_",grpId1,grpId2,sep="")]=res[colId,"Pr(>|t|)"]
+                            tbl[hId,paste("pv_",grpUniq[grpId2],"V",grpUniq[grpId1],sep="")]=res[colId,"Pr(>|t|)"]
                         }
                     }
                     if (varName1[vId1]%in%c("meth")) {
@@ -767,9 +819,18 @@ for (vId1 in 1:length(varName1)) {
                                 plot(clin[j,varName1[vId1]],clin$adult[j],xlim=xlim,main=paste(tbl$set[k],"\nmodel ",tbl$model[k],", pv ",tbl$pv[k],sep=""),xlab=varName1[vId1],ylab="Log2 expression")
                                 abline(c(res$coef),lty="solid",col="red")
                             } else {
-                                ttl=sort(unique(clin[j,varName1[vId1]]))
+                                ttl=sort(unique(clin[j,varName1[vId1]])); ttl=substr(ttl,3,nchar(ttl))
+                                ttl[which(ttl=="hyperdiploid")]="hyper\ndiploid"
                                 if (varName1[vId1]=="hyperdipTelamlVsOther") ttl=c("other","hyperdiploid/tel-aml")
-                                boxplot(expr[iC[hId],j]~clin[j,varName1[vId1]],names=ttl,notch=T,ylim=xlim,main=paste(tbl$probeId[k],", ",tbl$geneSym[k],"\npv ",signif(tbl$pv_12[k],2),"(HO) ",signif(tbl$pv_13[k],2),"(HT) ",signif(tbl$pv_23[k],2),"(OT)",sep=""),xlab="",ylab="Log2 expression")
+                                heading2=paste(tbl$probeId[k],", ",tbl$geneSym[k],sep="")
+                                if (parInfo$name%in%c("apobec")) heading2=paste(heading2,"\npv ",signif(tbl$pv_12[k],2),"(HO) ",signif(tbl$pv_13[k],2),"(HT) ",signif(tbl$pv_23[k],2),"(OT)",sep="")
+                                boxplot(expr[iC[hId],j]~clin[j,varName1[vId1]],names=ttl,notch=ifelse(parInfo$name%in%c("apobec"),T,F),ylim=xlim,main=heading2,xlab="",ylab="Log2 expression",las=0)
+                                if (!parInfo$name%in%c("apobec")) {
+                                    for (p in 1:length(grpUniq)) {
+                                        jj=j[which(clin[j,varName1[vId1]]==grpUniq[p])]
+                                        points(rep(p,length(jj)),expr[iC[hId],jj],col="red",pch=20)
+                                    }
+                                }
                             }
                         }
                     }
@@ -778,28 +839,29 @@ for (vId1 in 1:length(varName1)) {
             dev.off()
         }
         tbl=cbind(tbl,tbl2)
-        names(tbl)=sub("_12","_hyperdipVsOther",names(tbl))
-        names(tbl)=sub("_13","_hyperdipVsTelaml",names(tbl))
-        names(tbl)=sub("_23","_telamlVsOther",names(tbl))
+        #names(tbl)=sub("_12","_hyperdipVsOther",names(tbl))
+        #names(tbl)=sub("_13","_hyperdipVsTelaml",names(tbl))
+        #names(tbl)=sub("_23","_telamlVsOther",names(tbl))
         for (k in grep("pv_",names(tbl))) {
             cat("\n\n========== ",names(tbl)[k]," ============\n",sep="")
             #print(tbl)
             kk=which(tbl[,k]<pThres)
             cat("PV<",pThres,": ",length(kk),"\n",sep="")
             if (length(kk)>0) print(tbl[kk,])
-            qv=qvalue(tbl[,k])$qvalues
+            #qv=qvalue(tbl[,k])$qvalues
+            qv=p.adjust(tbl[,k],method="BH")
             cat("QV<",pThres,": ",sum(qv<pThres),"\n",sep="")
         }
         if (varName1[vId1]=="grp") {
             k=c(which(names(tbl)%in%c("probeId","geneSym","model","coef")),grep("pv_",names(tbl)))
-            write.table(tbl[,k],file=paste("stat_expr_apobec.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+            write.table(tbl[,k],file=paste("stat_expr",parInfo$name,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
         } else {
             if (transformFlag=="_mVal") {
                 tblM=tbl
-                write.table(tbl,file=paste("stat_expr_methMval_apobec.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+                write.table(tbl,file=paste("stat_expr_methMval",parInfo$name,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
             } else {
                 tblB=tbl
-                write.table(tbl,file=paste("stat_expr_methBval_apobec.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+                write.table(tbl,file=paste("stat_expr_methBval",parInfo$name,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
             }
         }
     }
@@ -808,9 +870,38 @@ for (vId1 in 1:length(varName1)) {
 table(clin$subtype)
 "
 hyperdiploid       others       telaml
-31           25           24
+       31           25           24
 "
 
 #save(tblM,tblB,file="tmp_result_expr_apobec.RData")
 
 
+
+## -------------------------------------------
+## -------------------------------------------
+load("tmp_expr_apobec.RData")
+
+i21=which(map$probeId%in%c(8073062,8073056))
+xlim=range(expr[which(annE$transcript_cluster_id%in%map$probeId[i21]),],na.rm=T)
+ylim=c(0,1)
+png(paste("plot_expr_",tolower("APOBEC3A_B"),".png",sep=""),width=3*240, height=2*240)
+par(mfcol=c(2,1))
+for (i2 in i21) {
+    i=which(annE$transcript_cluster_id==map$probeId[i2])
+    plot(density(expr[i,],na.rm=T),xlim=xlim,ylim=ylim,main=paste(annE$transcript_cluster_id[i],": ",gsub(" ",", ",annE$geneSym[i]),sep=""),xlab="log2(expression)")
+}
+dev.off()
+grpUniq=sort(unique(phen$grp))
+png(paste("plot_expr_",tolower("APOBEC3A_B"),"_%02d.png",sep=""),width=3*240, height=2*240)
+par(mfrow=c(2,3))
+for (i2 in i21) {
+    i=which(annE$transcript_cluster_id==map$probeId[i2])
+    for (grpId in 1:length(grpUniq)) {
+        j=which(phen$grp==grpUniq[grpId])
+        plot(density(expr[i,j],na.rm=T),xlim=xlim,ylim=ylim,main=paste(annE$transcript_cluster_id[i],": ",gsub(" ",", ",annE$geneSym[i]),sep=""),sub=grpUniq[grpId],xlab="log2(expression)")
+    }
+}
+dev.off()
+
+## -------------------------------------------
+## -------------------------------------------
