@@ -636,7 +636,7 @@ sort(annE$geneSym[iC][! annE$geneSym[iC]%in%candGene])
 sort(candGene)
 iC=iC[which(!annE$geneSym[iC]%in%c("AIDA","ATRAID","FARP2","PARP2"))]
 iCA=iC
-candGene=c("IKZF2","IKZF3","IKZF4","IKZF5")
+candGene=c("IKZF1","IKZF2","IKZF3","IKZF4","IKZF5","ZPBP2","ORMDL3","GSDMB","GSDMA")
 iC=grep(paste(candGene,collapse="|"),annE$geneSym)
 annE[iC,c("seqname","start","stop","geneSym")]
 iCI=iC
@@ -686,16 +686,15 @@ load("tmp_expr_apobec.RData")
 library(qvalue)
 pThres=0.05
 
-varName1=c("grp","meth")
-varName1=c("grp")
-
 transformFlag="_mVal"
 transformFlag=""
 
 iC=iCA
+varName1=c("grp","meth")
 parInfo=list(name="_apobec",mfcol=c(2,3),pv=T,outFormat="png")
 
 iC=iCI; iC=iC[order(annE$geneSym[iC])]
+varName1=c("grp")
 parInfo=list(name="_ikzf",mfcol=c(1,1),pv=F,outFormat="pdf")
 
 for (vId1 in 1:length(varName1)) {
