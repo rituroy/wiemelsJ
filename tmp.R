@@ -15,10 +15,10 @@ cohort="_aml"
 cohort="_allGuthSet2"
 cohort="_leuk"
 cohort="_allGuthSet1Set2"
-cohort="_allGuthSet1"
 #cohort="_tcgaGbm"
 cohort="_birthDefect"
 cohort="_uscEpic"
+cohort="_allGuthSet1"
 
 subsetFlag="_ctrl"
 subsetFlag="_case"
@@ -154,6 +154,29 @@ if (computerFlag=="cluster") {
 	}
 } else {
 	if (cohort=="_allGuthSet1") {
+        baseDir="docs/all/set1/idat/"
+        targets=read.table("docs/all/set1/final.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin2=read.table("docs/all/set1/matches.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        
+        names(clin2)[match(c("Array.ID","Old.match","New.match"),names(clin2))]=c("arrayId","guthrieIdO","guthrieIdN")
+        clin2$Beadchip=substr(clin2$arrayId,1,10)
+        clin2$Position=substr(clin2$arrayId,12,17)
+        #clin2$guthrieIdO=paste("X",clin2$guthrieIdO,sep="")
+        #clin2$guthrieIdN=paste("X",clin2$guthrieIdN,sep="")
+        #clin2$type=substr(clin2$guthrieIdN,6,6)
+        clin2$type=substr(clin2$guthrieIdN,5,5)
+        clin2[!clin2$type%in%c("G","C"),]
+        clin2$type[!clin2$type%in%c("G","C")]=NA
+        
+        targets$arrayId=paste(targets$Beadchip,targets$Position,sep="_")
+        #targets$guthrieId=paste("X",targets$TargetID,sep="")
+        targets$guthrieId=targets$TargetID
+        
+        targets$Beadchip=targets$Position=NA
+        j=match(clin2$guthrieIdN,targets$guthrieId); j2=which(!is.na(j)); j1=j[j2]
+        targets$Beadchip[j1]=clin2$Beadchip[j2]
+        targets$Position[j1]=clin2$Position[j2]
+        targets$caco=targets$Leukemia
 	} else if (cohort=="_allGuthSet2") {
 		baseDir="docs/all/set2/idat/"
 		targets=read.table("docs/all/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
@@ -172,6 +195,8 @@ if (computerFlag=="cluster") {
 	} else {
 	}
 }
+#tbl=targets[,which(!names(targets)%in%c("arrayId","TargetID","Leukemia","Position1","Bead_Position","Blinded_Study_ID"))]
+#write.table(tbl,file=paste("clinGuthrieSet1Orig.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
 
 #list.files(baseDir)
 #list.files(file.path(baseDir, "6042308046"))

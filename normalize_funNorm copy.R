@@ -1,5 +1,5 @@
-computerFlag="cluster"
 computerFlag=""
+computerFlag="cluster"
 
 if (computerFlag=="cluster") {
 } else {
@@ -18,7 +18,6 @@ cohort="_allGuthSet1Set2"
 cohort="_allGuthSet1"
 #cohort="_tcgaGbm"
 cohort="_birthDefect"
-cohort="_uscEpic"
 
 subsetFlag="_ctrl"
 subsetFlag="_case"
@@ -31,13 +30,8 @@ subsetName=ifelse(subsetFlag=="",subsetFlag,paste(subsetFlag,"Subset",sep=""))
 options(width=70)
 require(minfi)
 #require(minfiData)
-if (cohort=="_uscEpic") {
-    library(IlluminaHumanMethylationEPICmanifest)
-    library(IlluminaHumanMethylationEPICanno.ilm10b2.hg19)
-} else {
-    library(IlluminaHumanMethylation450kmanifest)
-    library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-}
+library(IlluminaHumanMethylation450kmanifest)
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
 if (computerFlag=="cluster") {
 	if (cohort=="_allGuthSet1") {
@@ -157,18 +151,6 @@ if (computerFlag=="cluster") {
 	} else if (cohort=="_allGuthSet2") {
 		baseDir="docs/all/set2/idat/"
 		targets=read.table("docs/all/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-    } else if (cohort=="_uscEpic") {
-        baseDir="docs/uscEpic/idat/"
-        fileList=list.files(baseDir)
-        targets=read.table("docs/uscEpic/1436 (UCSF-16).txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        names(targets)[match(c("Plate","Bead.chip..","Well.Position","Well.Position.1","Sentrix.ID","Terminus","Complete.Barcode","Tube.Label","X","Volume.For.Bis","Volume.water.to.45","ALU.C4..HB.313..Ct.value","CONV.100...HB.365..Ct.value","CONV.50...HB.382..Ct.value","CONV.0...HB.368..Ct.value","Detected.CpG..0.05.","Percent.of.Probes..P.0.05."),names(targets))]=
-            c("plate","group","wellPosition","wellPosition2","Beadchip","Position","id","tubeLabel","X","volBis","volWater45","aluC4","conv100","conv50","conv0","detCpG","probePerc")
-        out=as.data.frame(t(sapply(fileList[grep("_Grn",fileList)],function(x) {
-            y=strsplit(x,"_")[[1]]
-            c(y[1:2])
-        },USE.NAMES=F)),stringsAsFactors=F)
-        names(out)=c("Beadchip","Position")
-        targets$id=paste(targets$Beadchip,"_",targets$Position,sep="")
 	} else {
 	}
 }
@@ -178,7 +160,7 @@ if (computerFlag=="cluster") {
 
 
 #targets=read.450k.sheet(baseDir)
-if (!cohort%in%c("_tcgaGbm","_uscEpic")) {
+if (!cohort%in%c("_tcgaGbm")) {
     targets=targets[targets$Beadchip%in%list.files(baseDir),]
 }
 
@@ -252,10 +234,7 @@ if (cohort=="_allGuthSet1") {
     targets$caco=targets$status
     targets$cacoDesc=targets$status
     targets$cacoDesc[which(targets$caco=="")]="miscellaneous"
-} else if (cohort=="_uscEpic") {
-    targets$caco=targets$group
-    targets$cacoDesc=paste("group",targets$group)
-} else if (cohort%in%c("_tcgaGbm")) {
+} else if (cohort=="_tcgaGbm") {
     targets$caco=0
     targets$cacoDesc=""
 } else {
@@ -271,7 +250,7 @@ if (cohort=="_allGuthSet1") {
 rgsetRaw=read.metharray.exp(base=baseDir, recursive=T)
 #save(rgsetRaw,file="rgsetRaw_read.metharray.exp.RData")
 
-if (cohort%in%c("_leuk","_birthDefect","_tcgaGbm","_uscEpic")) {
+if (cohort%in%c("_leuk","_birthDefect","_tcgaGbm")) {
 	k=which(names(targets)%in%c("id","Beadchip","Position"))
 } else {
 	k=which(names(targets)%in%c("guthrieId","Beadchip","Position"))
@@ -294,7 +273,7 @@ mani=getManifest(rgsetRaw)
 
 rgsetRaw
 
-if (!cohort%in%c("_leuk","_birthDefect","_tcgaGbm","_uscEpic")) {
+if (!cohort%in%c("_leuk","_birthDefect","_tcgaGbm")) {
 	j=which(is.na(targets$guthrieId))
 	targets$id=paste("X",targets$guthrieId,sep="")
 	if (length(j)!=0) {targets$id[j]=paste(targets$Beadchip,"_",targets$Position,sep="")[j]}
@@ -341,9 +320,6 @@ if (cohort%in%c("_leuk","_birthDefect")) {
 } else if (cohort%in%c("_tcgaGbm")) {
     colId=c("id","predictedSex","Beadchip","Position")
     k="id"
-} else if (cohort%in%c("_uscEpic")) {
-    colId=c("id","group","predictedSex","Beadchip","Position")
-    k="id"
 } else {
 	#colId=c("labId","sex","predictedSex","Beadchip","Position")]
 	colId=c("guthrieId","sex","predictedSex","Beadchip","Position")
@@ -353,7 +329,7 @@ if (cohort%in%c("_leuk","_birthDefect")) {
 table(observedSex=colData(rgsetFN)$sex, predictedSex=colData(rgsetFN)$predictedSex,exclude=NULL)
 if (cohort=="_birthDefect") {
     j=which(colData(rgsetFN)$sex!=colData(rgsetFN)$predictedSex)
-} else if (cohort%in%c("_tcgaGbm","_uscEpic")) {
+} else if (cohort=="_tcgaGbm") {
     j=c()
 } else {
     table(colData(rgsetFN)$sex,2-as.integer(as.factor(colData(rgsetFN)$predictedSex)))
@@ -404,7 +380,7 @@ if (cohort=="_allGuthSet1") {
 	j=which(!sampleNames(rgsetRaw)%in%c("X1339G","X1298G","X0508G","X1762G","X0635G","X1588G","9702496164_R05C02","9702496164_R06C02"))
 } else if (cohort%in%c("_birthDefect")) {
     j=which(!sampleNames(rgsetRaw)%in%c("X8216","HB0004"))
-} else if (cohort%in%c("_leuk","_tcgaGbm","_uscEpic")) {
+} else if (cohort%in%c("_leuk","_tcgaGbm")) {
 	j=1:ncol(rgsetRaw)
 } else {
 	j=which(!sampleNames(rgsetRaw)%in%c("X1095G"))
@@ -459,7 +435,7 @@ for (datType in c("mDat","beta")) {
 	load(paste("tmp_",datType,cohort,".RData",sep=""))
 	rownames(dat)=dat$probeId
 	dat=as.matrix(dat[,-1])
-	if (cohort%in%c("_leuk","_birthDefect","_tcgaGbm","_uscEpic",)) {
+	if (cohort%in%c("_leuk","_birthDefect","_tcgaGbm",)) {
 		j=match(colnames(dat),targets$id); j1=which(!is.na(j)); j2=j[j1]
 	} else {
 		j=match(colnames(dat),paste("X",targets$guthrieId,sep="")); j1=which(!is.na(j)); j2=j[j1]
@@ -504,9 +480,6 @@ for (datType in c("mDat","beta")) {
     } else if (cohort%in%c("_tcgaGbm")) {
             varList=c("Beadchip","Position")
             subset2List=c("",paste("_",unique(targets$group2),sep=""))
-    } else if (cohort%in%c("_uscEpic")) {
-        varList=c("group","Beadchip","Position")
-        subset2List=""
 	} else {
 		varList=c("group2","sex","Beadchip","Position")
 		subset2List=c("","_ctrl","_case")
@@ -539,65 +512,6 @@ for (datType in c("mDat","beta")) {
 
 ###################################################
 }
-
-
-## ----------------------------------------------
-if (computerFlag=="cluster") {
-    ann <- read.delim(paste("data/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-    snpVec <- read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-} else {
-    ann <- read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-    snpVec <- read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-    dmr <- read.table(paste("docs/SeungTae/leukemia.DMRs/leukemia.DMRs.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-}
-ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
-ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
-ann[,"CHR"]=as.integer(ann[,"CHR"])
-ann <- ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
-for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
-
-snpVec=snpVec[,1]
-ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
-
-ann$keep = ann$snp==0 & !ann$CHR%in%c(23,24)
-
-ann1=ann
-dat=mDat
-
-i=match(rownames(dat),ann$IlmnID); i1=which(!is.na(i)); i2=i[i1]
-dat=dat[i1,j1]
-ann=ann[i2,]
-
-sdVec=apply(mDat,1,sd,na.rm=T)
-save.image("tmp_10.RData")
-
-nPr=10000
-nPr=30000
-#dat2=mDat[1:nPr,]
-dat2=mDat[order(sdVec,decreasing=T)[1:nPr],]
-#colnames(dat2)=paste(targets$group,"_",targets$wellPosition,sep="")
-colnames(dat2)=targets$wellPosition
-
-header=paste(nPr," most variable CpGs",sep="")
-
-png(paste("hclust_epic_",nPr,"cpg.png",sep=""))
-plot(hclust(dist(t(dat2)),method="ward.D2"),main=header,xlab="")
-dev.off()
-
-library(FactoMineR)
-#fit <- PCA(t(dat), graph = F, ncp =6)
-fit <- PCA(t(dat2), graph = F, ncp =6)
-limAll=NULL
-png(paste("pca_epic_",nPr,"cpg.png",sep=""))
-plot(fit,xlim=limAll,ylim=limAll,sub=paste("PCA: ",header,sep=""))
-if (F) {
-    j=which(targets$group==1)
-    points(fit$ind$coord[j,1],fit$ind$coord[j,1],col="red")
-    j=which(targets$group==2)
-    points(fit$ind$coord[j,1],fit$ind$coord[j,1],col="green")
-}
-abline(c(0,1),lty="dotted")
-dev.off()
 
 ####################################################################
 ####################################################################
