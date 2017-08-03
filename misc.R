@@ -1219,6 +1219,7 @@ write.table(clin,file="clin_ivorra.txt", sep="\t", col.names=T, row.names=F, quo
 dirSrc="/Users/royr/UCSF/"
 dirSrc2=dirSrc
 dirSrc3=paste("code/",sep="")
+dirSrc3=paste("/Users/royr/Downloads/wiemelsJ-all/",sep="")
 setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
 
 ##############################################
@@ -2972,3 +2973,714 @@ phen$subjectId=phen$subjectID
 # 661724 - T-ALL, 328606 - T-ALL/B-ALL
 x=c("661724","328606")
 table(x%in%phen$subjectId)
+
+########################################################################
+########################################################################
+########################################################################
+## QC analysis
+
+library(FactoMineR)
+
+## ---------------
+
+dirSrc="/Users/royr/UCSF/"
+dirSrc2=dirSrc
+dirSrc3=paste("code/",sep="")
+dirSrc3=paste("/Users/royr/Downloads/wiemelsJ-all/",sep="")
+setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
+
+##############################################
+
+computerFlag="cluster"
+computerFlag=""
+
+##############################################
+
+setFlag="set2"
+setFlag=""
+
+subsetFlag="propOfCacoEthnAsInSet2"
+subsetFlag="case"
+subsetFlag="ctrl"
+subsetFlag=""
+
+
+colList=c("black","red")
+colList=c("skyblue","blue","yellow","purple","black","red","orange","green","cyan","darkgreen")
+
+##############################################
+
+source(paste(dirSrc3,"funcs.R",sep=""))
+res=getClinData(setFlag=setFlag,subsetFlag=subsetFlag)
+clin1=res$clin1
+clin2=res$clin2
+datadir11=res$dirClin1
+datadir21=res$dirClin2
+datadir12=res$dirMeth1
+datadir22=res$dirMeth2
+rm(res)
+
+clin1$id=paste("X",clin1$guthrieId,sep="")
+clin2$id=paste("X",clin2$guthrieId,sep="")
+clin1$beadPos=paste(clin1$Beadchip,"_",clin1$Position,sep="")
+clin2$beadPos=paste(clin2$Beadchip,"_",clin2$Position,sep="")
+
+## ---------------
+datadir="docs/HelenHansen/"
+qcX=read.table(paste(datadir,"SET 1& 2 BAC control probes_GC samples_xo.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+qcC=read.table(paste(datadir,"SET 1& 2 BAC control probes_GC samples_countOfFlags.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+qcR=read.table(paste(datadir,"SET 1& 2 BAC control probes_GC samples_rawBacScores.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+qcThres=read.table(paste(datadir,"SET 1& 2 BAC control probes_GC samples_bacThresholds.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+
+nameInfo=data.frame(name1=c(names(qcX),names(qcC),names(qcR)),stringsAsFactors=F)
+
+names(qcX)[match(c("Sample.Name","Sentrix.Barcode","Sentrix.Position","Any.non.background.bilufite.conversion.flag","Any.Bisulfite.Conversion..Flag","Any.Flag"),names(qcX))]=
+    c("sampleId","Beadchip","Position","convNBFlag","convFlag","anyFlag")
+names(qcC)[match(c("Sample.Name","Sentrix.Barcode","Sentrix.Position","Staining.Green","Staining.Red","Extension.Green","Extension.Red","Hybridization.High.Medium","HybridizationMedium.Low","Target.Removal1","Target.Removal2","Specificity.1.Green","Specificity.1.Red","Specificity.2","Specificity.2.Background","NonPolymorphic.Green","NonPolymorphic.Red","Bisulfite.Conversion.1.Green","Bisulfite.Conversion.1.Red","Bisulfite.Conversion.2","BisulfiteConversion.1.Background.Green","Bisulfite.Conversion.1.Background.Red","Bisulfite.Conversion.2.Background","Any.non.background.bilufite.conversion.flag","Any.Bisulfite.Conversion..Flag","Any.Flag"),names(qcC))]=
+    c("sampleId","Beadchip","Position","stainG","stainR","extG","extR","hybHiMed","hybMedLo","tarRem1","tarRem2","spec1G","spec1R","spec2","spec2Bgd","nonPolG","nonPolR","conv1G","conv1R","conv2","conv1BgdG","conv1BgdR","conv2Bgd","convNBFlag","anyConvFlag","anyFlag")
+names(qcR)[match(c("Sample.Name","Sentrix.Barcode","Sentrix.Position","Restoration","Staining.Green","Staining.Red","Extension.Green","Extension.Red","Hybridization.High.Medium","HybridizationMedium.Low","Target.Removal1","Target.Removal2","Bisulfite.Conversion.1.Green","BisulfiteConversion.1.Background.Green","Bisulfite.Conversion.1.Red","Bisulfite.Conversion.1.Background.Red","Bisulfite.Conversion.2","Bisulfite.Conversion.2.Background","Specificity.1.Green","Specificity.1.Red","Specificity.2","Specificity.2.Background","NonPolymorphicGreen","NonPolymorphic.Red","sample.group","X450k.EPIC","DNA.source","Restored..Y.N.","conversion.lab","Illumina.Core","Approx.date.of.project","Flagged.by.MethylLight..only.USC.","P..0.05","Excluded.for.QC.by.RR","Illumina.known.hyb.probe..labeling.error","Total.ng.DNA.for.bis.conv","Concentrated"),names(qcR))]=
+    c("sampleId","Beadchip","Position","restore","stainG","stainR","extG","extR","hybHiMed","hybMedLo","tarRem1","tarRem2","conv1G","conv1BgdG","conv1R","conv1BgdR","conv2","conv2Bgd","spec1G","spec1R","spec2","spec2Bgd","nonPolG","nonPolR","group","chipType","dnaSrc","restored","convLab","ilmnCore","projDate","methylLightFlag","pv.05","qcExclRR","IlmnPrLabelErr","totDna","conc")
+names(qcThres)[match(c("X","BAC.cut.off.for.passing.QC"),names(qcThres))]=c("name","thres")
+qcThres$id[match(c("Staining Green","Staining Red","Extension Green","Extension Red","Hybridization High Medium","HybridizationMedium Low","Target Removal1","Target Removal2","Bisulfite Conversion 1 Green","BisulfiteConversion 1 Background Green","Bisulfite Conversion 1 Red","Bisulfite Conversion 1 Background Red","Bisulfite Conversion 2","Bisulfite Conversion 2 Background","Specificity 1 Green","Specificity 1 Red","Specificity 2","Specificity 2 Background","NonPolymorphicGreen","NonPolymorphic Red"),qcThres$name)]=
+    c("stainG","stainR","extG","extR","hybHiMed","hybMedLo","tarRem1","tarRem2","conv1G","conv1BgdG","conv1R","conv1BgdR","conv2","conv2Bgd","spec1G","spec1R","spec2","spec2Bgd","nonPolG","nonPolR")
+qcThres$thres=as.numeric(sub(">","",qcThres$thres))
+
+nameInfo$name2=c(names(qcX),names(qcC),names(qcR))
+nameInfo=nameInfo[!duplicated(nameInfo$name1),]
+
+qcC=qcC[match(qcX$sampleId,qcC$sampleId),]
+qcR=qcR[match(qcX$sampleId,qcR$sampleId),]
+
+if (F) {
+    qcComb=data.frame(sampleId=qcX$sampleId,stringsAsFactors=F)
+    tbl=qcR[,which(names(qcR)%in%qcThres$id)]
+    for (k2 in 1:ncol(tbl)) {
+        k1=match(names(tbl)[k2],qcThres$id)
+        tbl[,k2]=as.integer(tbl[,k2]>qcThres$thres[k1])
+    }
+    tbl=qcC[,which(names(qcC)%in%qcThres$id)]
+    for (k2 in names(tbl)) {
+        cat("\n\n==============",k2,"\n")
+        k1=match(k2,qcThres$id)
+        tbl[,k2]=as.integer(qcR[,k2]>qcThres$thres[k1])
+        print(table(qcC=qcC[,k2],qcR=tbl[,k2],exclude=NULL))
+    }
+    qcComb=cbind(sampleId=qcX$sampleId,tbl)
+}
+
+clin1=clin1[which(clin1$beadPos%in%qcX$sampleId),]
+clin2=clin2[which(clin2$beadPos%in%qcX$sampleId),]
+
+## ---------------
+
+nProbe=10001
+nProbe=101
+nProbe=-1
+
+## ---------------
+## Run this if necessary
+
+cohortList=c("_set1","_set2")
+for (cohortFlag in cohortList) {
+    if (nProbe==(-1)) {
+        load(paste("beta",cohortFlag,".RData",sep=""))
+    } else {
+        cohortFlag="_set1"
+        datadir=paste("docs/all/",sub("_","",cohortFlag),"/",sep="")
+        fName=paste("beta_funNorm",cohortFlag,".txt",sep="")
+        meth1=read.table(paste(datadir,fName,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        
+        cohortFlag="_set2"
+        datadir=paste("docs/all/",sub("_","",cohortFlag),"/",sep="")
+        fName=paste("beta_funNorm",cohortFlag,".txt",sep="")
+        meth2=read.table(paste(datadir,fName,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+    }
+    switch(cohortFlag,
+    "_set1"={
+        rownames(meth1)=meth1$probeId
+        j=match(clin1$id,colnames(meth1)); j1=which(!is.na(j)); j2=j[j1]
+        betaThis=t(meth1[,j2])
+        rm(meth1)
+    },
+    "_set2"={
+        rownames(meth2)=meth2$probeId
+        j=match(clin2$id,colnames(meth2)); j1=which(!is.na(j)); j2=j[j1]
+        betaThis=t(meth2[,j2])
+        rm(meth2)
+    }
+    )
+    #cpgId=1:nrow(betaThis)
+    #samId=1:ncol(betaThis)
+    #betaThis=t(betaThis)
+    cpgId=apply(betaThis,2,function(x) mean(!is.na(x))!=0)
+    samId=apply(betaThis,1,function(x) mean(!is.na(x))!=0)
+    betaThis=betaThis[samId,cpgId]
+    
+    cpgInfo=as.data.frame(t(apply(betaThis,2,function(x) {
+        meanThis=mean(x,na.rm=T)
+        sdThis=sd(x,na.rm=T)
+        y=quantile(x,na.rm=T)
+        zeroThis=mean(x==0,na.rm=T)
+        oneThis=mean(x==1,na.rm=T)
+        c(meanThis,sdThis,zeroThis,oneThis,y)
+    })),stringsAsFactors=F)
+    names(cpgInfo)=c("mean","sd","mean0","mean1",paste("perc",c(0,25,50,75,100),sep=""))
+    cpgInfo=cbind(cpgId=colnames(betaThis),cpgInfo)
+    save(cpgInfo,file=paste("cpgInfo",cohortFlag,".RData",sep=""))
+    
+    fitPCA=PCA(betaThis,graph=F,ncp=6)
+    save(fitPCA,file=paste("fitPCA",cohortFlag,".RData",sep=""))
+}
+
+
+## ---------------
+## Plots of some methylated & demethyated CpGs
+
+qcFlag="_xo"
+varList=paste(c("anyFlag"),"_xo",sep="")
+varId=1
+varList=paste(c("convNBFlag","convFlag","anyFlag"),"_xo",sep="")
+
+qcFlag="_rpart"
+varList=c("outlier","outlierPred")
+
+cohortList=c("_set1","_set2")
+for (cohortFlag in cohortList) {
+    if (nProbe==(-1)) {
+        load(paste("beta",cohortFlag,".RData",sep=""))
+    } else {
+        cohortFlag="_set1"
+        datadir=paste("docs/all/",sub("_","",cohortFlag),"/",sep="")
+        fName=paste("beta_funNorm",cohortFlag,".txt",sep="")
+        meth1=read.table(paste(datadir,fName,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        
+        cohortFlag="_set2"
+        datadir=paste("docs/all/",sub("_","",cohortFlag),"/",sep="")
+        fName=paste("beta_funNorm",cohortFlag,".txt",sep="")
+        meth2=read.table(paste(datadir,fName,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+    }
+    switch(cohortFlag,
+    "_set1"={
+        rownames(meth1)=meth1$probeId
+        j=match(clin1$id,colnames(meth1)); j1=which(!is.na(j)); j2=j[j1]
+        betaThis=t(meth1[,j2])
+        rm(meth1)
+    },
+    "_set2"={
+        rownames(meth2)=meth2$probeId
+        j=match(clin2$id,colnames(meth2)); j1=which(!is.na(j)); j2=j[j1]
+        betaThis=t(meth2[,j2])
+        rm(meth2)
+    }
+    )
+    cpgId=apply(betaThis,2,function(x) mean(!is.na(x))!=0)
+    samId=apply(betaThis,1,function(x) mean(!is.na(x))!=0)
+    betaThis=betaThis[samId,cpgId]
+    load(file=paste("cpgInfo",cohortFlag,".RData",sep=""))
+    switch(cohortFlag,
+    "_set1"={
+        clin=clin1
+        dat=dat12
+    },
+    "_set2"={
+        clin=clin2
+        dat=dat22
+    }
+    )
+    cohortName=capWords(sub("_","",cohortFlag))
+    tbl2=qcX
+    names(tbl2)=paste(names(tbl2),"_xo",sep="")
+    tbl2=cbind(tbl2,qcC)
+    tbl1=qcR
+    names(tbl1)=paste(names(tbl1),"_raw",sep="")
+    tbl2=cbind(tbl2,tbl1)
+    if (qcFlag=="_rpart") {
+        if (is.numeric(dat$classObs)) tmp=rep(NA,nrow(tbl2)) else tmp=rep("",nrow(tbl2))
+        tbl1=data.frame(classObs=tmp,classPred=tmp,stringsAsFactors=F)
+        j=match(dat$beadPos,tbl2$sampleId); j=j[!is.na(j)]
+        for (k in names(tbl1)) {
+            tbl1[j,k]=dat[,k]
+        }
+        names(tbl1)=c("outlier","outlierPred")
+        tbl2=cbind(tbl2,tbl1)
+    }
+    nm=c(names(clin),varList)
+    clin=cbind(clin,tbl2[match(clin$beadPos,tbl2$sampleId),varList])
+    names(clin)=nm
+    for (varId in 1:length(varList)) {
+        if (is.character(clin[,varList[varId]])) {
+            if (all(clin[,varList[varId]]!="0",na.rm=T)) {clin[is.na(clin[,varList[varId]]),varList[varId]]="0"}
+            clin[which(clin[,varList[varId]]=="X"),varList[varId]]="1"
+            clin[,varList[varId]]=as.integer(clin[,varList[varId]])
+        } else {
+            if (all(clin[,varList[varId]]!=0,na.rm=T)) {clin[is.na(clin[,varList[varId]]),varList[varId]]=0}
+        }
+    }
+    clin=clin[match(rownames(betaThis),clin$id),]
+    i1=order(cpgInfo$perc50,decreasing=F)[1:10]
+    i2=order(cpgInfo$perc50,decreasing=T)[1:10]
+    i1=which(cpgInfo$perc100<.1)[1:10]
+    i2=which(cpgInfo$perc0>.9)[1:10]
+    i=1
+    offset=.1
+    for (varId in 1:length(varList)) {
+        parInfo=list(pch=20,cex=1,cex.axis=.8,las=3,cex.leg=.6)
+        png(paste("scatterPlot",cohortFlag,"_",varList[varId],qcFlag,"_%1d.png",sep=""),width=3*240,height=2*240)
+        par(mfrow=c(2,1))
+        for (pId in 1:2) {
+            if (pId==1) {
+                header=paste(cohortName,": Demethylated CpGs",sep="")
+                ii=i1
+            } else {
+                header=paste(cohortName,": Methylated CpGs",sep="")
+                ii=i2
+            }
+            xlim=c(1,length(ii)+1)
+            ylim=range(c(betaThis[,ii]),na.rm=T)
+            i=1
+            j1=which(!is.na(betaThis[,ii[i]]))
+            y=betaThis[j1,ii[i]]
+            x=rep(i,length(y))
+            plot(x,y,xlim=xlim,ylim=ylim,main=header,xlab="",ylab="beta-value",pch=parInfo$pch,cex=parInfo$cex,cex.axis=parInfo$cex.axis,las=parInfo$las,type="n",xaxt="n")
+            axis(side=1,at=xlim[1]:xlim[2],labels=c(colnames(betaThis)[ii],""),tick=F,cex.axis=parInfo$cex.axis,las=parInfo$las)
+            grpUniq=sort(unique(clin[j1,varList[varId]]))
+            if (pId==1) legend(x=length(ii)+.5,y=ylim[2],fill=colList[1:length(grpUniq)],legend=grpUniq,title=varList[varId],cex=parInfo$cex.leg)
+            for (i in 1:length(ii)) {
+                j1=which(!is.na(betaThis[,ii[i]]))
+                y=betaThis[j1,ii[i]]
+                x=rep(i,length(y))
+                y0=round(y*100000)
+                y1=unique(y0[duplicated(y0)])
+                if (length(y1)!=0) {
+                    for (j1 in 1:length(y1)) {
+                        j=which(y0==y1[j1])
+                        x2=(0:floor(length(j)/2))*offset
+                        j2=j[1:length(x2)]
+                        x[j2]=x[j2]+x2
+                        if (length(j2)!=length(j)) {
+                            j2=j[(length(j2)+1):length(j)]
+                            x2=-(1:length(j2))*offset
+                            x[j2]=x[j2]+x2
+                        }
+                    }
+                }
+                colVec=rep("black",nrow(clin))
+                j1=which(!is.na(betaThis[,ii[i]]))
+                grpUniq=sort(unique(clin[j1,varList[varId]]))
+                for (gId in 1:length(grpUniq)) {
+                    colVec[which(clin[j1,varList[varId]]==grpUniq[gId])]=colList[gId]
+                }
+                points(x,y,pch=parInfo$pch,cex=parInfo$cex,col=colVec)
+                j=which(clin[j1,varList[varId]]!=grpUniq[1])
+                points(x[j],y[j],pch=parInfo$pch,cex=parInfo$cex,col=colVec[j])
+            }
+        }
+        dev.off()
+    }
+}
+
+## ---------------
+
+library(coin)
+
+datadir="results/qc/"
+
+qcFlag="_cntOfFlg"
+varList=c()
+for (k in 1:ncol(qcC)) {
+    x=sum(!duplicated(qcC[,k]))
+    if (x==2) varList=c(varList,names(qcC)[k])
+    if (x>2 & x<21) {
+        cat("\n\n==============",k,names(qcC)[k],x,"\n")
+        print(table(qcC[,k],exclude=NULL))
+    }
+}
+#varList=varList[1:2]
+
+qcFlag="_xo"
+varList=paste(c("convNBFlag","convFlag","anyFlag"),"_xo",sep="")
+
+qcFlag="_rpart"
+#varList=paste(c("classObs","classPred"),"_rpart",sep="")
+varList=c("outlier","outlierPred")
+
+cohortList=c("_set1","_set2")
+
+xlim=ylim=c(-2000,1000)
+xlim=ylim=NULL
+load(file=paste(datadir,"fitPCA_set1.RData",sep=""))
+xlim=range(fitPCA$ind$coord[,1],na.rm=T)
+ylim=range(fitPCA$ind$coord[,2],na.rm=T)
+load(file=paste(datadir,"fitPCA_set2.RData",sep=""))
+xlim=range(c(xlim,fitPCA$ind$coord[,1]),na.rm=T)
+ylim=range(c(ylim,fitPCA$ind$coord[,2]),na.rm=T)
+
+
+png(paste("pcaScreePlot.png",sep=""),width=3*240,height=2*240)
+par(mfrow=c(1,2))
+for (cohortFlag in cohortList) {
+    cohortName=capWords(sub("_","",cohortFlag))
+    load(file=paste(datadir,"fitPCA",cohortFlag,".RData",sep=""))
+    x=fitPCA$eig[1:20,"percentage of variance"]
+    names(x)=paste("PC",1:length(x),sep="")
+    barplot(x,ylim=c(0,17),main=cohortName,xlab="Principal component",ylab="Variance explained (%)",las=3)
+}
+dev.off()
+
+tbl=NULL
+for (cohortFlag in cohortList) {
+    cohortName=capWords(sub("_","",cohortFlag))
+    switch(cohortFlag,
+        "_set1"={
+            clin=clin1
+            dat=dat12
+        },
+        "_set2"={
+            clin=clin2
+            dat=dat22
+        }
+    )
+    tbl2=qcX
+    names(tbl2)=paste(names(tbl2),"_xo",sep="")
+    tbl2=cbind(tbl2,qcC)
+    tbl1=qcR
+    names(tbl1)=paste(names(tbl1),"_raw",sep="")
+    tbl2=cbind(tbl2,tbl1)
+    if (qcFlag=="_rpart") {
+        if (is.numeric(dat$classObs)) tmp=rep(NA,nrow(tbl2)) else tmp=rep("",nrow(tbl2))
+        tbl1=data.frame(classObs=tmp,classPred=tmp,stringsAsFactors=F)
+        j=match(dat$beadPos,tbl2$sampleId); j=j[!is.na(j)]
+        for (k in names(tbl1)) {
+            tbl1[j,k]=dat[,k]
+            #tbl1[-j,k]=NA
+        }
+        #names(tbl1)=paste(names(tbl1),"_rpart",sep="")
+        names(tbl1)=c("outlier","outlierPred")
+        tbl2=cbind(tbl2,tbl1)
+    }
+    nm=c(names(clin),varList)
+    clin=cbind(clin,tbl2[match(clin$beadPos,tbl2$sampleId),varList])
+    names(clin)=nm
+
+    for (varId in 1:length(varList)) {
+        if (is.character(clin[,varList[varId]])) {
+            if (all(clin[,varList[varId]]!="0",na.rm=T)) {clin[is.na(clin[,varList[varId]]),varList[varId]]="0"}
+            clin[which(clin[,varList[varId]]=="X"),varList[varId]]="1"
+            clin[,varList[varId]]=as.integer(clin[,varList[varId]])
+        } else {
+            if (all(clin[,varList[varId]]!=0,na.rm=T)) {clin[is.na(clin[,varList[varId]]),varList[varId]]=0}
+        }
+    }
+    load(file=paste(datadir,"fitPCA",cohortFlag,".RData",sep=""))
+    
+    #Refactor_dat=fitPCA$ind$coord[,c(1:6)]
+    if (nrow(fitPCA$ind$coord)==nrow(clin)) {
+        png(paste("pca",cohortFlag,qcFlag,"_%1d.png",sep=""),width=3*240,height=2*240)
+        #png(paste("pca",cohortFlag,qcFlag,"_%1d.png",sep=""))
+        par(mfrow=c(2,3))
+        for (varId in 1:length(varList)) {
+            y=table(clin[,varList[varId]])
+            
+            if (F) {
+                par(mfrow=c(1,1))
+                pv1=pv2=NA
+            }
+
+            if (T) {
+                if (length(y)==2) {
+                    testType="wilcox"
+                    res=wilcox_test(fitPCA$ind$coord[,1]~as.factor(clin[,varList[varId]]),distribution="exact")
+                    pv1=pvalue(res)
+                    res=wilcox_test(fitPCA$ind$coord[,2]~as.factor(clin[,varList[varId]]),distribution="exact")
+                    pv2=pvalue(res)
+                } else if (length(y)>2) {
+                    testType="kruskal"
+                    res=kruskal_test(fitPCA$ind$coord[,1]~as.factor(clin[,varList[varId]]),distribution="exact")
+                    pv1=pvalue(res)
+                    res=kruskal_test(fitPCA$ind$coord[,2]~as.factor(clin[,varList[varId]]),distribution="exact")
+                    pv2=pvalue(res)
+                } else {
+                    pv1=pv2=NA
+                }
+            }
+            tbl2=c(sub("_","",cohortFlag),sub("_","",subsetFlag),varList[varId],sum(clin[,varList[varId]]==1,na.rm=T),pv1,pv2)
+            tbl=rbind(tbl,tbl2)
+            colVec=rep("black",nrow(clin))
+            grpUniq=sort(unique(clin[,varList[varId]]))
+            for (gId in 1:length(grpUniq)) {
+                colVec[which(clin[,varList[varId]]==grpUniq[gId])]=colList[gId]
+            }
+            plot(fitPCA,xlim=xlim,ylim=ylim,label="none",col.ind=colVec,title=paste("PCA: ",cohortName,"\nPV: ",varList[varId]," vs PC1 ",signif(pv1,2),", vs PC2 ",signif(pv2,2),sep=""))
+            abline(c(0,1),lty="dotted")
+            abline(v=c(-500,500),lty="dotted")
+            abline(h=c(-500,500),lty="dotted")
+            legend(x=-2000,y=-500,fill=colList[1:length(grpUniq)],legend=grpUniq,title=varList[varId])
+        }
+        dev.off()
+    } else {
+        cat("No. of samples differ after PCA!!!\n")
+    }
+}
+rownames(tbl)=NULL
+tbl=as.data.frame(tbl,stringsAsFactors=F)
+names(tbl)=c("dataset","subset","variable","numFlagged","pvPC1","pvPC2")
+for (k in c("numFlagged","pvPC1","pvPC2")) tbl[,k]=as.numeric(tbl[,k])
+tbl2=tbl
+for (k in c("pvPC1","pvPC2")) {
+    sig=rep("",nrow(tbl))
+    sig[which(tbl[,k]<0.1)]="*"
+    sig[which(tbl[,k]<0.05)]="**"
+    sig[which(tbl[,k]<0.001)]="***"
+    tbl2[,k]=paste(signif(tbl[,k],2)," ",sig,sep="")
+}
+colId=c("dataset","variable","varDescription","numFlagged","pvPC1","pvPC2")
+tbl2$varDescription=nameInfo$name1[match(tbl2$variable,nameInfo$name2)]
+tbl2=tbl2[,colId]
+tbl2=cbind(tbl2[which(tbl2$dataset=="set1"),c("variable","varDescription","numFlagged","pvPC1","pvPC2")],tbl2[which(tbl2$dataset=="set2"),c("numFlagged","pvPC1","pvPC2")])
+names(tbl2)=c("variable","varDescription",paste(c("numSampleFlagged","pvPC1","pvPC2"),rep(cohortList,each=3),sep=""))
+write.table(tbl2,file=paste("pca_qcFlag",qcFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+
+## ---------------
+
+########################################################################
+########################################################################
+########################################################################
+
+if (F) {
+    nProbe=-1
+
+    cohortFlag="_set1"
+    datadir=paste("data/",sub("_","",cohortFlag),"/",sep="")
+    fName=paste("beta_funNorm",cohortFlag,".txt",sep="")
+    meth1=read.table(paste(datadir,fName,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+    save(meth1,file="beta_set1.RData")
+    rm(meth1)
+
+    cohortFlag="_set2"
+    datadir=paste("data/",sub("_","",cohortFlag),"/",sep="")
+    fName=paste("beta_funNorm",cohortFlag,".txt",sep="")
+    meth2=read.table(paste(datadir,fName,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+    save(meth2,file="beta_set2.RData")
+    rm(meth2)
+}
+
+########################################################################
+########################################################################
+########################################################################
+## rpart
+## Prepare input data for rpart then run rpart.R
+
+library(rpart)
+
+datadir="results/qc/"
+
+varResp="classObs"
+varSamId="beadPos"
+
+qcFlag="_cntOfFlg"
+varList=c()
+for (k in 1:ncol(qcC)) {
+    x=sum(!duplicated(qcC[,k]))
+    if (x==2) varList=c(varList,names(qcC)[k])
+    if (x>2 & x<21) {
+        cat("\n\n==============",k,names(qcC)[k],x,"\n")
+        print(table(qcC[,k],exclude=NULL))
+    }
+}
+
+qcFlag="_xo"
+varList=paste(c("convNBFlag","convFlag","anyFlag"),"_xo",sep="")
+
+qcFlag="_raw"
+varList=c()
+for (k in 1:ncol(qcR)) {
+    x=sum(!duplicated(qcR[,k]))
+    if (x>1 & is.numeric(qcR[,k])) varList=c(varList,names(qcR)[k])
+    if (x>1 & x<21 & is.character(qcR[,k])) {
+        cat("\n\n==============",k,names(qcR)[k],x,"\n")
+        print(table(qcR[,k],exclude=NULL))
+    }
+}
+varList=c("stainG","stainR","extG","extR","hybHiMed","hybMedLo","tarRem1","tarRem2","conv1G","conv1BgdG","conv1R","conv1BgdR","conv2","conv2Bgd","spec1G","spec1R","spec2","spec2Bgd","nonPolG","nonPolR")
+varList=paste(varList,"_raw",sep="")
+
+thres=c(-500,500)
+
+for (datType in c("_allGuthSet2","_allGuthSet1")) {
+    cat("\n\n=================== ",datType," ==================\n\n",sep="")
+    dat2Type=tolower(sub("allGuth","",datType))
+    load(file=paste(datadir,"fitPCA",dat2Type,".RData",sep=""))
+    switch(datType,
+    "_allGuthSet2"={
+        clin=clin2
+    },
+    "_allGuthSet1"={
+        clin=clin1
+    }
+    )
+    tbl2=qcX
+    names(tbl2)=paste(names(tbl2),"_xo",sep="")
+    tbl2=cbind(tbl2,qcC)
+    tbl1=qcR
+    names(tbl1)=paste(names(tbl1),"_raw",sep="")
+    tbl2=cbind(tbl2,tbl1)
+    nm=c(names(clin),varList)
+    clin=cbind(clin,tbl2[match(clin$beadPos,tbl2$sampleId),varList])
+    names(clin)=nm
+    for (varId in 1:length(varList)) {
+        if (is.character(clin[,varList[varId]])) {
+            if (all(clin[,varList[varId]]!="0",na.rm=T)) {clin[is.na(clin[,varList[varId]]),varList[varId]]="0"}
+            clin[which(clin[,varList[varId]]=="X"),varList[varId]]="1"
+            clin[,varList[varId]]=as.integer(clin[,varList[varId]])
+        } else {
+            if (all(clin[,varList[varId]]!=0,na.rm=T)) {clin[is.na(clin[,varList[varId]]),varList[varId]]=0}
+        }
+    }
+    clin$classObs=rep("0",nrow(clin))
+    clin$classObs[which(fitPCA$ind$coord[,1]<thres[1] | fitPCA$ind$coord[,1]>thres[2] | fitPCA$ind$coord[,2]<thres[1] | fitPCA$ind$coord[,2]>thres[2])]="X"
+    
+    if (F) {
+        clin$flagLev=rep("",nrow(clin))
+        clin$flagLev[which(fitPCA$ind$coord[,1]<thres[1] | fitPCA$ind$coord[,1]>thres[2] | fitPCA$ind$coord[,2]<thres[1] | fitPCA$ind$coord[,2]>thres[2])]="99"
+        clin$flagLev[which(fitPCA$ind$coord[,1]<thres[1] & fitPCA$ind$coord[,2]<thres[1])]="ll"
+        clin$flagLev[which(fitPCA$ind$coord[,1]<thres[1] & fitPCA$ind$coord[,2]>=thres[1])]="ln"
+    }
+    
+    j=match(clin$beadPos,tbl2$sampleId)
+    classObs=clin$classObs
+    classPred=tbl2$anyFlag_xo[j]
+    classPred[which(classPred=="0")]="0"
+    classPred[which(classPred=="X")]="X"
+    cat("\nN: ",length(classObs),"\n",sep="")
+    if (is.numeric(classPred)) {
+        classPred=as.numeric(classPred)
+        cat("\nCor: ",round(cor(classObs,classPred,use="complete.obs"),2),"\n")
+    } else {
+        print(table(classObs,classPred))
+        cat("\nMisclassification rate: ",round(mean(classObs!=classPred,na.rm=T),2),sep="")
+    }
+
+    if (is.numeric(clin[,varResp])) tmp=rep(NA,nrow(clin)) else tmp=rep("",nrow(clin))
+    dat=data.frame(clin[,c(varSamId,varList,varResp)],tmp,stringsAsFactors=F)
+    names(dat)=c(varSamId,varList,"classObs","classPred")
+    switch(datType,
+    "_allGuthSet2"={
+        dat22=dat
+    },
+    "_allGuthSet1"={
+        dat12=dat
+    }
+    )
+    j=1:nrow(clin)
+    for (k in c(varResp,varList)) {
+        j=j[which(!is.na(clin[j,k]))]
+    }
+    clin=clin[j,]
+    for (k in c(varResp)) {
+        clin[,k]=as.factor(clin[,k])
+    }
+    switch(datType,
+    "_allGuthSet2"={
+        dat2=clin[,c(varSamId,varResp,varList)]
+    },
+    "_allGuthSet1"={
+        dat1=clin[,c(varSamId,varResp,varList)]
+    }
+    )
+}
+
+"
+=================== _allGuthSet2 ==================
+
+
+N: 451
+classPred
+classObs   0   X
+0 363  63
+X   9  16
+
+Misclassification rate: 0.16
+
+=================== _allGuthSet1 ==================
+
+
+N: 479
+classPred
+classObs   0   X
+0 363  97
+X   6  13
+
+Misclassification rate: 0.22
+
+"
+## ---------------------------------------------
+## NOT USED
+
+clin=dat2
+j=1:nrow(clin)
+for (k in c(varResp,varList)) {
+    j=j[which(!is.na(clin[j,k]))]
+}
+for (k in c(varResp,varList)) {
+    #clin[,k]=as.factor(clin[,k])
+}
+modelThis=as.formula(paste(varResp,"~",paste(varList,collapse="+"),sep=""))
+ctrlThis=rpart.control(minsplit = 2, minbucket = 1, cp = 0.01,maxcompete = 4, maxsurrogate = 5, usesurrogate = 2, xval = 10,surrogatestyle = 0, maxdepth = 30)
+ctrlThis=rpart.control(minsplit = 20, minbucket = round(20/3), cp = 0.01,maxcompete = 4, maxsurrogate = 5, usesurrogate = 2, xval = 10,surrogatestyle = 0, maxdepth = 30)
+ctrlThis=rpart.control(minsplit = 5, minbucket = 2, cp = 0.01,maxcompete = 4, maxsurrogate = 5, usesurrogate = 2, xval = 10,surrogatestyle = 0, maxdepth = 30)
+fit <- rpart(modelThis, data = clin[j,],method = "class",control=ctrlThis)
+png("rpart_set2.png")
+plot(fit)
+par(xpd = TRUE)
+text(fit, use.n = TRUE)
+dev.off()
+
+
+x="2) nonPolG< 0.5 434 15 0 (0.96543779 0.03456221)
+4) spec1R< 0.5 433 14 0 (0.96766744 0.03233256)
+8) conv2< 0.5 431 13 0 (0.96983759 0.03016241)
+16) conv1G< 0.5 429 12 0 (0.97202797 0.02797203) *
+17) conv1G>=0.5 2  1 0 (0.50000000 0.50000000)
+34) stainG< 0.5 1  0 0 (1.00000000 0.00000000) *
+35) stainG>=0.5 1  0 1 (0.00000000 1.00000000) *
+9) conv2>=0.5 2  1 0 (0.50000000 0.50000000)
+18) conv1G>=0.5 1  0 0 (1.00000000 0.00000000) *
+19) conv1G< 0.5 1  0 1 (0.00000000 1.00000000) *
+5) spec1R>=0.5 1  0 1 (0.00000000 1.00000000) *
+3) nonPolG>=0.5 17  7 1 (0.41176471 0.58823529)
+6) stainG>=0.5 2  0 0 (1.00000000 0.00000000) *
+7) stainG< 0.5 15  5 1 (0.33333333 0.66666667)
+14) conv1G>=0.5 1  0 0 (1.00000000 0.00000000) *
+15) conv1G< 0.5 14  4 1 (0.28571429 0.71428571) *"
+y=sapply(strsplit(x,"\n")[[1]],function(x) {
+    y=sub("< ","<",gsub(" +"," ",x))
+    y=strsplit(y," ")[[1]]
+},USE.NAMES=F)
+
+
+library(MASS)
+fit <- glm(modelThis, family="binomial", data = clin[j,])
+fit2 <- stepAIC(fit, k=log(nrow(clin[j,])), trace = FALSE)
+fit2$anova
+summary(glm(classObs ~ nonPolG + nonPolR, family="binomial", data = clin[j,]))
+
+
+
+########################################################################
+########################################################################
+########################################################################
+## NOT USED
+
+kk=c()
+for (k in 1:ncol(qcR)) if (!is.numeric(qcR[,k])) {
+    kk=c(kk,k)
+    cat(k,names(qcR)[k],"\n")
+}
+kk=c()
+for (k in 1:ncol(qcR)) {
+    if (is.numeric(qcR[,k])) {
+        kk=c(kk,k)
+        cat(k,names(qcR)[k],sum(is.na(qcR[,k])),"\n")
+    }
+}
+names(qcR)[!names(qcR)%in%names(qcR)]

@@ -1,7 +1,7 @@
 
 ############################################
 
-inferWBCbyLme = function(Y, pheno, modelFix, modelRand, coefWBC, 
+inferWBCbyLme=function (Y, pheno, modelFix, modelRand, coefWBC, 
 contrastWBC=NULL, detailLevel=1, silentErrors=TRUE){
 	
 	
