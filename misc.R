@@ -3203,6 +3203,9 @@ for (cohortFlag in cohortList) {
         }
         names(tbl1)=c("outlier","outlierPred")
         tbl2=cbind(tbl2,tbl1)
+        tbl1=tbl2[match(clin$beadPos,tbl2$sampleId),c("sampleId","outlier","outlierPred")]
+        names(tbl1)=c("sampleId","outlierFromPca","outlierPredByRpart")
+        write.table(tbl1,file=paste("outlier",cohortFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
     }
     nm=c(names(clin),varList)
     clin=cbind(clin,tbl2[match(clin$beadPos,tbl2$sampleId),varList])
