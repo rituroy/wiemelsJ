@@ -1,0 +1,9 @@
+cd /Users/royr/UCSF/JoeWiemels/leukMeth
+
+qRscript bumpHunting.R "logged_PCB_105_SRS" "100"
+qRscript bumpHunting.R "logged_PCB_118_SRS" "100"
+qRscript bumpHunting.R "logged_PCB_138_SRS" "100"
+qRscript bumpHunting.R "logged_PCB_153_SRS" "100"
+qRscript bumpHunting.R "logged_PCB_170_SRS" "100"
+qRscript bumpHunting.R "logged_PCB_180_SRS" "100"
+qRscript bumpHunting.R "logged_PCB_aroclor1260" "100"

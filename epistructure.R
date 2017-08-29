@@ -1,13 +1,14 @@
+## Use subsetted clinical & refactor data instead of all samples
 ## ---------------------------------
 
-computerFlag="cluster"
 computerFlag=""
+computerFlag="cluster"
 
 ## ---------------------------------
 
 nProbe=101
-nProbe=-1
 nProbe=10001
+nProbe=-1
 
 ## ---------------------------------
 subsetName2=""
@@ -20,17 +21,18 @@ datType="_leuk"; subsetName2=""
 datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
+datType="_allGuthSet1Set2"; subsetName2=""
 
 setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
-
-subsetFlag="case"
-subsetFlag="ctrl"
 
 #subsetFlag="noHisp"
 subsetFlag="noHispWt"
 subsetFlag="hisp"
 
 subsetFlag=""
+
+subsetFlag="case"
+subsetFlag="ctrl"
 
 covFlag=""
 mediationFlag=F
@@ -73,7 +75,8 @@ subsetName=subsetFlag
 if (subsetFlag!="") {
 	#varFlag=paste(varFlag,"_",subsetFlag,"Subset",sep="")
 	subsetName=paste("_",subsetFlag,"Subset",sep="")
-	switch(subsetFlag,
+    if (F) {
+        switch(subsetFlag,
 		   "case"={varName=sub(")"," cases)",varName)},
 		   "ctrl"={varName=sub(")"," controls)",varName)},
 		   "hisp"={varName=sub(")"," hispanics)",varName)},
@@ -81,7 +84,8 @@ if (subsetFlag!="") {
 		   "hyperdip"={varName=sub(")"," hyperdiploids)",varName)},
 		   "telaml"={varName=sub(")"," tel/aml1s)",varName)},
 		   "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)}
-		   )
+        )
+    }
 }
 
 heading=paste(c(varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",datType,subsetName2,", ",normFlag),collapse="")
@@ -102,13 +106,13 @@ if (computerFlag=="cluster") {
 	switch(datType,
 		"_allGuthSet2"={
 		   dirMeth=dirClin="data/set2/"
-		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),subsetName,sep="")
 		   fNameClin="clin_guthrieSet2_20140619"
            fNameClin="clin_allGuthSet2_20160928"
 		},
 		"_allGuthSet1"={
 		   dirMeth=dirClin="data/set1/"
-		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
+		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetName,sep="")
 		   fNameClin="final"
            fNameClin="clin_allGuthSet1_20160928"
 		   dirMethLeuk=dirMeth
@@ -116,29 +120,30 @@ if (computerFlag=="cluster") {
         },
         "_allGuthSet1Set2"={
             dirMeth=dirClin="data/set1set2/"
-            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),sep="")
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),subsetName,sep="")
             fNameClin="clin_guthrieSet1Set2_20140619"
             fNameClin="clin_guthrieSet1Set2_20151022"
+            fNameClin="clin_allGuthSet1Set2_20160523"
         },
 		"_leuk"={
 		   dirMeth=dirClin=dirClin2="data/set1/"
-		   fNameMeth=paste("beta",normFlag,datFlag,sep="")
+		   fNameMeth=paste("beta",normFlag,datFlag,subsetName,sep="")
 		   fNameClin="i.LEU.v2"
 		   fNameClin2="0708011 Sample_Sheet (Fetal blood)"
 		},
 		"_allGuthSet1Set2Combat"={
 		   dirMeth=dirClin="data/set1set2/"
-		   fNameMeth="combatAdjustedBeta_allGuthSet1Set2_set"
+		   fNameMeth=paste("combatAdjustedBeta_allGuthSet1Set2",subsetName,"_set",sep="")
 		   fNameClin="clin_guthrieSet1Set2_20140619"
 		},
 		"_aml"={
 		   dirClin=dirMeth=dirRefactor="data/aml/"
-		   fNameMeth=paste("beta",normFlag,"_aml",sep="")
+		   fNameMeth=paste("beta",normFlag,"_aml",subsetName,sep="")
 		   fNameClin=paste("clin_aml_20150114",sep="")
 		},
 		"_ivorra"={
 		   dirMeth=dirClin="data/ivorra2014/"
-		   fNameMeth="beta_ivorra"
+		   fNameMeth=paste("beta_ivorra",subsetName,sep="")
 		   fNameClin="clin_ivorra"
 		}
 	)
@@ -151,23 +156,29 @@ if (computerFlag=="cluster") {
 		"_allGuthSet2"={
 		   dirMeth=dirClin="docs/all/set2/"
            dirRefactor=dirClin
-           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),subsetName,sep="")
 		   fNameClin="clin_guthrieSet2_20140619"
            fNameClin="clin_allGuthSet2_20160928"
 	   },
 	   "_allGuthSet1"={
 			dirMeth=dirClin="docs/all/set1/"
             dirRefactor=dirClin
-            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetName,sep="")
 			fNameClin="final"
             fNameClin="clin_allGuthSet1_20160928"
 			dirMethLeuk="docs/all/set1/LEU.data/"
 			fNameMethLeuk="i.LEU.v2"
-		},
-		"_leuk"={
+       },
+       "_allGuthSet1Set2"={
+           dirMeth=dirClin="docs/all/set1set2/"
+           dirRefactor=dirClin
+           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetName,sep="")
+           fNameClin="clin_allGuthSet1Set2_20160523"
+       },
+       "_leuk"={
 		   dirMeth="docs/all/set1/"
            dirRefactor=dirClin
-           fNameMeth=paste("beta",normFlag,datFlag,sep="")
+           fNameMeth=paste("beta",normFlag,datFlag,subsetName,sep="")
 		   dirClin="docs/all/set1/LEU.data/"
 		   fNameClin="i.LEU.v2"
 		   dirClin2="docs/all/set1/preBcell/"
@@ -176,13 +187,13 @@ if (computerFlag=="cluster") {
 		"_aml"={
 		   dirClin=dirMeth="docs/aml/"
 		   dirRefactor="docs/aml/refactor/"
-		   fNameMeth=paste("beta",normFlag,"_aml",sep="")
+		   fNameMeth=paste("beta",normFlag,"_aml",subsetName,sep="")
 		   fNameClin=paste("clin_aml_20150114",sep="")
 	   },
 	   "_ivorra"={
 		   dirMeth=dirClin="docs/misc/ivorra2014/"
            dirRefactor=dirClin
-           fNameMeth="beta_ivorra"
+           fNameMeth=paste("beta_ivorra",subsetName,sep="")
 		   fNameClin="clin_ivorra"
 		}
 	)
@@ -251,7 +262,7 @@ switch(datType,
         phen=clin
         phen=phen[match(colnames(meth),phen$id),]
         
-        load(paste(dirRefactor,"Refactor_dat",datType,".RData",sep=""))
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetName,".RData",sep=""))
         colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
         j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
         meth=meth[,j1]
@@ -332,7 +343,7 @@ switch(datType,
         phen=clin
         phen=phen[match(colnames(meth),phen$id),]
         
-        load(paste(dirRefactor,"Refactor_dat",datType,".RData",sep=""))
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetName,".RData",sep=""))
         colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
         j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
         meth=meth[,j1]
@@ -360,7 +371,7 @@ switch(datType,
 		clin=rbind(clin[,k1],tbl1[!duplicated(tbl1$id),k2])
 		
 		
-#		x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
+        #x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
 		x=gsub("_+","_",gsub("(","_",gsub(" |-|)","_",clin$id),fixed=T))
 		j=which(substr(x,nchar(x),nchar(x))=="_")
 		if (length(j)!=0) x[j]=substr(x[j],1,nchar(x[j])-1)
@@ -374,8 +385,7 @@ switch(datType,
 		rm(probeId,beta)
 
 		phen=clin
-#		phen$id[!(phen$id%in%colnames(meth))]
-
+        #phen$id[!(phen$id%in%colnames(meth))]
 		phen=phen[match(colnames(meth),phen$id),]
 	},
 	"_allGuthSet1Set2"={
@@ -397,8 +407,14 @@ switch(datType,
 		}
 		phen=clin
 		phen=phen[match(colnames(meth),phen$id),]
-	},
-	"_allGuthSet1Set2Combat"={
+        
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetName,".RData",sep=""))
+        colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
+        j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
+        meth=meth[,j1]
+        phen=cbind(phen[j1,],Refactor_dat[j2,])
+    },
+    "_allGuthSet1Set2Combat"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
 		probeId=beta$cpgId

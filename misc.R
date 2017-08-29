@@ -3687,3 +3687,340 @@ for (k in 1:ncol(qcR)) {
     }
 }
 names(qcR)[!names(qcR)%in%names(qcR)]
+
+## ----------------------------
+"
+For G X E interaction between genome wide genetics and smoking exposures.  This is in a dataset with GWAS data, but no smoking data so we will use DNA methylation marks to assess smoking (AHRR etc) on bloodspots.
+Do a correlation matrix between the following variables? They are all yes/no, so would this just be a chisquare test?  (use set 1 and set 2 data that we have around, cases and controls both are fine)
+The main reason is so that we can say that DNA methylation at birth will be a decent enough variable to explain household smoking (in the absence of any other data such as questionnaire data)
+"
+
+cohortFlag="_allGuthrieSet1Set2"
+
+subsetList=c("","_case","_ctrl")
+
+pThres=0.05
+alt="greater"
+alt="two.sided"
+
+if (F) {
+    fileList=c("beta_bmiq_allGuthSet1","beta_bmiq_allGuthSet2")
+    datadir12="docs/all/set1/"; datadir22="docs/all/set2/"
+    datadir12="data/set1/"; datadir22="data/set2/"
+
+    x=c("cg05575921","cg01418385")
+    offset=1
+    nRow=-1
+    fName=fileList[1]
+    tmp=read.table(paste(datadir12,fName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=2)
+    beta1=read.table(paste(datadir12,fName,".txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T,col.names=names(tmp),skip=offset,nrow=nRow)
+    fName=fileList[2]
+    tmp=read.table(paste(datadir22,fName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=2)
+    beta2=read.table(paste(datadir22,fName,".txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T,col.names=names(tmp),skip=offset,nrow=nRow)
+    
+    rownames(beta1)=beta1$probeId
+    beta1=as.matrix(beta1[,-1])
+    rownames(beta2)=beta2$probeId
+    beta2=as.matrix(beta2[,-1])
+    
+    #load("data.RData")
+    beta1=beta1[match(x,rownames(beta1)),]
+    beta2=beta2[match(x,rownames(beta2)),]
+    
+    #save(beta1,beta2,file="data.RData")
+}
+
+load("data.RData")
+j=match(clin1$id,colnames(beta1)); j1=which(!is.na(j)); j2=j[j1]
+clin1$cg05575921=NA
+clin1$cg05575921[j1]=beta1["cg05575921",j2]
+j=match(clin2$id,colnames(beta2)); j1=which(!is.na(j)); j2=j[j1]
+clin2$cg05575921=NA
+clin2$cg05575921[j1]=beta2["cg05575921",j2]
+
+#x=c("smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_bf","passive_sm_home_post","AHRRCpGcg05575921")
+x=c("smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_bf","passive_sm_home_post","cg05575921")
+x[!x%in%names(clin1)]
+x[!x%in%names(clin2)]
+
+k=match(names(clin1),names(clin2)); k1=which(!is.na(k)); k2=k[k1]
+clin=rbind(clin1[,k1],clin2[,k2])
+
+varList=x[x%in%names(clin)]
+for (vId in 1:length(varList)) {
+    cat("\n\n============ ",varList[vId],"\n",sep="")
+    print(table(clin$caco,clin[,varList[vId]],exclude=NULL))
+}
+
+for (subsetFlag in subsetList) {
+    cat("\n\n============ ",subsetFlag,"\n",sep="")
+    fName=paste("smokingVariableAssociation",subsetFlag,cohortFlag,".txt",sep="")
+    j=1:nrow(clin)
+    header="ALL Guthrie set1 & set2"
+    switch(subsetFlag,
+        "_case"={
+            header="ALL Guthrie set1 & set2 cases"
+            j=which(clin$caco==1)
+        },
+        "_ctrl"={
+            header="ALL Guthrie set1 & set2 controls"
+            j=which(clin$caco==0)
+        }
+    )
+    dat=as.matrix(clin[j,varList])
+    orMat=pvMat=qvMat=matrix(nrow=length(varList),ncol=length(varList),dimnames=list(varList,varList))
+    for (k1 in 1:(length(varList)-1)) {
+        for (k2 in (k1+1):length(varList)) {
+            res1=fisher.test(dat[,k1],dat[,k2],alternative="two.sided")$p.value
+            res2=fisher.test(dat[,k1],dat[,k2],alternative="greater")$p.value
+            #if (res1<res2) cat(k1,k2,"diff!!\n")
+            res=fisher.test(dat[,k1],dat[,k2],alternative=alt)
+            pvMat[k1,k2]=pvMat[k2,k1]=signif(res$p.value,2)
+            orMat[k1,k2]=orMat[k2,k1]=round(log(res$estimate),2)
+        }
+    }
+    res=p.adjust(pvMat[lower.tri(pvMat)],method="bonferroni")
+    k=1
+    for (k1 in 1:(length(varList)-1)) {
+        for (k2 in (k1+1):length(varList)) {
+            qvMat[k1,k2]=qvMat[k2,k1]=res[k]
+            k=k+1
+        }
+    }
+    print("summary(orMat[lower.tri(orMat)])")
+    print(summary(orMat[lower.tri(orMat)]))
+    print("table(pvMat[lower.tri(pvMat)]<pThres)")
+    print(table(pvMat[lower.tri(pvMat)]<pThres))
+    print("table(qvMat[lower.tri(qvMat)]<pThres)")
+    print(table(qvMat[lower.tri(qvMat)]<pThres))
+
+    write.table(header,file=fName, sep="\t", col.names=F, row.names=F, quote=F)
+
+    tbl=cbind(rownames(orMat),as.data.frame(orMat)); names(tbl)=c("",colnames(orMat))
+    write.table("\n\nFisher's exact test: Log odds ratio estimate",file=fName, sep="\t", col.names=F, row.names=F, quote=F, append=T)
+    write.table(tbl,file=fName, sep="\t", col.names=T, row.names=F, quote=F,append=T)
+    
+    tbl=cbind(rownames(pvMat),as.data.frame(pvMat)); names(tbl)=c("",colnames(pvMat))
+    write.table("\n\nFisher's exact test: P-value",file=fName, sep="\t", col.names=F, row.names=F, quote=F, append=T)
+    write.table(tbl,file=fName, sep="\t", col.names=T, row.names=F, quote=F,append=T)
+    
+    tbl=cbind(rownames(qvMat),as.data.frame(qvMat)); names(tbl)=c("",colnames(qvMat))
+    write.table("\n\nFisher's exact test: Bonferroni corrected p-value",file=fName, sep="\t", col.names=F, row.names=F, quote=F, append=T)
+    write.table(tbl,file=fName, sep="\t", col.names=T, row.names=F, quote=F,append=T)
+}
+
+## ----------------------
+## Smoking CpG & variables
+
+varList1="cg05575921"
+varList2=c("smoke_mo_ever","smoke_mo_preg","smoke_fa_ever","smoke_fa_3months","smoke_mo_bf")
+
+par(mfrow=c(2,2))
+qqnorm(clin1[,varList]); qqline(clin1[,varList])
+qqnorm(clin2[,varList]); qqline(clin2[,varList])
+
+library(coin)
+pvMat=qvMat=matrix(nrow=length(varList2),ncol=length(subsetList),dimnames=list(varList2,subsetList))
+vId1=1
+for (sId in 1:length(subsetList)) {
+    subsetFlag=subsetList[sId]
+    cat("\n\n============ ",subsetFlag,"\n",sep="")
+    fName=paste("smokingVariableAssociation",subsetFlag,cohortFlag,".txt",sep="")
+    j=1:nrow(clin)
+    header="ALL Guthrie set1 & set2"
+    switch(subsetFlag,
+    "_case"={
+        header="ALL Guthrie set1 & set2 cases"
+        j=which(clin$caco==1)
+    },
+    "_ctrl"={
+        header="ALL Guthrie set1 & set2 controls"
+        j=which(clin$caco==0)
+    }
+    )
+    dat=clin[j,]
+    for (vId2 in 1:length(varList2)) {
+        pvMat[vId2,sId]=pvalue(wilcox_test(dat[,varList1[vId1]]~as.factor(dat[,varList2[vId2]])))
+    }
+    qvMat[,sId]=p.adjust(pvMat[,sId],method="bonferroni")
+    png(paste("boxplot_smokingVariableAHRRCpGAssociation",subsetFlag,cohortFlag,".png",sep=""),width=3*240,height=2*240)
+    par(mfrow=c(2,3))
+    for (vId2 in 1:length(varList2)) {
+        boxplot(dat[,varList1[vId1]]~as.factor(dat[,varList2[vId2]]),main=paste(header,"\nPV ",signif(pvMat[vId2,sId],2),", Bonf ",signif(qvMat[vId2,sId],2),sep=""),xlab=varList2[vId2],ylab=varList1[vId1])
+    }
+    dev.off()
+}
+table(c(pvMat)<pThres)
+table(c(qvMat)<pThres)
+tbl1=cbind(pvMat,qvMat)
+tbl1=tbl1[,c(1,4,2,5,3,6)]
+colnames(tbl1)=paste(c("pv","bonferroni"),"_",rep(c("caseCtrl","case","ctrl"),each=2),cohortFlag,sep="")
+tbl=data.frame(variable=varList2,stringsAsFactors=F)
+tbl=cbind(tbl,tbl1)
+fName=paste("smokingVariableAHRRCpGAssociation",cohortFlag,".txt",sep="")
+write.table("Wilcoxon's rank sum test\n",file=fName, sep="\t", col.names=F, row.names=F, quote=F)
+write.table(tbl,file=fName, sep="\t", col.names=T, row.names=F, quote=F,append=T)
+
+## ----------------------
+## Chemical variables
+
+datadir="docs/all/"
+
+tbl=read.table(paste(datadir,"chemicals.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+names(tbl)[match("subjectID",names(tbl))]="subjectId"
+table(tbl$subjectId %in%c(clin1$subjectId,clin2$subjectId))
+
+pcb=read.table(paste(datadir,"pcb.txt",sep=""), sep=" ", h=F, quote="", comment.char="",as.is=T,fill=T,skip=5)
+names(pcb)=c("pcbNo","clPos","aroclor1016","aroclor1242","aroclor1248A3.5","aroclor1248G3.5","aroclor1254Late","aroclor1254","aroclor1260")
+for (k in 1:ncol(pcb)) if (is.character(pcb[,k])) pcb[,k]=gsub("\"","",pcb[,k])
+#pcb=pcb[!is.na(as.integer(pcb$pcbNo)) & !is.na(as.integer(pcb$aroclor1016)),]
+for (k in c("pcbNo")) pcb[,k]=as.integer(pcb[,k])
+for (k in c("aroclor1016","aroclor1242","aroclor1248A3.5","aroclor1248G3.5","aroclor1254Late","aroclor1254","aroclor1260")) pcb[,k]=as.numeric(pcb[,k])
+pcbLim=read.table(paste(datadir,"pcb.txt",sep=""), sep=" ", h=F, quote="", comment.char="",as.is=T,fill=T,skip=3,nrow=1)
+pcbLim=as.numeric(unlist(pcbLim))
+pcbLim=pcbLim[!is.na(pcbLim)]
+
+dat=as.matrix(pcb[,grep("aroclor",names(pcb))])
+summary(dat)
+data.frame(totPercRep=pcbLim,totPercEst=apply(dat,2,sum,na.rm=T))
+
+k=grep("logged_PCB",names(tbl))
+dat=as.matrix(tbl[,k])
+x=as.integer(gsub("logged_PCB_|_SRS","",colnames(dat)))
+pcb[match(x,pcb$pcbNo),]
+
+
+for (cohortFlag in c("_allGuthrieSet1","_allGuthrieSet2")) {
+    for (subsetFlag in c("","_case","_ctrl")) {
+        cat("\n\n============ ",cohortFlag,", ",subsetFlag,"\n",sep="")
+        switch(cohortFlag,
+            "_allGuthrieSet1"={
+                clin=clin1
+            },
+            "_allGuthrieSet2"={
+                clin=clin2
+            }
+        )
+        j=1:nrow(clin)
+        switch(subsetFlag,
+            "_case"={
+                j=which(clin$caco==1)
+            },
+            "_ctrl"={
+                j=which(clin$caco==0)
+            }
+        )
+        clin=clin[j,]
+        j=match(clin$subjectId,tbl$subjectId); j1=which(!is.na(j)); j2=j[j1]
+        cat("No. of samples with PCB info: ",length(j1),"\n")
+        k=grep("PCB",names(tbl))
+        out=apply(as.matrix(tbl[j2,k]),2,function(x) sum(!is.na(x)))
+        names(out)=names(tbl)[k]
+        print(out)
+        k=grep("logged_PCB",names(tbl))
+        out=apply(as.matrix(tbl[j2,k]),2,function(x) summary(x))
+        #print(out)
+    }
+}
+
+for (cohortFlag in c("_allGuthrieSet1","_allGuthrieSet2")) {
+    for (datFlag in c("_raw","_logged")) {
+        cat("\n\n============ ",cohortFlag,", ",datFlag,"\n",sep="")
+        switch(cohortFlag,
+            "_allGuthrieSet1"={
+                header="Set1"
+                clin=clin1
+            },
+            "_allGuthrieSet2"={
+                header="Set1"
+                clin=clin2
+            }
+        )
+        j=match(clin$subjectId,tbl$subjectId); j1=which(!is.na(j)); j2=j[j1]
+        switch(datFlag,
+            "_raw"={
+                fName="_det_PCB"
+                colId=grep("det_PCB",names(tbl))
+            },
+            "_logged"={
+                fName="_logged_PCB"
+                colId=grep("logged_PCB",names(tbl))
+            }
+        )
+        j=match(clin$subjectId,tbl$subjectId); j1=which(!is.na(j)); j2=j[j1]
+        png(paste("qqPlot",fName,cohortFlag,".png",sep=""),width=3*240,height=2*240)
+        par(mfrow=c(2,3))
+        for (k in colId) {
+            qqnorm(tbl[j2,k],main=paste(header,": ",names(tbl)[k]))
+            qqline(tbl[j2,k])
+        }
+        dev.off()
+    }
+}
+
+names(tbl)[grep("pcb",tolower(names(tbl)))]
+k=grep("logged_PCB",names(tbl))
+dat=as.matrix(tbl[,k])
+res=cor(dat,use="complete.obs",method="pearson")
+
+## ----------------------
+"
+============ _allGuthrieSet1,
+No. of samples with PCB info:  345
+det_PCB_105        det_PCB_118        det_PCB_138        det_PCB_153
+341                341                340                341
+det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
+341                341                341                341
+logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
+340                341                341                341
+
+
+============ _allGuthrieSet1, _case
+No. of samples with PCB info:  104
+det_PCB_105        det_PCB_118        det_PCB_138        det_PCB_153
+100                100                100                100
+det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
+100                100                100                100
+logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
+100                100                100                100
+
+
+============ _allGuthrieSet1, _ctrl
+No. of samples with PCB info:  241
+det_PCB_105        det_PCB_118        det_PCB_138        det_PCB_153
+241                241                240                241
+det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
+241                241                241                241
+logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
+240                241                241                241
+
+
+============ _allGuthrieSet2,
+No. of samples with PCB info:  78
+det_PCB_105        det_PCB_118        det_PCB_138        det_PCB_153
+67                 67                 67                 67
+det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
+67                 67                 67                 67
+logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
+67                 67                 67                 67
+
+
+============ _allGuthrieSet2, _case
+No. of samples with PCB info:  71
+det_PCB_105        det_PCB_118        det_PCB_138        det_PCB_153
+63                 63                 63                 63
+det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
+63                 63                 63                 63
+logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
+63                 63                 63                 63
+
+
+============ _allGuthrieSet2, _ctrl
+No. of samples with PCB info:  7
+det_PCB_105        det_PCB_118        det_PCB_138        det_PCB_153
+4                  4                  4                  4
+det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
+4                  4                  4                  4
+logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
+4                  4                  4                  4
+"
