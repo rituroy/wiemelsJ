@@ -1,16 +1,41 @@
 ## Linear or logistic regression
 ## Additive or multiplicative model
 
+argv=commandArgs(TRUE)
+varThis=argv[1]
+
+if (F) {
+    '
+    cd /Users/royr/UCSF/JoeWiemels/leukMeth
+    
+    qRscript regression_refactor.R "logged_PCB_105_SRS"
+    qRscript regression_refactor.R "logged_PCB_118_SRS"
+    qRscript regression_refactor.R "logged_PCB_138_SRS"
+    qRscript regression_refactor.R "logged_PCB_153_SRS"
+    qRscript regression_refactor.R "logged_PCB_170_SRS"
+    qRscript regression_refactor.R "logged_PCB_180_SRS"
+    qRscript regression_refactor.R "logged_PCB_aroclor1260"
+    '
+    
+    varThis="logged_PCB_105_SRS"
+    varThis="logged_PCB_118_SRS"
+    varThis="logged_PCB_138_SRS"
+    varThis="logged_PCB_153_SRS"
+    varThis="logged_PCB_170_SRS"
+    varThis="logged_PCB_180_SRS"
+    varThis="logged_PCB_aroclor1260"
+}
+
 ## ---------------------------------
 
-computerFlag="cluster"
 computerFlag=""
+computerFlag="cluster"
 
 ## ---------------------------------
 
 nProbe=10001
-nProbe=-1
 nProbe=101
+nProbe=-1
 
 ## ---------------------------------
 subsetName2=""
@@ -24,10 +49,10 @@ transformFlag="_mVal"
 
 datType="_leuk"; subsetName2=""
 datType="_allGuthSet1"; subsetName2="_noNonRndChip"
-datType="_allGuthSet1Set2"; subsetName2=""
 datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
+datType="_allGuthSet1Set2"; subsetName2=""
 
 mediationFlag=T
 mediationFlag=F
@@ -51,9 +76,6 @@ setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
 subsetFlag="hispCtrl"
 subsetFlag="noHispWtCtrl"
 
-subsetFlag="case"
-subsetFlag="ctrl"
-
 subsetFlag="female"
 subsetFlag="male"
 
@@ -62,6 +84,9 @@ subsetFlag=""
 #subsetFlag="noHisp"
 subsetFlag="hisp"
 subsetFlag="noHispWt"
+
+subsetFlag="case"
+subsetFlag="ctrl"
 
 #for (subsetName2 in c("_set1","_set2")) {
 #for (datType in c("_allGuthSet1","_allGuthSet2")) {
@@ -168,6 +193,8 @@ varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="c
 varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSemNoSexChr"; computeFlag[2]="logistic"
 varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*semNoSnpNoSexChr"; computeFlag[2]="logistic"
 varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSemNoSnpNoSexChr"; computeFlag[2]="logistic"
+
+varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
 
 if (mediationFlag) {
@@ -412,6 +439,16 @@ switch(datType,
         clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
         rm(clin2,tmp,id)
         
+        clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+        id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$subjectId=id
+        clin2=rbind(clin2,tmp)
+        clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+        rm(clin2,tmp,id)
+        
         load(paste(dirClin,"sem",datType,".RData",sep=""))
 
 		phen=clin
@@ -424,67 +461,67 @@ switch(datType,
         phen=cbind(phen[j1,],Refactor_dat[j2,])
 	},
 	"_allGuthSet1"={
-		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         #names(clin)[match(c("Subject_ID","birth_weight"),names(clin))]=c("subjectId","birthWt")
         #clin$id=paste("X",clin$TargetID,sep="")
         clin$id=paste("X",clin$guthrieId,sep="")
         clin$Beadchip=substr(clin$Bead_Position,1,10)
-		if ("Position1"%in%names(clin)) clin$Position=clin$Position1 else clin$Position=clin$Position.1
-		clin$caco=clin$Leukemia
-		clin$int_ch_ethnicity=clin$ch_ethnicity
-	   
-		clin2=read.table(paste(dirMethLeuk,fNameMethLeuk,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-		j=match(clin$subjectId,clin2$Subject_ID)
-		j1=which(!is.na(j)); j2=j[j1]
-		
-		clin$subtype=rep("",nrow(clin))
-		clin$subtype[j1][which(clin2$Subtype[j2]=="hyperdiploid")]="hyperdiploid"
-		clin$subtype[j1][which(clin2$Subtype[j2]=="t1221")]="telaml"
-		clin$subtype[j1][which(clin2$Subtype[j2]%in%c("mll","others","t119"))]="nonHypTelaml"
-		clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
-		clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
-		clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
-		clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
-		clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
-		clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
-		
-		bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-		names(bw)[match("SubjectID",names(bw))]=c("subjectId")
-		j=match(clin$subjectId,bw$subjectId)
-		j1=which(!is.na(j)); j2=j[j1]
-		clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
-		clin$dbirwt[j1]=bw$dbirwt[j2]
-		clin$pred_btw[j1]=bw$pred_btw[j2]
-		clin$pobw[j1]=bw$pobw[j2]
-		
+        if ("Position1"%in%names(clin)) clin$Position=clin$Position1 else clin$Position=clin$Position.1
+        clin$caco=clin$Leukemia
+        clin$int_ch_ethnicity=clin$ch_ethnicity
+
+        clin2=read.table(paste(dirMethLeuk,fNameMethLeuk,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        j=match(clin$subjectId,clin2$Subject_ID)
+        j1=which(!is.na(j)); j2=j[j1]
+
+        clin$subtype=rep("",nrow(clin))
+        clin$subtype[j1][which(clin2$Subtype[j2]=="hyperdiploid")]="hyperdiploid"
+        clin$subtype[j1][which(clin2$Subtype[j2]=="t1221")]="telaml"
+        clin$subtype[j1][which(clin2$Subtype[j2]%in%c("mll","others","t119"))]="nonHypTelaml"
+        clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
+        clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
+        clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
+        clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
+        clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
+        clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
+
+        bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+        j=match(clin$subjectId,bw$subjectId)
+        j1=which(!is.na(j)); j2=j[j1]
+        clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+        clin$dbirwt[j1]=bw$dbirwt[j2]
+        clin$pred_btw[j1]=bw$pred_btw[j2]
+        clin$pobw[j1]=bw$pobw[j2]
+
         if (F) {
-		load(paste(dirRefactor,"Refactor_set1_and_2_K_6.RData",sep=""))
-		Refactor_set=Refactor_set1
-		rownames(Refactor_set)=paste("X",rownames(Refactor_set),sep="")
-		colnames(Refactor_set)=paste("refactor_",colnames(Refactor_set),sep="")
-		j=match(clin$id,rownames(Refactor_set))
-		j1=which(!is.na(j)); j2=j[j1]
-		j11=which(is.na(j))
-		tmp=matrix(nrow=nrow(clin),ncol=ncol(Refactor_set))
-		colnames(tmp)=colnames(Refactor_set)
-		tmp[j1,]=Refactor_set[j2,]
-		clin=cbind(clin,tmp)
-		rm(Refactor_set1,Refactor_set2,Refactor_set,tmp)
+            load(paste(dirRefactor,"Refactor_set1_and_2_K_6.RData",sep=""))
+            Refactor_set=Refactor_set1
+            rownames(Refactor_set)=paste("X",rownames(Refactor_set),sep="")
+            colnames(Refactor_set)=paste("refactor_",colnames(Refactor_set),sep="")
+            j=match(clin$id,rownames(Refactor_set))
+            j1=which(!is.na(j)); j2=j[j1]
+            j11=which(is.na(j))
+            tmp=matrix(nrow=nrow(clin),ncol=ncol(Refactor_set))
+            colnames(tmp)=colnames(Refactor_set)
+            tmp[j1,]=Refactor_set[j2,]
+            clin=cbind(clin,tmp)
+            rm(Refactor_set1,Refactor_set2,Refactor_set,tmp)
         }
-		
-		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
-		probeId=beta$probeId
-		beta=as.matrix(beta[,-1])
-		rownames(beta)=probeId
-		meth=beta
-		rm(probeId,beta)
-	   if (subsetName2=="_set2EthnProp") {
-			clin2=read.table(paste(dirClin,"guthrieId_propOfCacoEthnAsInSet2_set1.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-			clin=clin[match(clin2$guthrieId,clin$id),]
-			j=match(colnames(meth),clin$id); j1=which(!is.na(j)); j2=j[j1]
-			meth=meth[,j1]
-			clin=clin[j2,]
-       } else if (subsetName2=="_noNonRndChip") {
+
+        beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        probeId=beta$probeId
+        beta=as.matrix(beta[,-1])
+        rownames(beta)=probeId
+        meth=beta
+        rm(probeId,beta)
+        if (subsetName2=="_set2EthnProp") {
+            clin2=read.table(paste(dirClin,"guthrieId_propOfCacoEthnAsInSet2_set1.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            clin=clin[match(clin2$guthrieId,clin$id),]
+            j=match(colnames(meth),clin$id); j1=which(!is.na(j)); j2=j[j1]
+            meth=meth[,j1]
+            clin=clin[j2,]
+        } else if (subsetName2=="_noNonRndChip") {
            x=table(clin$Beadchip,clin$caco)
            y=apply(x,1,function(x) {all(x>2)})
            chisq.test(x[y,])
@@ -493,18 +530,28 @@ switch(datType,
            meth=meth[,j1]
            clin=clin[j2,]
            rm(x,y)
-       }
-       
-       clin2=read.table(paste(dirClin,"epistructure",datType,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-       id=clin$id[!clin$id%in%clin2$id]
-       tmp=clin2[1:length(id),]
-       for (k in 1:ncol(tmp)) tmp[,k]=NA
-       tmp$id=id
-       clin2=rbind(clin2,tmp)
-       clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
-       rm(clin2,tmp,id)
-       
-       phen=clin
+        }
+
+        clin2=read.table(paste(dirClin,"epistructure",datType,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        id=clin$id[!clin$id%in%clin2$id]
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$id=id
+        clin2=rbind(clin2,tmp)
+        clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
+        rm(clin2,tmp,id)
+
+        clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+        id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$subjectId=id
+        clin2=rbind(clin2,tmp)
+        clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+        rm(clin2,tmp,id)
+
+        phen=clin
         phen=phen[match(colnames(meth),phen$id),]
 
         load(paste(dirRefactor,"Refactor_dat",datType,".RData",sep=""))
@@ -535,7 +582,7 @@ switch(datType,
 		clin=rbind(clin[,k1],tbl1[!duplicated(tbl1$id),k2])
 		
 		
-#		x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
+        #x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
 		x=gsub("_+","_",gsub("(","_",gsub(" |-|)","_",clin$id),fixed=T))
 		j=which(substr(x,nchar(x),nchar(x))=="_")
 		if (length(j)!=0) x[j]=substr(x[j],1,nchar(x[j])-1)
@@ -549,7 +596,7 @@ switch(datType,
 		rm(probeId,beta)
 
 		phen=clin
-#		phen$id[!(phen$id%in%colnames(meth))]
+        #phen$id[!(phen$id%in%colnames(meth))]
 
 		phen=phen[match(colnames(meth),phen$id),]
 	},
@@ -564,6 +611,25 @@ switch(datType,
         clin$dbirwt[j1]=bw$dbirwt[j2]
         clin$pred_btw[j1]=bw$pred_btw[j2]
         clin$pobw[j1]=bw$pobw[j2]
+        
+        clin2=read.table(paste(dirClin,"epistructure",datType,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        id=clin$id[!clin$id%in%clin2$id]
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$id=id
+        clin2=rbind(clin2,tmp)
+        clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
+        rm(clin2,tmp,id)
+        
+        clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+        id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$subjectId=id
+        clin2=rbind(clin2,tmp)
+        clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+        rm(clin2,tmp,id)
         
         if (length(grep("ctrl",tolower(subsetFlag)))==1) {
             beta=read.table(paste(dirMeth,fNameMeth,"_ctrlSubset.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
@@ -716,6 +782,22 @@ phen$moBmiObese=as.integer(phen$moBmiCat%in%c("obese"))
 phen$moBmiObese[!phen$moBmiCat%in%c("normal","obese")]=NA
 phen$moBmiUnder=as.integer(phen$moBmiCat%in%c("underweight"))
 phen$moBmiUnder[!phen$moBmiCat%in%c("normal","underweight")]=NA
+if (length(grep("PCB",names(phen)))!=0) {
+    pcb=read.table(paste(dirCom,"pcb.txt",sep=""), sep=" ", h=F, quote="", comment.char="",as.is=T,fill=T,skip=5)
+    names(pcb)=c("pcbNo","clPos","aroclor1016","aroclor1242","aroclor1248A3.5","aroclor1248G3.5","aroclor1254Late","aroclor1254","aroclor1260")
+    for (k in 1:ncol(pcb)) if (is.character(pcb[,k])) pcb[,k]=gsub("\"","",pcb[,k])
+    #pcb=pcb[!is.na(as.integer(pcb$pcbNo)) & !is.na(as.integer(pcb$aroclor1016)),]
+    for (k in c("pcbNo")) pcb[,k]=as.integer(pcb[,k])
+    for (k in c("aroclor1016","aroclor1242","aroclor1248A3.5","aroclor1248G3.5","aroclor1254Late","aroclor1254","aroclor1260")) pcb[,k]=as.numeric(pcb[,k])
+    k=grep("logged_PCB",names(phen))
+    dat=as.matrix(phen[,k])
+    x=as.integer(gsub("logged_PCB_|_SRS","",colnames(dat)))
+    x=x[!is.na(x)]
+    phen$logged_PCB_aroclor1260=dat%*%pcb$aroclor1260[match(x,pcb$pcbNo)]
+    #j=2
+    #sum(dat[j,]*pcb$aroclor1260[match(x,pcb$pcbNo)])
+    #phen$logged_PCB_aroclor1260[j]
+}
 
 if (subsetFlag!="") {
 	switch(subsetFlag,
@@ -940,7 +1022,8 @@ if (F) {
 
 ## ----------------------------------------------
 if (computerFlag=="") {
-	load(file="ann.RData")
+    #load(file="ann.RData")
+    load(file="annAll.RData")
 } else {
 	if (computerFlag=="cluster") {
 		ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
@@ -1029,6 +1112,10 @@ if (varFlag%in%c("_cacoXbirthwt","_cacoXpobw")) {
                 model1=paste(model1,"+SNP_PC",x2,sep="")
             }
         }
+    }
+    k=grep("Set",covFlag)
+    if (length(k)==1) {
+        model1=paste(model1,"+set",sep="")
     }
 }
 if (covPCFlag!="") {

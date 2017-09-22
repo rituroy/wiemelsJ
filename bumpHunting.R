@@ -1236,7 +1236,7 @@ for (maxG in maxGList) {
     save(dmrs,file=paste("bumphunter_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,datType,subsetName2,normFlag,transformFlag,"_",maxG,"maxGap_",nPerm,"perms_",nCore,"cores.RData",sep=""))
 }
 
-if (F) {
+if (T) {
     verboseFlag=T
     verboseFlag=F
     
@@ -1245,14 +1245,21 @@ if (F) {
     library(bumphunter)
     library(methyAnalysis)
     
+    colIdPV="p.value"; pvName="pv"
+    pThres=0.05
+    pThres=0.2
+    
+    colIdPV="fwer"; pvName="fwer"
     pThres=0.05
     pThres=0.1
     
     if (T) {
         nPerm=3
-        nPerm=1000
         nPerm=100
+        nPerm=1000
     }
+    tbl=c()
+    tbl2=NULL
     for (nmList in c("logged_PCB_105_SRS","logged_PCB_118_SRS","logged_PCB_138_SRS","logged_PCB_153_SRS","logged_PCB_170_SRS","logged_PCB_180_SRS","logged_PCB_aroclor1260")) {
         datadir="./"
         datadir="bumphunter/"
@@ -1286,33 +1293,48 @@ if (F) {
             if (verboseFlag) {
                 print(tab[1:3,])
             }
-            if (any(tab$fwer<pThres,na.rm=T)) {
+            if (any(tab[,colIdPV]<pThres,na.rm=T)) {
                 cat("\n\n============================\n",header,"\n===========================\n\n",sep="")
-                cat("Regions with FWER < ",pThres,":\n",sep="")
+                cat("Regions with ",colIdPV," < ",pThres,":\n",sep="")
                 if (verboseFlag) {
                     cat("\n\n============================ ",header," ===========================\n\n",sep="")
                 }
                 fList=c(fList,fId)
-                print(tab[which(tab$fwer<pThres),c("chr","start","end","value","p.value","fwer")])
+                #print(tab[which(tab[,colIdPV]<pThres),c("chr","start","end","value","p.value","fwer")])
+                i=which(tab[,colIdPV]<pThres)
+                tbl=c(tbl,paste("chr",tab$chr[i],":",tab$start[i],"-",tab$end[i],sep=""))
+                tbl3=cbind(comparison=rep(header,length(i)),tab[i,c("chr","start","end","value","p.value","fwer")])
+                tbl2=rbind(tbl2,tbl3)
             }
-            if (verboseFlag) {
-                print("table(tab$fwer<pThres)")
-                print(table(tab$fwer<pThres))
+            if (F) {
+                if (verboseFlag) {
+                    cat(paste("table(tab[,",colIdPV,"]<pThres)\n",sep=""))
+                    print(table(tab[,colIdPV]<pThres))
+                }
+                if (any(tab[,colIdPV]<pThres,na.rm=T)) {
+                    GR_tab=as(tab[1:1000,],"GRanges")                            # If you get an error here reduce the number of to  tab[1:100]
+                    tab.ann = annotateDMRInfo(GR_tab,'TxDb.Hsapiens.UCSC.hg19.knownGene')
+                    #tab.ann = annotateDMRInfo.my(GR_tab,'TxDb.Hsapiens.UCSC.hg19.knownGene')
+                    #View(tab.ann$sigDMRInfo)
+                    dmrInfo=as.data.frame(tab.ann$sigDMRInfo)
+                    if (verboseFlag) {
+                        print("summary(dmrInfo$fwer)")
+                        print(summary(dmrInfo$fwer))
+                        #print(dmrInfo[1:3,])
+                        print(dmrInfo[1:3,c("GeneSymbol","distance2TSS","seqnames","start","end","p.value","fwer")])
+                    }
+                    write.table(dmrInfo,file=paste("dmrs_",fName,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+                }
             }
-            GR_tab=as(tab[1:1000,],"GRanges")                            # If you get an error here reduce the number of to  tab[1:100]
-            tab.ann = annotateDMRInfo(GR_tab,'TxDb.Hsapiens.UCSC.hg19.knownGene')
-            #tab.ann = annotateDMRInfo.my(GR_tab,'TxDb.Hsapiens.UCSC.hg19.knownGene')
-            #View(tab.ann$sigDMRInfo)
-            dmrInfo=as.data.frame(tab.ann$sigDMRInfo)
-            if (verboseFlag) {
-                print("summary(dmrInfo$fwer)")
-                print(summary(dmrInfo$fwer))
-                #print(dmrInfo[1:3,])
-                print(dmrInfo[1:3,c("GeneSymbol","distance2TSS","seqnames","start","end","p.value","fwer")])
-            }
-            write.table(dmrInfo,file=paste("dmrs_",fName,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
         }
     }
+    names(tbl2)[1]="comparison"
+    x=tbl; x=sub("chr1:","chr01",x)
+    #tbl=tbl[order(x)]
+    i=!duplicated(tbl)
+    write.table(tbl[i],file=paste("ann_bumphunter_",pvName,pThres,"_forUCSCLiftover_hg19.txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F)
+    write.table(tbl2[i,],file=paste("stat_bumphunter_",pvName,pThres,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+    write.table(tbl2,file=paste("stat_all_bumphunter_",pvName,pThres,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
 }
 
 ####################################################################

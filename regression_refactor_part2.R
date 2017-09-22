@@ -74,6 +74,70 @@ save.image("tmp2_1.RData")
 ## ----------------------------------------------
 ## Subsets
 
+library(qvalue)
+
+transformFlag=""
+transformFlag="_mVal"
+
+datadir="results/comparison/pcb/"
+
+colIdPV="qv"; pvName="qv"
+pThres=0.1
+pThres=0.05
+pThres=0.2
+
+colIdPV="pv"; pvName="pv"
+pThres=0.1
+pThres=0.05
+pThres=0.001
+pThres=0.01
+pThres=0.2
+
+fileList=dir(datadir)
+f1=read.table(paste(datadir,fileList[1],sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+tbl=c()
+tbl2=NULL
+for (fId in 1:length(fileList)) {
+    cat("\n\n================= ",fileList[fId],"\n",sep="")
+    f2=read.table(paste(datadir,fileList[fId],sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    nm=sub("coef_","",names(f2)[grep("coef",names(f2))])
+    names(f2)=c("cpgId","coef","se","pv")
+    if (any(f1$cpgId!=f2$cpgId,na.rm=T) | any(is.na(f1$cpgId)!=is.na(f2$cpgId))) print(fId)
+    i=which(!is.na(f2$pv))
+    f2$qv[i]=qvalue(f1$pv[i])$qvalues
+    i=which(f2[,colIdPV]<pThres)
+    print(length(i))
+    if (length(i)!=0) {
+        tbl2=rbind(tbl2,cbind(comparison=rep(nm,length(i)),f2[i,]))
+        tbl=c(tbl,f2$cpgId[i])
+    }
+}
+i=match(tbl,ann$IlmnID)
+x=as.character(ann$CHR[i])
+x[which(x=="23")]="X"
+x[which(x=="24")]="Y"
+x=paste("chr",x,":",ann$MAPINFO[i],"-",ann$MAPINFO[i],sep="")
+sum(!duplicated(x))
+write.table(x[!duplicated(x)],file=paste("ann_pcb_",colIdPV,pThres,"_forUCSCLiftover_hg19.txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F)
+write.table(tbl2,file=paste("stat_pcb_",colIdPV,pThres,".txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F)
+
+i=which(tbl2$comparison=="logged_PCB_105_SRS")
+i=which(tbl2$comparison=="logged_PCB_aroclor1260")
+for (compFlag in c("logged_PCB_105_SRS","logged_PCB_138_SRS","logged_PCB_aroclor1260")) {
+    i=which(tbl2$comparison==compFlag)
+    write.table(x[i],file=paste("ann_pcb_",compFlag,"_pv",pThres,"_forUCSCLiftover_hg19.txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F)
+    write.table(tbl2[i,],file=paste("stat_pcb_",compFlag,"_pv",pThres,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+}
+
+if (F) {
+    varFlag="meth"
+    stat_cc_s1=read.table(paste(datadir,"stat_",varFlag,"Resp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    stat_cc_s1=read.table(paste(datadir,"stat_",varFlag,"Resp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+}
+
+## ----------------------------------------------
+## Subsets
+
 transformFlag=""
 transformFlag="_mVal"
 
