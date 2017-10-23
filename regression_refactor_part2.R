@@ -135,6 +135,22 @@ if (F) {
     stat_cc_s1=read.table(paste(datadir,"stat_",varFlag,"Resp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 }
 
+## --------------
+
+transformFlag=""
+transformFlag="_mVal"
+
+datadir="results/comparison/pcb/"
+
+varFlag=""
+stat_pcb105=read.table(paste(datadir,"stat_methResp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_pcb118=read.table(paste(datadir,"stat_methResp_logged_PCB_118_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_pcb138=read.table(paste(datadir,"stat_methResp_logged_PCB_138_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_pcb153=read.table(paste(datadir,"stat_methResp_logged_PCB_153_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_pcb170=read.table(paste(datadir,"stat_methResp_logged_PCB_170_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_pcb180=read.table(paste(datadir,"stat_methResp_logged_PCB_180_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_pcb1260=read.table(paste(datadir,"stat_methResp_logged_PCB_aroclor1260_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+
 ## ----------------------------------------------
 ## Subsets
 
@@ -1359,7 +1375,8 @@ if ("Goodman"%in%testFlag) {
 
 ## -------------------
 library(qvalue)
-source(paste(dirSrc,"functions/TTest.9.1.6.R",sep=""))
+#source(paste(dirSrc,"functions/TTest.9.1.6.R",sep=""))
+source(paste(dirSrc,"functions/TTest.9.1.7.R",sep=""))
 
 #for (compId in paste("med_",c("zS","zA","zG"),sep="")) {
 #for (compId in c("p_co_1","p_co_2","mp_2")) {
@@ -1370,10 +1387,39 @@ source(paste(dirSrc,"functions/TTest.9.1.6.R",sep=""))
 #for (compId in c("p4_co_3","p4_co_4","mp4_4")) {
 #for (compId in c("aml_cc_1_00","aml_cc_1_0","aml_cc_1_1","aml_cc_1_2","aml_cc_2_00","aml_cc_2_0","aml_cc_2_1","aml_cc_2_2")) {
 #for (compId in c("cc_2","cc_fs_2","cc_ms_2","cc_he_2","cc_we_2","cc_3")) {
-for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
+#for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
+for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
     colIdPV="pv"
 	cat("\n\n==================",compId,"==================\n")
 	switch(compId,
+            "pcb105"={
+                stat2=stat_pcb105
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb118"={
+                stat2=stat_pcb118
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb138"={
+                stat2=stat_pcb138
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb153"={
+                stat2=stat_pcb153
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb170"={
+                stat2=stat_pcb170
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb180"={
+                stat2=stat_pcb180
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb1260"={
+                stat2=stat_pcb1260
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
             "cc_s1"={
                 stat2=stat_cc_s1
                 colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
@@ -1565,6 +1611,27 @@ for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
     i=which(stat2$qvGI<.05)
     if (any(stat2$qvGI[i]<stat2[i,"pvGI"])) {cat("Q-value < p-value !!!\n")}
 	switch(compId,
+            "pcb105"={
+                stat_pcb105=stat2
+            },
+            "pcb118"={
+                stat_pcb118=stat2
+            },
+            "pcb138"={
+                stat_pcb138=stat2
+            },
+            "pcb153"={
+                stat_pcb153=stat2
+            },
+            "pcb170"={
+                stat_pcb170=stat2
+            },
+            "pcb180"={
+                stat_pcb180=stat2
+            },
+            "pcb1260"={
+                stat_pcb1260=stat2
+            },
             "cc_s1"={
                 stat_cc_s1=stat2
             },
@@ -1746,10 +1813,8 @@ if (length(ii)!=0) {
 plotFlag=""
 plotFlag="_onePlot"
 
-compId="med_3X"
-
-outlierFlag=T
 outlierFlag=F
+outlierFlag=T
 
 ## -------------------
 #for (compId in paste("med_",c("1","2","3X","3M","zS","zA"),sep="")) {
@@ -1761,9 +1826,8 @@ outlierFlag=F
 #for (compId in c("p4_co_3","p4_co_4","mp4_4")) {
 #for (compId in c("aml_cc_1_0","aml_cc_1_1","aml_cc_1_2","aml_cc_2_00","aml_cc_2_0","aml_cc_2_1","aml_cc_2_2")) {
 #for (compId in c("cc_2","cc_fs_2","cc_ms_2","cc_he_2","cc_we_2","cc_3")) {
-for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
-    #for (compId in c("cc_s1")) {
-    
+#for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
+for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
     colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.001
     colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=0.1
     colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=0.01
@@ -1774,6 +1838,34 @@ for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
     colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=0.05
     
 	switch(compId,
+            "pcb105"={
+                stat2=stat_pcb105; fName1=paste("_methResp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb105\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
+            "pcb118"={
+                stat2=stat_pcb118; fName1=paste("_methResp_logged_PCB_118_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb118\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
+            "pcb138"={
+                stat2=stat_pcb138; fName1=paste("_methResp_logged_PCB_138_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb138\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
+            "pcb153"={
+                stat2=stat_pcb153; fName1=paste("_methResp_logged_PCB_153_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb153\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
+            "pcb170"={
+                stat2=stat_pcb170; fName1=paste("_methResp_logged_PCB_170_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb170\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
+            "pcb180"={
+                stat2=stat_pcb180; fName1=paste("_methResp_logged_PCB_180_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb180\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
+            "pcb1260"={
+                stat2=stat_pcb1260; fName1=paste("_methResp_logged_PCB_aroclor1260_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ aroclor1260\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+            },
             "cc_s1"={
                 stat2=stat_cc_s1; fName1=paste("_",varFlag,"Resp_methXsem_covSexGestage_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,sep=""); compName=paste("M-value based, coefficient - interaction\nSet2: ",varFlag," ~ meth * sem\nCov: Sex, gestage, ReFACTor comp 1,2,3,4, epistructure",sep="")
                 k=grep("pv_meth.",names(stat2))
@@ -2052,12 +2144,13 @@ for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
         iThis=iThis[which(abs(stat[iThis,colIdEst])<=x)]
     }
 	plot(stat[iThis,colIdEst],-log10(stat[iThis,colIdPV[1]]),xlab="Estimate",ylab="-log10(p-value)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
-	ii=iThis[stat[iThis,colIdPV[2]]<pThres]
-	points(stat[ii,colIdEst],-log10(stat[ii,colIdPV[2]]),col="red")
-	if (plotFlag=="") {
+	ii=iThis[which(stat[iThis,colIdPV[2]]<pThres)]
+	points(stat[ii,colIdEst],-log10(stat[ii,colIdPV[1]]),col="red")
+    if (plotFlag=="") {
 		dev.off()
 	}
     
+    #plot(stat2$coef,-log10(stat2$pv)); iii=which(stat2$qv<.05); points(stat2$coef[iii],-log10(stat2$pv)[iii],col="red")
     
     if (plotFlag=="_onePlot") {
 #		par(mfrow=c(1,1))
@@ -2211,3 +2304,51 @@ write.table(tbl, file=paste("stat",fName,"_",colIdPV[2],pThres,".txt",sep=""), a
 ####################################################################
 ####################################################################
 ####################################################################
+
+pThres=c(0.001,0.05)
+iA2=match(stat2$cpgId,ann$IlmnID)
+
+i=c()
+for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
+    colIdPV="pv"
+    cat("\n\n==================",compId,"==================\n")
+    switch(compId,
+    "pcb105"={
+        stat2=stat_pcb105
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    },
+    "pcb118"={
+        stat2=stat_pcb118
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    },
+    "pcb138"={
+        stat2=stat_pcb138
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    },
+    "pcb153"={
+        stat2=stat_pcb153
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    },
+    "pcb170"={
+        stat2=stat_pcb170
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    },
+    "pcb180"={
+        stat2=stat_pcb180
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    },
+    "pcb1260"={
+        stat2=stat_pcb1260
+        colIdPV=names(stat2)[grep("pv_",names(stat2))]
+    }
+    )
+    colId=grep("pv_",names(stat2))
+    i=c(i,which(stat2[,colId]<pThres[1]))
+    colId=grep("qv_",names(stat2))
+    i=c(i,which(stat2[,colId]<pThres[2]))
+}
+i=unique(i)
+length(i)
+cpgId=stat2$cpgId[i]
+save(cpgId,file="cpgId_tmp.RData")
+
