@@ -60,7 +60,6 @@ if (covESFlag=="_covEpStr") {
     ann$keep[which(ann$keep==1 & ann$IlmnID%in%prId)]=0
 }
 
-
 ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
 	strsplit(x,";")[[1]][1]
 },USE.NAMES=F)
@@ -153,6 +152,8 @@ stat_pcb1260=read.table(paste(datadir,"stat_methResp_logged_PCB_aroclor1260_ctrl
 
 ## ----------------------------------------------
 
+designList=c("I","II")
+designList=""
 
 #############################################################
 ## take a look at significant loci enrichment
@@ -175,6 +176,7 @@ ann$region <- sapply(as.character(ann[, "UCSC_RefGene_Group"]), function(z){
         }
     }
 })
+ann$region[ann$region=="Uncertain"]=NA
 ann$relationToIsland <- ann[,"Relation_to_UCSC_CpG_Island"]; ann$relationToIsland <- gsub("S_","",gsub("N_","",ann$relationToIsland)); ann$relationToIsland[ann$relationToIsland==""] <- "notCGI"
 
 ## -------------------
@@ -224,9 +226,13 @@ if (F) {
     fisher.test(table(id1[i], id2[i]))
 }
 
-for (designFlag in c("I","II")) {
-    cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
-    ii=which(ann$Infinium_Design_Type[iA2][i2]==designFlag)
+for (designFlag in designList) {
+    if (designFlag=="") {
+        ii=1:nrow(ann)
+    } else {
+        cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
+        ii=which(ann$Infinium_Design_Type[iA2][i2]==designFlag)
+    }
     x=table(id1[ii],id2[ii])
     rownames(x)=c("Not in our gene list","In our gene list")
     print(x)
@@ -249,9 +255,13 @@ for (designFlag in c("I","II")) {
 ## -------------------
 id2=ann$relationToIsland[iA2][i2]
 
-for (designFlag in c("I","II")) {
-    cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
-    ii=which(ann$Infinium_Design_Type[iA2][i2]==designFlag)
+for (designFlag in designList) {
+    if (designFlag=="") {
+        ii=1:nrow(ann)
+    } else {
+        cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
+        ii=which(ann$Infinium_Design_Type[iA2][i2]==designFlag)
+    }
     x=table(id1[ii],id2[ii])
     rownames(x)=c("Not in our gene list","In our gene list")
     print(x)
@@ -279,62 +289,142 @@ for (designFlag in c("I","II")) {
 }
 
 #############################################################
-## Is there a global demethylation associated with caco-pobw interaction
+#############################################################
+## Manhattan plot
+
+#source(paste(dirSrc,"functions/acghFuncsFromPkg.1.3.R",sep=""))
+source(paste(dirSrc,"functions/TTest.9.1.7.R",sep=""))
+#source(paste(dirSrc,"functions/plotSummaryProfileSeg.7.2.R",sep=""))
+
+fName="_allGuthSet1Set2_ctrlSubset_pcb170"
+
+stat_1=stat_pcb170
+datainfo=ann[match(stat_1$cpgId,ann$IlmnID),]
+names(datainfo)[match(c("IlmnID","CHR","MAPINFO"),names(datainfo))]=c("cpgId","Chrom","kb")
+datainfo$kb=datainfo$kb/1000
+i=order(datainfo$Chrom,datainfo$kb)
+stat_1=stat_1[i,]
+datainfo=datainfo[i,]
+
+numaut=24
+tmp=rep(NA,numaut)
+chrominfo=data.frame(chr=1:numaut,length=tmp,stringsAsFactors=F)
+for (chr in 1:nrow(chrominfo)) {
+    chrominfo$length[i]=max(datainfo$kb[which(datainfo$Chrom==chr)],na.rm=T)
+}
+
+numaut=22
+numchr <- numaut
+chrominfo <- chrominfo[1:numchr, ]
+ind.na <- datainfo$Chrom %in% (1:numchr)
+start <- c(0, cumsum(chrominfo$length))
+kb.loc <- datainfo$kb
+for (i in 1:nrow(chrominfo)) kb.loc[datainfo$Chrom == i] <- start[i] + datainfo$kb[datainfo$Chrom == i]
+if (F) {
+    chrom.start <- c(0, cumsum(chrominfo$length))[1:numchr]
+    chrom.centr <- chrom.start + chrominfo$centr
+    chrom.mid <- chrom.start + chrominfo$length/2
+}
+
+pThres=0.05
+#plotFreqStat.my(data, datainfo, resT = vector("list",length(data)), pheno = rep(1, ncol(data)), chrominfo = human.chrom.info.Jul03, X = TRUE, Y = FALSE,
+ylim=c(0,-log10(min(stat_1[,grep("pv_",names(stat_1))],na.rm=T))+.5)
+for (chr in 1:numaut) {
+    i=which(datainfo$Chrom==chr)
+    th=which(stat_1[i,grep("qv_",names(stat_1))]<pThres)
+    if (length(th)==0) next
+    y=-log10(stat_1[i,grep("pv_",names(stat_1))])
+    th=min(y[th])
+    fName2=paste("plot_chr",chr,fName,sep="")
+    png(paste(fName2,".png",sep=""))
+    plot(kb.loc[i],y,ylim=ylim,main=paste("Chr ",chr,sep=""),xlab="KB",ylab="-log10(p-value)")
+    ii=which(y>=th)
+    points(kb.loc[i][ii],y[ii],col="red")
+    if (F) {
+        ii=which(datainfo$snp[i]==1)
+        points(kb.loc[i][ii],y[ii],col="blue")
+    }
+    abline(h=th,lty="dashed",col="red")
+    dev.off()
+}
+
+
+#############################################################
+## Is there a global demethylation associated with variable of interest?
 #############################################################
 
 dirn=sign(stat2$coef[i2])
 dirn[dirn==0]=NA
 dirn[is.na(ann$keep[iA2][i2]) | !ann$keep[iA2][i2]]=NA
 
-#Is there a global demethylation associated with caco-pobw interaction?
-for (designFlag in c("I","II")) {
-    cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
-    ii=which(ann$Infinium_Design_Type[iA2][i2]==designFlag)
+varList=c("","region","relationToIsland")
+for (varId in 1:length(varList)) {
+    if (varList[varId]=="") grp=rep("",nrow(ann)) else grp=ann[,varList[varId]]
+    grpUniq=sort(unique(grp))
     
-    ## global: binomial test against 0.5
-    x=table(dirn[ii])
-    #print(x)
-    res=binom.test(x=sum(dirn[ii]==-1,na.rm=TRUE), n=sum(!is.na(dirn[ii])), p=0.5, alternative="greater")
-    #print(res)
-    pv=res$p.value
-    suf=""
-    if (pv<0.05) {
-        suf=" ****"
-    } else if (pv<0.1) {
-        suf=" **"
+    for (grpId in 1:length(grpUniq)) {
+        cat("\n=========== ",grpUniq[grpId]," ====================\n",sep="")
+        
+        #Is there a global demethylation associated with variable of interest?
+        for (designFlag in designList) {
+            if (designFlag=="") {
+                ii=which(grp==grpUniq[grpId])
+            } else {
+                cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
+                ii=which(grp==grpUniq[grpId] & ann$Infinium_Design_Type[iA2][i2]==designFlag)
+            }
+            ## global: binomial test against 0.5
+            x=table(dirn[ii])
+            #print(x)
+            res=binom.test(x=sum(dirn[ii]==-1,na.rm=TRUE), n=sum(!is.na(dirn[ii])), p=0.5, alternative="greater")
+            #print(res)
+            pv=res$p.value
+            suf=""
+            if (pv<0.05) {
+                suf=" ****"
+            } else if (pv<0.1) {
+                suf=" **"
+            }
+            cat("Number total: ",length(ii),"\n",sep="")
+            cat("Proportion down globally: ",round(res$estimate,2),"\npv (vs. 0.5) ",signif(pv,4),suf,"\n",sep="")
+        }
     }
-    cat("Number total: ",length(ii),"\n",sep="")
-    cat("Proportion down globally: ",round(res$estimate,2),"\npv (vs. 0.5) ",signif(pv,4),suf,"\n",sep="")
-}
 
-#Is there greater demethylation for significant caco-pobw interaction loci than globally?
-for (designFlag in c("I","II")) {
-    cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
-    ii=which(ann$Infinium_Design_Type[iA2][i2]==designFlag)
-    i=ii[which(id1[ii]==1)]
-    i_2=ii[which(id1[ii]==0)]
-    
-    ## among P<0.05
-    x=table(dirn[ii])
-    #print(x)
-    res=prop.test(c(sum(dirn[i]==-1,na.rm=TRUE), sum(dirn[ii]==-1,na.rm=TRUE)),c(sum(!is.na(dirn[i])), sum(!is.na(dirn[ii]),na.rm=TRUE)), alternative="greater")
-    #print(res)
-    pv=res$p.value
-    suf=""
-    if (pv<0.05) {
-        suf=" ****"
-    } else if (pv<0.1) {
-        suf=" **"
+    for (grpId in 1:length(grpUniq)) {
+        cat("\n=========== ",grpUniq[grpId]," ====================\n",sep="")
+
+        #Is there greater demethylation for significant loci than globally?
+        for (designFlag in designList) {
+            if (designFlag=="") {
+                ii=which(grp==grpUniq[grpId])
+            } else {
+                cat("\n=========== Infinium_Design_Type ",designFlag," ====================\n",sep="")
+                ii=which(grp==grpUniq[grpId] & ann$Infinium_Design_Type[iA2][i2]==designFlag)
+            }
+            i=ii[which(id1[ii]==1)]
+            i_2=ii[which(id1[ii]==0)]
+            
+            ## among P<0.05
+            x=table(dirn[ii])
+            #print(x)
+            res=prop.test(c(sum(dirn[i]==-1,na.rm=TRUE), sum(dirn[ii]==-1,na.rm=TRUE)),c(sum(!is.na(dirn[i])), sum(!is.na(dirn[ii]),na.rm=TRUE)), alternative="greater")
+            #print(res)
+            pv=res$p.value
+            suf=""
+            if (pv<0.05) {
+                suf=" ****"
+            } else if (pv<0.1) {
+                suf=" **"
+            }
+            cat("Number total = ",length(ii),", number signif = ",length(i),"\n",sep="")
+            cat("Proportion down: For signif loci (",round(res$estimate[1],2),") vs. globally (",round(res$estimate[2],2),"):\npv ",signif(pv,4),suf,"\n",sep="")
+            
+            ## among P>=0.05
+            res=prop.test(c(sum(dirn[i]==-1,na.rm=TRUE), sum(dirn[i_2]==-1,na.rm=TRUE)),c(sum(!is.na(dirn[i])), sum(!is.na(dirn[i_2]),na.rm=TRUE)), alternative="greater")
+            #print(res)
+        }
     }
-    cat("Number total = ",length(ii),", number signif = ",length(i),"\n",sep="")
-    cat("Proportion down: For signif loci (",round(res$estimate[1],2),") vs. globally (",round(res$estimate[2],2),"):\npv ",signif(pv,4),suf,"\n",sep="")
-    
-    ## among P>=0.05
-    res=prop.test(c(sum(dirn[i]==-1,na.rm=TRUE), sum(dirn[i_2]==-1,na.rm=TRUE)),c(sum(!is.na(dirn[i])), sum(!is.na(dirn[i_2]),na.rm=TRUE)), alternative="greater")
-    #print(res)
 }
-
-
 
 
 ## -----------------------------------------------------------------------------------------------------------

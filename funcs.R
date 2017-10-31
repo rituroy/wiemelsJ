@@ -13,6 +13,8 @@ getClinData=function(setFlag,subsetFlag) {
     ## ---------------------------------
 
     if (computerFlag=="cluster") {
+        dirClin0="data/"
+        
         datType2="allGuthSet2"
         datName2="ALL Guthrie, set2"
         dirClin2="data/set2/"
@@ -45,7 +47,9 @@ getClinData=function(setFlag,subsetFlag) {
         dirSrc="/Users/royr/UCSF/"
         dirSrc2=dirSrc
         setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
-        
+
+        dirClin0="docs/"
+
         datType2="allGuthSet2"
         datName2="ALL Guthrie, set2"
         dirClin2="docs/all/set2/"
@@ -94,11 +98,13 @@ getClinData=function(setFlag,subsetFlag) {
     if (computerFlag=="cluster") {
         clin12=read.table(paste(dirClin1,"i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         clin13=read.table(paste(dirClin1,"Ritu_birthweight_dataset - covariate data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        bw=read.table(paste("data/pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        bw=read.table(paste(dirClin0,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        il10=read.table(paste(dirClin0,"IL-10 data for adam(1).txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     } else {
         clin12=read.table(paste(dirClin1,"LEU.data/i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         clin13=read.table(paste(dirClin1,"birthWeight/Ritu_birthweight_dataset - covariate data.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        bw=read.table(paste("docs/birthWeight/pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        bw=read.table(paste(dirClin0,"birthWeight/pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        il10=read.table(paste(dirClin0,"all/IL-10 data for adam(1).txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     }
     names(clin12)[match("Subject_ID",names(clin12))]=c("subjectId")
     names(clin12)[match(c("Plate","Sentrix_ID","Sentrix_Position"),names(clin12))]=c("Batch","Beadchip","Position")
@@ -106,7 +112,8 @@ getClinData=function(setFlag,subsetFlag) {
     clin2=read.table(paste(dirClin2,"clin_guthrieSet2_20140619.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 
     names(bw)[match("SubjectID",names(bw))]=c("subjectId")
-
+    names(il10)[match(c("subjectID","caco","gdbid","IL10_normal","log_IL10"),names(il10))]=c("subjectId","caco","guthrieId","il10_norm","log_il10")
+    
     x=c("caco","birthWt","sex","int_ch_ethnicity","ch_hispanic_bc","int_ch_race","gestage")
     varib=c("caco","birthWt","sex","ethnicity","hispanicStatus","race","gestage")
     tbl=data.frame(varib,names(clin1)[match(x,names(clin1))],names(clin2)[match(x,names(clin2))],stringsAsFactors=F)
@@ -207,19 +214,26 @@ getClinData=function(setFlag,subsetFlag) {
     clin1$birthWtPerc[j1]=clin13$Percent[j2]
     clin2$birthWt=as.numeric(clin2$birthWt)
 
-    j=match(clin1$subjectId,bw$subjectId)
-    j1=which(!is.na(j)); j2=j[j1]
+    j=match(clin1$subjectId,bw$subjectId); j1=which(!is.na(j)); j2=j[j1]
     clin1$pobw=clin1$pred_btw=clin1$dbirwt=rep(NA,nrow(clin1))
     clin1$dbirwt[j1]=bw$dbirwt[j2]
     clin1$pred_btw[j1]=bw$pred_btw[j2]
     clin1$pobw[j1]=bw$pobw[j2]
-    j=match(clin2$subjectId,bw$subjectId)
-    j1=which(!is.na(j)); j2=j[j1]
+    j=match(clin2$subjectId,bw$subjectId); j1=which(!is.na(j)); j2=j[j1]
     clin2$pobw=clin2$pred_btw=clin2$dbirwt=rep(NA,nrow(clin2))
     clin2$dbirwt[j1]=bw$dbirwt[j2]
     clin2$pred_btw[j1]=bw$pred_btw[j2]
     clin2$pobw[j1]=bw$pobw[j2]
-
+    
+    j=match(clin1$subjectId,il10$subjectId); j1=which(!is.na(j)); j2=j[j1]
+    clin1$il10_norm=clin1$log_il10=rep(NA,nrow(clin1))
+    clin1$log_il10[j1]=il10$log_il10[j2]
+    clin1$il10_norm[j1]=il10$il10_norm[j2]
+    j=match(clin2$subjectId,il10$subjectId); j1=which(!is.na(j)); j2=j[j1]
+    clin2$il10_norm=clin2$log_il10=rep(NA,nrow(clin2))
+    clin2$log_il10[j1]=il10$log_il10[j2]
+    clin2$il10_norm[j1]=il10$il10_norm[j2]
+    
     clin1$Beadchip=clin1$Position=NA
     j=match(clin14$guthrieIdN,clin1$guthrieId); j2=which(!is.na(j)); j1=j[j2]
     clin1$Beadchip[j1]=clin14$Beadchip[j2]

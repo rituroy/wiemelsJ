@@ -2211,7 +2211,7 @@ write.table(tbl, file=paste("stat",fName,"_",colIdPV[2],pThres,".txt",sep=""), a
 			annotSel$PcG[tmp6] = 1 
 		}
 		
-# Get an index of CpGs by gene region
+        # Get an index of CpGs by gene region
 		tmp1 = strsplit(annotSel$UCSC_RefGene_Name,";")
 		names(tmp1)=paste(1:length(tmp1),":",sep="")
 		tmp2 = unlist(tmp1)
@@ -2230,8 +2230,7 @@ write.table(tbl, file=paste("stat",fName,"_",colIdPV[2],pThres,".txt",sep=""), a
 			qThresh
 		}
 		
-		GeneAnnotation = unique(data.frame(UCSC_REFGENE_NAME=tmp2,UCSC_REFGENE_GROUP=tmp5,
-										   rowid=tmp3, stringsAsFactors=FALSE))
+		GeneAnnotation = unique(data.frame(UCSC_REFGENE_NAME=tmp2,UCSC_REFGENE_GROUP=tmp5,rowid=tmp3, stringsAsFactors=FALSE))
 		GeneIndex = split(GeneAnnotation$rowid,with(GeneAnnotation,paste(UCSC_REFGENE_NAME,UCSC_REFGENE_GROUP,sep=":")))
 		GeneIndexN = sapply(GeneIndex, length)
 		
@@ -2239,8 +2238,8 @@ write.table(tbl, file=paste("stat",fName,"_",colIdPV[2],pThres,".txt",sep=""), a
 			medPval = sapply(GeneIndex, function(u) median(pval[u],na.rm=T))
 			propHit = sapply(GeneIndex, function(u) mean(pval[u]<pThres,na.rm=T))
 			
-			#		isPcG = sapply(GeneIndex, function(u) min(annotSel$PcG[u]))
-			#		isNearPcG = sapply(GeneIndex, function(u) max(annotSel$PcG[u]))
+			#isPcG = sapply(GeneIndex, function(u) min(annotSel$PcG[u]))
+			#isNearPcG = sapply(GeneIndex, function(u) max(annotSel$PcG[u]))
 			
 			tmp1 = sapply(GeneIndex, function(u) u[which.min(annotSel$MAPINFO[u])])
 			tmp2 = sapply(GeneIndex, function(u) u[which.max(annotSel$MAPINFO[u])])
@@ -2254,8 +2253,8 @@ write.table(tbl, file=paste("stat",fName,"_",colIdPV[2],pThres,".txt",sep=""), a
 				sgnChar = ifelse(pv>pThres, ".", ifelse(sgn<0,"-","+"))
 				paste(sgnChar[order(annotSel$CHR[u], annotSelMap[u])],collapse="")
 			}
-			# check
-#			if (length(GeneIndex)>2) print(tmpF(GeneIndex[[3]]))
+			#Check
+            #if (length(GeneIndex)>2) print(tmpF(GeneIndex[[3]]))
 			
 			hypohyper =sapply(GeneIndex, tmpF)
 			

@@ -1758,6 +1758,137 @@ for (colId in c(c("pValue","corrCoef"))) {
 tbl[(substr(tbl$variable1,1,nchar("refactor"))=="refactor" | substr(tbl$variable2,1,nchar("refactor"))=="refactor") & tbl$pValue<0.05,]
 
 ## ----------------------------------
+## IL10
+
+datadir="docs/all/set1/"
+cellMixR=read.table(paste(datadir,"cellCount_minfi_allGuthSet1.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+cellMixB=read.table(paste(datadir,"cellCount_minfi_cordBlood_allGuthSet1.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+out=as.matrix(cellMixR[match(clin1$id,cellMixR$id),which(!names(cellMixR)%in%c("id"))])
+colnames(out)=paste(colnames(out),"_r",sep="")
+clin1=cbind(clin1,out)
+out=as.matrix(cellMixB[match(clin1$id,cellMixB$id),which(!names(cellMixB)%in%c("id"))])
+colnames(out)=paste(colnames(out),"_b",sep="")
+clin1=cbind(clin1,out)
+datadir="docs/all/set2/"
+cellMixR=read.table(paste(datadir,"cellCount_minfi_allGuthSet2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+cellMixB=read.table(paste(datadir,"cellCount_minfi_cordBlood_allGuthSet2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+out=as.matrix(cellMixR[match(clin2$id,cellMixR$id),which(!names(cellMixR)%in%c("id"))])
+colnames(out)=paste(colnames(out),"_r",sep="")
+clin2=cbind(clin2,out)
+out=as.matrix(cellMixB[match(clin2$id,cellMixB$id),which(!names(cellMixB)%in%c("id"))])
+colnames(out)=paste(colnames(out),"_b",sep="")
+clin2=cbind(clin2,out)
+
+for (varName in c("il10_norm","log_il10","Gran_r","Gran_b")) {
+    if (any(!is.na(clin1[,varName])) | any(!is.na(clin2[,varName]))) {
+        cat("\n================",varName,"================\n")
+        png(paste("densityPlots_",varName,".png",sep=""))
+        par(mfrow=c(2,1))
+        lim=range(c(clin1[,varName],clin2[,varName]),na.rm=T)
+        ylim=c(0,1)
+        ylim=NULL
+        if (varName=="wbc") {
+            lim=c(0,100)
+            ylim=c(0,.05)
+        }
+        if (setFlag=="") {
+            j=which(clin1[,varName]<=lim[2])
+            plot(density(clin1[j,varName],na.rm=T),xlim=lim,ylim=ylim,main=paste("Set1: Median ",round(median(clin1[j,varName],na.rm=T),2),sep=""),xlab=varName)
+            axis(side=3)
+            print(summary(clin1[,varName]))
+        }
+        j=which(clin2[,varName]<=lim[2])
+        plot(density(clin2[j,varName],na.rm=T),xlim=lim,ylim=ylim,main=paste("Set2: Median ",round(median(clin2[j,varName],na.rm=T),2),sep=""),xlab=varName)
+        axis(side=3)
+        print(summary(clin2[,varName]))
+        dev.off()
+    }
+}
+
+tbl=NULL
+varList1=c("il10_norm","log_il10")
+varList2=c("Gran_r","Gran_b")
+varName2=c("Reinius ref: Granulocyte","Bakulski ref: Granulocyte")
+for (k2 in 1:length(varList2)) {
+    cat("================ Kendall's correlation test p-value:\n")
+    for (k1 in 1:length(varList1)) {
+        cat("\n================",varList1[k1]," and ",varList2[k2],"================\n")
+        #	cat("================ Kendall's correlation test p-value:\n")
+        if (any(!is.na(clin1[,varList1[k1]]) & any(!is.na(clin1[,varList2[k2]])))) {
+            png(paste("plot_",varList1[k1],"_vs_",varList2[k2],".png",sep=""),width=2*480,height=480)
+            par(mfrow=c(1,2))
+            xlim=range(c(clin1[,varList1[k1]],clin2[,varList1[k1]]),na.rm=T)
+            ylim=range(c(clin1[,varList2[k2]],clin2[,varList2[k2]]),na.rm=T)
+            res=cor(clin1[,varList1[k1]],clin1[,varList2[k2]],use="complete.obs",method="pearson")
+            res=c(res,cor(clin1[,varList1[k1]],clin1[,varList2[k2]],use="complete.obs",method="kendall"))
+            plot(clin1[,varList1[k1]],clin1[,varList2[k2]],xlim=xlim,ylim=ylim,main=paste("Set1: Corr coef - Pearson ",round(res[1],2),", Kendall ",round(res[2],2),sep=""),xlab=varList1[k1],ylab=varName2[k2])
+            res=cor(clin2[,varList1[k1]],clin2[,varList2[k2]],use="complete.obs",method="pearson")
+            res=c(res,cor(clin2[,varList1[k1]],clin2[,varList2[k2]],use="complete.obs",method="kendall"))
+            plot(clin2[,varList1[k1]],clin2[,varList2[k2]],xlim=xlim,ylim=ylim,main=paste("Set2: Corr coef - Pearson ",round(res[1],2),", Kendall ",round(res[2],2),sep=""),xlab=varList1[k1],ylab=varName2[k2])
+            dev.off()
+            if (F) {
+                png(paste("rankPlot_",varList1[k1],"_vs_",varList2[k2],".png",sep=""),width=2*480,height=480)
+                par(mfrow=c(1,2))
+                x11=as.integer(as.factor(clin1[,varList1[k1]]))
+                x21=as.integer(as.factor(clin2[,varList1[k1]]))
+                x12=as.integer(as.factor(clin1[,varList2[k2]]))
+                x22=as.integer(as.factor(clin2[,varList2[k2]]))
+                x11=order(clin1[,varList1[k1]])
+                x21=order(clin2[,varList1[k1]])
+                x12=order(clin1[,varList2[k2]])
+                x22=order(clin2[,varList2[k2]])
+                xlim=range(c(x11,x21),na.rm=T)
+                ylim=range(c(x12,x22),na.rm=T)
+                plot(x11,x12,xlim=xlim,ylim=ylim,main="Set1",xlab=paste("Ranked ",varList1[k1],sep=""),ylab=paste("Ranked ",varName2[k2],sep=""))
+                plot(x21,x22,xlim=xlim,ylim=ylim,main="Set2",xlab=paste("Ranked ",varList1[k1],sep=""),ylab=paste("Ranked ",varName2[k2],sep=""))
+                dev.off()
+            }
+            if (setFlag=="") {
+                clin=clin1
+                res=cor.test(clin[,varList1[k1]],clin[,varList2[k2]],method="kendall")
+                pv=res$p.value
+                tbl1=c("set1",varList1[k1],varList2[k2],"Kendall's correlation test",res$p.value,res$estimate)
+                tbl=rbind(tbl,tbl1)
+                suf=""
+                if (pv<0.05) {
+                    suf=" ****"
+                } else if (pv<0.1) {
+                    suf=" **"
+                }
+                #		cat("set1 ",signif(pv,5),suf,"\n")
+                cat("set1 : Corr coef ",round(res$estimate,2)," (pv ",signif(pv,5),suf,")","\n",sep="")
+            }
+            if (setFlag=="") {
+                ttl="set2 "
+            } else {
+                ttl="P-value "
+            }
+            clin=clin2
+            res=cor.test(clin[,varList1[k1]],clin[,varList2[k2]],method="kendall")
+            pv=res$p.value
+            tbl1=c("set2",varList1[k1],varList2[k2],"Kendall's correlation test",res$p.value,res$estimate)
+            tbl=rbind(tbl,tbl1)
+            suf=""
+            if (pv<0.05) {
+                suf=" ****"
+            } else if (pv<0.1) {
+                suf=" **"
+            }
+            #	cat(ttl,signif(pv,5),suf,"\n")
+            cat(ttl,": Corr coef ",round(res$estimate,2)," (pv ",signif(pv,5),suf,")","\n",sep="")
+        }
+    }
+}
+
+rownames(tbl)=NULL
+colnames(tbl)=c("set","variable1","variable2","test","pValue","corrCoef")
+tbl=as.data.frame(tbl,stringsAsFactors=F)
+for (colId in c(c("pValue","corrCoef"))) {
+    tbl[,colId]=as.numeric(tbl[,colId])
+}
+
+
+## ----------------------------------
 ## SEM
 
 if (computerFlag=="cluster") {

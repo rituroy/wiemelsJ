@@ -29,10 +29,14 @@ limSl=c(0,0.5)
 
 compList=paste("_rnd",numPr,sep="")
 compList=paste("_topVar",numPr,sep="")
-compList=paste("_allGuthSet1_caseSubset",sep="")
 compList=paste("_allGuthSet2_caseSubset",sep="")
 compList=paste("_allGuthSet1Set2_ctrlSubset",sep="")
-compList=c("_allGuthSet1_caseSubset","_allGuthSet2_caseSubset","_allGuthSet1Set2_ctrlSubset")
+compList=c("_allGuthSet1Set2_ctrlSubset","_allGuthSet1_caseSubset","_allGuthSet2_caseSubset")
+compList=c("_allGuthSet1_caseSubset","_allGuthSet2_caseSubset")
+compList=paste("_allGuthSet1Set2_ctrlSubset",sep="")
+
+clusterFlag="_supervised"
+clusterFlag=""
 
 statName="_allGuthSet1Set2_ctrlSubset_pcb170_qv0.05"
 
@@ -41,6 +45,11 @@ datFlag=""
 
 colGeneId="probesetid"; colIdPV="FDR"; colNamePV="QV"
 colGeneId="cpgId"; colIdPV="qv"; colNamePV="QV"
+
+if (clusterFlag[1]=="_supervised") {
+    datadirG=""
+    genesetFlag="clusterInfoCpG_allGuthSet1Set2_ctrlSubset_pcb170_qv0.05_allGuthSet1Set2_ctrlSubset_hasPcbData"
+}
 
 tblCC=NULL
 for (compFlag in compList) {
@@ -80,8 +89,8 @@ for (compFlag in compList) {
             }
             cnt_1=meth
             switch(datFlag,
-            "_combatAdj"={cnt_1=exprCom
-            }
+                "_combatAdj"={cnt_1=exprCom
+                }
             )
             ann_1=ann[match(rownames(cnt_1),ann$IlmnID),]
             names(ann_1)[match(c("IlmnID"),names(ann_1))]=c("cpgId")
@@ -94,17 +103,22 @@ for (compFlag in compList) {
                 cnt_1=cnt_1[,samId]
                 phen_1=phen_1[samId,]
             }
-            colIdPV="qv"; pThres=0.05
-            if (statName=="_allGuthSet1Set2_ctrlSubset_pcb170_qv0.05") {
-                stat2=stat_pcb170
+            if (clusterFlag[1]=="_supervised") {
+                tbl=read.table(paste(datadirG,genesetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+                clId=match(tbl$cpgId,ann_1$cpgId)
             } else {
-                stat2=NULL
+                colIdPV="qv"; pThres=0.05
+                if (statName=="_allGuthSet1Set2_ctrlSubset_pcb170_qv0.05") {
+                    stat2=stat_pcb170
+                } else {
+                    stat2=NULL
+                }
+                names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+                stat_1=NULL
+                stat_1=stat2[match(rownames(cnt_1),stat2$cpgId),]
+                clId=which(stat_1$cpgId%in%cpgId)
+                clId=which(stat_1$cpgId%in%cpgId & stat_1[,colIdPV]<pThres)
             }
-            names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
-            stat_1=NULL
-            stat_1=stat2[match(rownames(cnt_1),stat2$cpgId),]
-            clId=which(stat_1$cpgId%in%cpgId)
-            clId=which(stat_1$cpgId%in%cpgId & stat_1[,colIdPV]<pThres)
         }
         cnt_1=cnt_1[clId,]
         ann_1=ann_1[clId,]
@@ -154,8 +168,11 @@ for (compFlag in compList) {
                     header=paste("Stat: ",sub("_","",statName),",  data: ",compName2,sep="")
                     dat0=cnt_1
                 }
+                #expr=cnt_1[,samId]
+                #annRow=ann_1[match(rownames(expr),ann_1[,colGeneId]),]
                 expr=cnt_1[,samId]
-                annRow=ann_1[match(rownames(expr),ann_1[,colGeneId]),]
+                annRow=ann_1[which(ann_1[,colGeneId]%in%rownames(expr)),]
+                expr=expr[match(ann_1[,colGeneId],rownames(expr)),]
                 phen=phen_1[samId,]
                 
                 i2=1:nrow(expr)
@@ -194,6 +211,10 @@ for (compFlag in compList) {
                     expr=expr[i2,]
                     annRow=cbind(annRow[i2,],coef=stat_1$coef[match(annRow[i2,colGeneId],stat_1[,colGeneId])])
                     i=order(annRow$coef)
+                }
+                if (clusterFlag[1]=="_supervised") {
+                    geneBar=""
+                    i=1:nrow(expr)
                 }
                 
                 if (transFlag=="") {
@@ -245,6 +266,7 @@ for (compFlag in compList) {
                 } else {
                     cloneCol=matrix(rep("white",nrow(arrayData)),nrow=length(varFList))
                     for (k1 in 1:length(varFList)) {
+                        kk=varFList[k]
                         lim=100*limFCmmu
                         x=round(100*annRow[,kk]); x=x-min(x,na.rm=T)+1
                         grpUniq=sort(unique(x[!is.na(x)]))
