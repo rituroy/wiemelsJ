@@ -12,19 +12,10 @@ if (computerFlag=="cluster") {
 	setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
 }
 
-####################################################################
-####################################################################
-
 ## ----------------------------------------------
-
-adjPFlag="qv"
-adjPFlag="holm"
 
 covESFlag=""
 covESFlag="_covEpStr"
-
-####################################################################
-####################################################################
 
 ## ----------------------------------------------
 if (computerFlag=="cluster") {
@@ -75,12 +66,99 @@ ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
 },USE.NAMES=F)
 ann$geneSym[is.na(ann$geneSym)]=""
 
-ann$keep=1
-
 save.image("tmp2_1.RData")
 
 ## -----------------------------------------------------------------------------------------------------------
 ## -----------------------------------------------------------------------------------------------------------
+## Run regression_refactor_part2.R first
+
+datadir="docs/all/hlaB/"
+probG=read.table(paste(datadir,"HLA-B Alleles_Probabilities.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+callG=read.table(paste(datadir,"HLA-B Alleles_Best Guess Calls.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+names(probG)[match("Subject.ID",names(probG))]="subjectId"
+names(callG)[match("Columns",names(callG))]="subjectId"
+callG=callG[match(probG$subjectId,callG$subjectId),match(names(probG),names(callG))]
+annG=data.frame(id=names(probG)[-1],chr=6,stringsAsFactors=F)
+phenG=data.frame(id=probG$subjectId,subjectId=probG$subjectId,stringsAsFactors=F)
+probG=t(as.matrix(probG[,-1]))
+callG=t(as.matrix(callG[,-1]))
+rownames(probG)=rownames(callG)=annG$id
+colnames(probG)=colnames(callG)=phenG$id
+
+annC=read.table(paste(datadir,"annotation_res_concordance.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+
+candGeneInfo=data.frame(geneSym=c("HLA-B","AS","HLAB","B-4901"),stringsAsFactors=F)
+x=ann[grep("HLA-B|AS|HLAB|B-4901",toupper(ann$UCSC_RefGene_Name)),]
+x=ann[grep("HLA-B|AS|HLAB|B-4901",toupper(ann$geneSym)),]
+x=ann[which(toupper(ann$geneSym)%in%toupper(candGene$geneSym)),]
+
+
+callG2=probG
+callG2[probG<.5]=0
+callG2[probG>=.5 & probG<=1.5]=1
+callG2[probG>1.5]=2
+callG2[is.na(probG)]=NA
+table(callG=c(callG),callG2=c(callG2),exclude=NULL)
+i=which(c(callG)!=c(callG2))
+png("tmp.png")
+boxplot(c(probG)[i]~c(callG)[i])
+dev.off()
+
+
+## ----------------------------------------------
+
+stat0=stat_hlabCo12
+stat1=stat_hlabCa1
+stat2=stat_hlabCa2
+
+pThres=0.05
+lim=range(c(stat0$coef_hlaBallele1v0,stat1$coef_hlaBallele1v0,stat2$coef_hlaBallele1v0,stat0$coef_hlaBallele2v0,stat1$coef_hlaBallele2v0,stat2$coef_hlaBallele2v0),na.rm=T)
+varName="Coefficient"
+cexMain=3; cexLab=3; cexAxis=2
+colList=c("green","cyan","red")
+png("tmp.png",width=3*480,height=2*480)
+par(mfrow=c(2,3))
+par(mar=c(5, 4, 4, 2) + 0.1)
+par(mar=c(5, 6, 4, 2) + 0.1)
+for (varList in c("hlaBallele1v0","hlaBallele2v0")) {
+    colId=paste("coef_",varList,sep="")
+    colIdPV=paste("holm_",varList,sep="")
+    header=paste(varList)
+    for (compFlag in c("co12Vca1","co12Vca2","ca1Vca2")) {
+        switch(compFlag,
+        "co12Vca1"={
+            stat_1=stat0; stat_2=stat1
+            ttl=paste(c("Set1+Set2 ctrl","Set1 case"),": ",varName,sep="")
+        },
+        "co12Vca2"={
+            stat_1=stat0; stat_2=stat2
+            ttl=paste(c("Set1+Set2 ctrl","Set2 case"),": ",varName,sep="")
+        },
+        "ca1Vca2"={
+            stat_1=stat1; stat_2=stat2
+            ttl=paste(c("Set1 case","Set2 case"),": ",varName,sep="")
+        },
+        )
+        x=table(stat_1[,colIdPV]<pThres,stat_2[,colIdPV]<pThres)
+        plot(stat_1[,colId],stat_2[,colId],xlim=lim,ylim=lim,main=header,xlab=ttl[1],ylab=ttl[2],cex.main=cexMain,cex.lab=cexLab,cex.axis=cexAxis)
+        i=which(stat_1[,colIdPV]<pThres & stat_2[,colIdPV]>=pThres)
+        points(stat_1[i,colId],stat_2[i,colId],col=colList[1])
+        i=which(stat_1[,colIdPV]>=pThres & stat_2[,colIdPV]<pThres)
+        points(stat_1[i,colId],stat_2[i,colId],col=colList[2])
+        i=which(stat_1[,colIdPV]<pThres & stat_2[,colIdPV]<pThres)
+        points(stat_1[i,colId],stat_2[i,colId],col=colList[3])
+        abline(h=0,lty="dotted"); abline(v=0,lty="dotted"); abline(c(0,1),lty="dotted");
+        ttl2=c("x-axis","y-axis","both")
+        if (nrow(x)==ncol(x)) ttl2=paste(ttl2," (",c(x)[2:4],")",sep="")
+        legend(x=lim[1],y=lim[2],title=paste("Holm<=",pThres,sep=""),legend=ttl2,fill=colList,cex=2)
+    }
+}
+dev.off()
+
+####################################################################
+####################################################################
+## NOT USED from here on
+
 
 ## ----------------------------------------------
 ## Subsets
@@ -145,18 +223,6 @@ if (F) {
     stat_cc_s1=read.table(paste(datadir,"stat_",varFlag,"Resp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     stat_cc_s1=read.table(paste(datadir,"stat_",varFlag,"Resp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 }
-
-## --------------
-
-transformFlag=""
-transformFlag="_mVal"
-
-datadir="results/comparison/hlaB/"
-
-varFlag=""
-stat_hlabCo12=read.table(paste(datadir,"stat_methResp_hlaB_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-stat_hlabCa1=read.table(paste(datadir,"stat_methResp_hlaB_caseSubset_covPrinComp1234_covEpStr_allGuthSet1_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-stat_hlabCa2=read.table(paste(datadir,"stat_methResp_hlaB_caseSubset_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 
 ## --------------
 
@@ -1429,402 +1495,374 @@ source(paste(dirSrc,"functions/TTest.9.1.7.R",sep=""))
 #for (compId in c("aml_cc_1_00","aml_cc_1_0","aml_cc_1_1","aml_cc_1_2","aml_cc_2_00","aml_cc_2_0","aml_cc_2_1","aml_cc_2_2")) {
 #for (compId in c("cc_2","cc_fs_2","cc_ms_2","cc_he_2","cc_we_2","cc_3")) {
 #for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
-#for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
-for (compId in c("hlabCo12","hlabCa1","hlabCa2")) {
+for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
     colIdPV="pv"
 	cat("\n\n==================",compId,"==================\n")
 	switch(compId,
-        "hlabCo12"={
-            stat2=stat_hlabCo12
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "hlabCa1"={
-            stat2=stat_hlabCa1
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "hlabCa2"={
-            stat2=stat_hlabCa2
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb105"={
-            stat2=stat_pcb105
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb118"={
-            stat2=stat_pcb118
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb138"={
-            stat2=stat_pcb138
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb153"={
-            stat2=stat_pcb153
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb170"={
-            stat2=stat_pcb170
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb180"={
-            stat2=stat_pcb180
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "pcb1260"={
-            stat2=stat_pcb1260
-            colIdPV=names(stat2)[grep("pv_",names(stat2))]
-        },
-        "cc_s1"={
-            stat2=stat_cc_s1
-            colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
-        },
-        "cc_s2"={
-            stat2=stat_cc_s2
-            colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
-        },
-        "cc_s3"={
-            stat2=stat_cc_s3
-            colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
-        },
-        "cc_s4"={
-            stat2=stat_cc_s4
-            colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
-        },
-        "cc_s5"={
-            stat2=stat_cc_s5
-            colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
-        },
-        "cc_s6"={
-            stat2=stat_cc_s6
-            colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
-        },
-        "cc_2"={
-            stat2=stat_cc_2
-            colIdPV=paste("pv_",varFlag,sep="")
-        },
-        "cc_fs_2"={
-            stat2=stat_cc_fs_2
-            colIdPV=paste("pv_",varFlag,sep="")
-        },
-        "cc_ms_2"={
-            stat2=stat_cc_ms_2
-            colIdPV=paste("pv_",varFlag,sep="")
-        },
-        "cc_he_2"={
-            stat2=stat_cc_he_2
-            colIdPV=paste("pv_",varFlag,sep="")
-        },
-        "cc_we_2"={
-            stat2=stat_cc_we_2
-            colIdPV=paste("pv_",varFlag,sep="")
-        },
-        "cc_3"={
-            stat2=stat_cc_3
-            colIdPV=paste("pv_",varFlag,sep="")
-        },
-        "med_zS"={
-           stat2=stat_bw_z
-           colIdPV="pv_S"
-       },
-       "med_zA"={
-           stat2=stat_bw_z
-           colIdPV="pv_A"
-       },
-       "med_zG"={
-           stat2=stat_bw_z
-           colIdPV="pv_G"
-       },
-       "p_co_1"={
-           stat2=stat_bw_1_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "p_co_2"={
-           stat2=stat_bw_2_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "mp_2"={
-           stat2=stat_bw_i_2
-           colIdPV=paste("pv_meth.",varFlag,sep="")
-       },
-       "p2_co_1"={
-           stat2=stat_bw_1_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "p2_co_2"={
-           stat2=stat_bw_2_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "mp2_2"={
-           stat2=stat_bw_i_2
-           colIdPV=paste("pv_meth.",varFlag,sep="")
-       },
-       "p_co_m_1"={
-           stat2=stat_bw_1_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "p_co_m_2"={
-           stat2=stat_bw_2_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "mp_m_2"={
-           stat2=stat_bw_i_2
-           colIdPV=paste("pv_meth.",varFlag,sep="")
-       },
-       "p2_co_m_1"={
-           stat2=stat_bw_1_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "p2_co_m_2"={
-           stat2=stat_bw_2_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "mp2_m_2"={
-           stat2=stat_bw_i_2
-           colIdPV=paste("pv_meth.",varFlag,sep="")
-       },
-       "p3_co_3"={
-           stat2=stat_bw_3_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "p3_co_4"={
-           stat2=stat_bw_4_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "mp3_4"={
-           stat2=stat_bw_i_4
-           colIdPV=paste("pv_meth.",varFlag,sep="")
-       },
-       "p4_co_3"={
-           stat2=stat_bw_3_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "p4_co_4"={
-           stat2=stat_bw_4_0
-           colIdPV=paste("pv_",varFlag,sep="")
-       },
-       "mp4_4"={
-           stat2=stat_bw_i_4
-           colIdPV=paste("pv_meth.",varFlag,sep="")
-       },
-       "aml_cc_1_00"={
-           stat2=stat_aml_1_00
-           colIdPV="pv_caco"
-       },
-       "aml_cc_1_0"={
-           stat2=stat_aml_1_0
-           colIdPV="pv_caco"
-       },
-       "aml_cc_1_1"={
-           stat2=stat_aml_1_1
-           colIdPV="pv_caco"
-       },
-       "aml_cc_1_2"={
-           stat2=stat_aml_1_2
-           colIdPV="pv_caco"
-       },
-       "aml_cc_2_00"={
-           stat2=stat_aml_2_00
-           colIdPV="pv_meth"
-       },
-       "aml_cc_2_0"={
-           stat2=stat_aml_2_0
-           colIdPV="pv_meth"
-       },
-       "aml_cc_2_1"={
-           stat2=stat_aml_2_1
-           colIdPV="pv_meth"
-       },
-       "aml_cc_2_2"={
-           stat2=stat_aml_2_2
-           colIdPV="pv_meth"
-       }
-    )
+            "pcb105"={
+                stat2=stat_pcb105
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb118"={
+                stat2=stat_pcb118
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb138"={
+                stat2=stat_pcb138
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb153"={
+                stat2=stat_pcb153
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb170"={
+                stat2=stat_pcb170
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb180"={
+                stat2=stat_pcb180
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "pcb1260"={
+                stat2=stat_pcb1260
+                colIdPV=names(stat2)[grep("pv_",names(stat2))]
+            },
+            "cc_s1"={
+                stat2=stat_cc_s1
+                colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
+            },
+            "cc_s2"={
+                stat2=stat_cc_s2
+                colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
+            },
+            "cc_s3"={
+                stat2=stat_cc_s3
+                colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
+            },
+            "cc_s4"={
+                stat2=stat_cc_s4
+                colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
+            },
+            "cc_s5"={
+                stat2=stat_cc_s5
+                colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
+            },
+            "cc_s6"={
+                stat2=stat_cc_s6
+                colIdPV=names(stat2)[grep("pv_meth.",names(stat2))]
+            },
+            "cc_2"={
+                stat2=stat_cc_2
+                colIdPV=paste("pv_",varFlag,sep="")
+            },
+            "cc_fs_2"={
+                stat2=stat_cc_fs_2
+                colIdPV=paste("pv_",varFlag,sep="")
+            },
+            "cc_ms_2"={
+                stat2=stat_cc_ms_2
+                colIdPV=paste("pv_",varFlag,sep="")
+            },
+            "cc_he_2"={
+                stat2=stat_cc_he_2
+                colIdPV=paste("pv_",varFlag,sep="")
+            },
+            "cc_we_2"={
+                stat2=stat_cc_we_2
+                colIdPV=paste("pv_",varFlag,sep="")
+            },
+            "cc_3"={
+                stat2=stat_cc_3
+                colIdPV=paste("pv_",varFlag,sep="")
+            },
+            "med_zS"={
+               stat2=stat_bw_z
+               colIdPV="pv_S"
+		   },
+           "med_zA"={
+               stat2=stat_bw_z
+               colIdPV="pv_A"
+           },
+           "med_zG"={
+               stat2=stat_bw_z
+               colIdPV="pv_G"
+           },
+           "p_co_1"={
+               stat2=stat_bw_1_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "p_co_2"={
+               stat2=stat_bw_2_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "mp_2"={
+               stat2=stat_bw_i_2
+               colIdPV=paste("pv_meth.",varFlag,sep="")
+           },
+           "p2_co_1"={
+               stat2=stat_bw_1_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "p2_co_2"={
+               stat2=stat_bw_2_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "mp2_2"={
+               stat2=stat_bw_i_2
+               colIdPV=paste("pv_meth.",varFlag,sep="")
+           },
+           "p_co_m_1"={
+               stat2=stat_bw_1_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "p_co_m_2"={
+               stat2=stat_bw_2_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "mp_m_2"={
+               stat2=stat_bw_i_2
+               colIdPV=paste("pv_meth.",varFlag,sep="")
+           },
+           "p2_co_m_1"={
+               stat2=stat_bw_1_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "p2_co_m_2"={
+               stat2=stat_bw_2_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "mp2_m_2"={
+               stat2=stat_bw_i_2
+               colIdPV=paste("pv_meth.",varFlag,sep="")
+           },
+           "p3_co_3"={
+               stat2=stat_bw_3_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "p3_co_4"={
+               stat2=stat_bw_4_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "mp3_4"={
+               stat2=stat_bw_i_4
+               colIdPV=paste("pv_meth.",varFlag,sep="")
+           },
+           "p4_co_3"={
+               stat2=stat_bw_3_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "p4_co_4"={
+               stat2=stat_bw_4_0
+               colIdPV=paste("pv_",varFlag,sep="")
+           },
+           "mp4_4"={
+               stat2=stat_bw_i_4
+               colIdPV=paste("pv_meth.",varFlag,sep="")
+           },
+           "aml_cc_1_00"={
+               stat2=stat_aml_1_00
+               colIdPV="pv_caco"
+           },
+           "aml_cc_1_0"={
+               stat2=stat_aml_1_0
+               colIdPV="pv_caco"
+           },
+           "aml_cc_1_1"={
+               stat2=stat_aml_1_1
+               colIdPV="pv_caco"
+           },
+           "aml_cc_1_2"={
+               stat2=stat_aml_1_2
+               colIdPV="pv_caco"
+           },
+           "aml_cc_2_00"={
+               stat2=stat_aml_2_00
+               colIdPV="pv_meth"
+           },
+           "aml_cc_2_0"={
+               stat2=stat_aml_2_0
+               colIdPV="pv_meth"
+           },
+           "aml_cc_2_1"={
+               stat2=stat_aml_2_1
+               colIdPV="pv_meth"
+           },
+           "aml_cc_2_2"={
+               stat2=stat_aml_2_2
+               colIdPV="pv_meth"
+           }
+		   )
 	iA2=match(stat2$cpgId,ann$IlmnID)
-    for (cId in 1:length(colIdPV)) {
-        stat2$qv=NA
-        #i=which(ann$snp[iA2]==0 & ann$CHR[iA2]%in%1:22)
-        i=which(ann$keep[iA2]==1)
-        stat2$qv[i]=getAdjustedPvalue(stat2[i,colIdPV[cId]],method=adjPFlag,strict=T)
-        if (all(is.na(stat2$qv))) {
-            cat("Using BH method !!!\n")
-            stat2$qv[i]=getAdjustedPvalue(stat2[i,colIdPV[cId]],method=adjPFlag,strict=F)
-            #stat2$qv[i]=p.adjust(stat2[i,colIdPV[cId]],method="BH")
-        }
-        i=which(stat2$qv<.05)
-        if (any(stat2$qv[i]<stat2[i,colIdPV[cId]])) {cat("Q-value < p-value !!!\n")}
-        names(stat2)[which(names(stat2)=="qv")]=sub("pv",adjPFlag,colIdPV[cId])
-        if (F) {
-            i=which(ann$keep[iA2]==1)
-            stat2$lambda=stat2$qvGI=stat2$pvGI=NA
-            stat2$lambda[i]=qchisq(median(stat2[i,colIdPV[cId]],na.rm=T), df = 1, lower.tail = F)/qchisq(0.5, 1)
-            stat2$pvGI[i]=stat2[i,colIdPV[cId]]*stat2$lambda[i]
-            stat2$qvGI[i]=getAdjustedPvalue(stat2[i,"pvGI"],method=adjPFlag,strict=T)
-            if (all(is.na(stat2$qvGI))) {
-                cat("Using BH method !!!\n")
-                stat2$qvGI[i]=getAdjustedPvalue(stat2[i,"pvGI"],method=adjPFlag,strict=F)
-                #stat2$qvGI[i]=p.adjust(stat2[i,"pvGI"],method="BH")
-            }
-            i=which(stat2$qvGI<.05)
-            if (any(stat2$qvGI[i]<stat2[i,"pvGI"])) {cat("Q-value < p-value !!!\n")}
-            names(stat2)[which(names(stat2)=="qvGI")]=sub("pv",adjPFlag,"GI",colIdPV[cId])
-        }
-        
+	stat2$qv=NA
+    #i=which(ann$snp[iA2]==0 & ann$CHR[iA2]%in%1:22)
+    i=which(ann$keep[iA2]==1)
+    stat2$qv[i]=getAdjustedPvalue(stat2[i,colIdPV],method="qv",strict=T)
+	if (all(is.na(stat2$qv))) {
+		cat("Using BH method !!!\n")
+        stat2$qv[i]=getAdjustedPvalue(stat2[i,colIdPV],method="qv",strict=F)
+        #stat2$qv[i]=p.adjust(stat2[i,colIdPV],method="BH")
     }
+	i=which(stat2$qv<.05)
+	if (any(stat2$qv[i]<stat2[i,colIdPV])) {cat("Q-value < p-value !!!\n")}
+    names(stat2)[which(names(stat2)=="qv")]=sub("pv","qv",colIdPV)
+    i=which(ann$keep[iA2]==1)
+    stat2$lambda=stat2$qvGI=stat2$pvGI=NA
+    stat2$lambda[i]=qchisq(median(stat2[i,colIdPV],na.rm=T), df = 1, lower.tail = F)/qchisq(0.5, 1)
+    stat2$pvGI[i]=stat2[i,colIdPV]*stat2$lambda[i]
+    stat2$qvGI[i]=getAdjustedPvalue(stat2[i,"pvGI"],method="qv",strict=T)
+    if (all(is.na(stat2$qvGI))) {
+        cat("Using BH method !!!\n")
+        stat2$qvGI[i]=getAdjustedPvalue(stat2[i,"pvGI"],method="qv",strict=F)
+        #stat2$qvGI[i]=p.adjust(stat2[i,"pvGI"],method="BH")
+    }
+    i=which(stat2$qvGI<.05)
+    if (any(stat2$qvGI[i]<stat2[i,"pvGI"])) {cat("Q-value < p-value !!!\n")}
 	switch(compId,
-        "hlabCo12"={
-            stat_hlabCo12=stat2
-        },
-        "hlabCa1"={
-            stat_hlabCa1=stat2
-        },
-        "hlabCa2"={
-            stat_hlabCa2=stat2
-        },
-        "pcb105"={
-            stat_pcb105=stat2
-        },
-        "pcb118"={
-            stat_pcb118=stat2
-        },
-        "pcb138"={
-            stat_pcb138=stat2
-        },
-        "pcb153"={
-            stat_pcb153=stat2
-        },
-        "pcb170"={
-            stat_pcb170=stat2
-        },
-        "pcb180"={
-            stat_pcb180=stat2
-        },
-        "pcb1260"={
-            stat_pcb1260=stat2
-        },
-        "cc_s1"={
-            stat_cc_s1=stat2
-        },
-        "cc_s2"={
-            stat_cc_s2=stat2
-        },
-        "cc_s3"={
-            stat_cc_s3=stat2
-        },
-        "cc_s4"={
-            stat_cc_s4=stat2
-        },
-        "cc_s5"={
-            stat_cc_s5=stat2
-        },
-        "cc_s6"={
-            stat_cc_s6=stat2
-        },
-        "cc_2"={
-            stat_cc_2=stat2
-        },
-        "cc_fs_2"={
-            stat_cc_fs_2=stat2
-        },
-        "cc_ms_2"={
-            stat_cc_ms_2=stat2
-        },
-        "cc_he_2"={
-            stat_cc_he_2=stat2
-        },
-        "cc_we_2"={
-            stat_cc_we_2=stat2
-        },
-        "cc_3"={
-            stat_cc_3=stat2
-        },
-        "med_zS"={
-           stat_bw_z=stat2
-       },
-       "med_zA"={
-           stat_bw_z=stat2
-       },
-       "med_zG"={
-           stat_bw_z=stat2
-       },
-       "p_co_1"={
-           stat_bw_1_0=stat2
-       },
-       "p_co_2"={
-           stat_bw_2_0=stat2
-       },
-       "mp_2"={
-           stat_bw_i_2=stat2
-       },
-       "p2_co_1"={
-           stat_bw_1_0=stat2
-       },
-       "p2_co_2"={
-           stat_bw_2_0=stat2
-       },
-       "mp2_2"={
-           stat_bw_i_2=stat2
-       },
-       "p_co_m_1"={
-           stat_bw_1_0=stat2
-       },
-       "p_co_m_2"={
-           stat_bw_2_0=stat2
-       },
-       "mp_m_2"={
-           stat_bw_i_2=stat2
-       },
-       "p2_co_m_1"={
-           stat_bw_1_0=stat2
-       },
-       "p2_co_m_2"={
-           stat_bw_2_0=stat2
-       },
-       "mp2_m_2"={
-           stat_bw_i_2=stat2
-       },
-       "p3_co_3"={
-           stat_bw_3_0=stat2
-       },
-       "p3_co_4"={
-           stat_bw_4_0=stat2
-       },
-       "mp3_4"={
-           stat_bw_i_4=stat2
-       },
-       "p4_co_3"={
-           stat_bw_3_0=stat2
-       },
-       "p4_co_4"={
-           stat_bw_4_0=stat2
-       },
-       "mp4_4"={
-           stat_bw_i_4=stat2
-       },
-       "aml_cc_1_00"={
-           stat_aml_1_00=stat2
-       },
-       "aml_cc_1_0"={
-           stat_aml_1_0=stat2
-       },
-       "aml_cc_1_1"={
-           stat_aml_1_1=stat2
-       },
-       "aml_cc_1_2"={
-           stat_aml_1_2=stat2
-       },
-       "aml_cc_2_00"={
-           stat_aml_2_00=stat2
-       },
-       "aml_cc_2_0"={
-           stat_aml_2_0=stat2
-       },
-       "aml_cc_2_1"={
-           stat_aml_2_1=stat2
-       },
-       "aml_cc_2_2"={
-           stat_aml_2_2=stat2
-       }
-    )
+            "pcb105"={
+                stat_pcb105=stat2
+            },
+            "pcb118"={
+                stat_pcb118=stat2
+            },
+            "pcb138"={
+                stat_pcb138=stat2
+            },
+            "pcb153"={
+                stat_pcb153=stat2
+            },
+            "pcb170"={
+                stat_pcb170=stat2
+            },
+            "pcb180"={
+                stat_pcb180=stat2
+            },
+            "pcb1260"={
+                stat_pcb1260=stat2
+            },
+            "cc_s1"={
+                stat_cc_s1=stat2
+            },
+            "cc_s2"={
+                stat_cc_s2=stat2
+            },
+            "cc_s3"={
+                stat_cc_s3=stat2
+            },
+            "cc_s4"={
+                stat_cc_s4=stat2
+            },
+            "cc_s5"={
+                stat_cc_s5=stat2
+            },
+            "cc_s6"={
+                stat_cc_s6=stat2
+            },
+            "cc_2"={
+                stat_cc_2=stat2
+            },
+            "cc_fs_2"={
+                stat_cc_fs_2=stat2
+            },
+            "cc_ms_2"={
+                stat_cc_ms_2=stat2
+            },
+            "cc_he_2"={
+                stat_cc_he_2=stat2
+            },
+            "cc_we_2"={
+                stat_cc_we_2=stat2
+            },
+            "cc_3"={
+                stat_cc_3=stat2
+            },
+            "med_zS"={
+               stat_bw_z=stat2
+		   },
+           "med_zA"={
+               stat_bw_z=stat2
+           },
+           "med_zG"={
+               stat_bw_z=stat2
+           },
+           "p_co_1"={
+               stat_bw_1_0=stat2
+           },
+           "p_co_2"={
+               stat_bw_2_0=stat2
+           },
+           "mp_2"={
+               stat_bw_i_2=stat2
+           },
+           "p2_co_1"={
+               stat_bw_1_0=stat2
+           },
+           "p2_co_2"={
+               stat_bw_2_0=stat2
+           },
+           "mp2_2"={
+               stat_bw_i_2=stat2
+           },
+           "p_co_m_1"={
+               stat_bw_1_0=stat2
+           },
+           "p_co_m_2"={
+               stat_bw_2_0=stat2
+           },
+           "mp_m_2"={
+               stat_bw_i_2=stat2
+           },
+           "p2_co_m_1"={
+               stat_bw_1_0=stat2
+           },
+           "p2_co_m_2"={
+               stat_bw_2_0=stat2
+           },
+           "mp2_m_2"={
+               stat_bw_i_2=stat2
+           },
+           "p3_co_3"={
+               stat_bw_3_0=stat2
+           },
+           "p3_co_4"={
+               stat_bw_4_0=stat2
+           },
+           "mp3_4"={
+               stat_bw_i_4=stat2
+           },
+           "p4_co_3"={
+               stat_bw_3_0=stat2
+           },
+           "p4_co_4"={
+               stat_bw_4_0=stat2
+           },
+           "mp4_4"={
+               stat_bw_i_4=stat2
+           },
+           "aml_cc_1_00"={
+               stat_aml_1_00=stat2
+           },
+           "aml_cc_1_0"={
+               stat_aml_1_0=stat2
+           },
+           "aml_cc_1_1"={
+               stat_aml_1_1=stat2
+           },
+           "aml_cc_1_2"={
+               stat_aml_1_2=stat2
+           },
+           "aml_cc_2_00"={
+               stat_aml_2_00=stat2
+           },
+           "aml_cc_2_0"={
+               stat_aml_2_0=stat2
+           },
+           "aml_cc_2_1"={
+               stat_aml_2_1=stat2
+           },
+           "aml_cc_2_2"={
+               stat_aml_2_2=stat2
+           }
+		   )
 }
 
 save.image("tmp2.RData")
@@ -1879,8 +1917,8 @@ if (length(ii)!=0) {
 ####################################################################
 ## ----------------------------------------------
 
-plotFlag="_onePlot"
 plotFlag=""
+plotFlag="_onePlot"
 
 outlierFlag=F
 outlierFlag=T
@@ -1896,34 +1934,17 @@ outlierFlag=T
 #for (compId in c("aml_cc_1_0","aml_cc_1_1","aml_cc_1_2","aml_cc_2_00","aml_cc_2_0","aml_cc_2_1","aml_cc_2_2")) {
 #for (compId in c("cc_2","cc_fs_2","cc_ms_2","cc_he_2","cc_we_2","cc_3")) {
 #for (compId in c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")) {
-#for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
-for (compId in c("hlabCo12","hlabCa1","hlabCa2")) {
-    stat2=stat_hlabCo12
-    colListPV=names(stat2)[grep("pv_",names(stat2))]
-    for (cId in 1:length(colListPV)) {
-        colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.001
-        colIdEst="coef"; colIdPV=c("pv",adjPFlag); 	pThres=0.1
-        colIdEst="coef"; colIdPV=c("pv",adjPFlag); 	pThres=0.01
-        colIdEst="coef"; colIdPV=c("pv",adjPFlag); 	pThres=10^-28
-        colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=10^-28
-        colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.05
-        colIdEst="coef"; colIdPV=c("pvGI","qvGI"); 	pThres=0.05
-        colIdEst="coef"; colIdPV=c("pv",adjPFlag); 	pThres=0.05
-        
-        colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],colListPV[cId]); pThres=0.05
-        colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],colListPV[cId]); pThres=0.5
-        colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],sub("pv",adjPFlag,colListPV[cId])); pThres=0.05
-        
-        switch(compId,
-            "hlabCo12"={
-                stat2=stat_hlabCo12; fName1=paste("_methResp_hlaB_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nSet1+Set2 ctrl: meth ~ hlaB\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
-            },
-            "hlabCa1"={
-                stat2=stat_hlabCa1; fName1=paste("_methResp_hlaB_caseSubset_covPrinComp1234_covEpStr_allGuthSet1_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nSet1 case: meth ~ hlaB\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
-            },
-            "hlabCa2"={
-                stat2=stat_hlabCa2; fName1=paste("_methResp_hlaB_caseSubset_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nSet2 case: meth ~ hlaB\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
-            },
+for (compId in c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")) {
+    colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.001
+    colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=0.1
+    colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=0.01
+    colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=10^-28
+    colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=10^-28
+    colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.05
+    colIdEst="coef"; colIdPV=c("pvGI","qvGI"); 	pThres=0.05
+    colIdEst="coef"; colIdPV=c("pv","qv"); 	pThres=0.05
+    
+	switch(compId,
             "pcb105"={
                 stat2=stat_pcb105; fName1=paste("_methResp_logged_PCB_105_SRS_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_bmiq",transformFlag,sep=""); compName=paste("M-value based\nSet1+Set2 ctrl: meth ~ pcb105\nCov: set, ReFACTor comp 1,2,3,4, epistructure",sep="")
                 names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
@@ -2015,7 +2036,7 @@ for (compId in c("hlabCo12","hlabCa1","hlabCa2")) {
             "med_1"={
                stat2=stat_bw_1; fName1=paste("_mediation_cacoResp_",strsplit(modelFlag,"->")[[1]][1],"_covSexHisp_covPrinComp1234_allGuthSet2",sep=""); compName=paste("Coefficient: c (",strsplit(modelFlag,"->")[[1]][1],")\nSet2: caco ~ ",strsplit(modelFlag,"->")[[1]][1],". Cov: Sex, hisp,\nReFACTor comp 1,2,3,4",sep="")
                names(stat2)=sub(paste("_",strsplit(modelFlag,"->")[[1]][1],sep=""),"",names(stat2))
-           },
+		   },
            "med_2"={
                stat2=stat_bw_2; fName1=paste("_mediation_",strsplit(modelFlag,"->")[[1]][2],"Resp_",strsplit(modelFlag,"->")[[1]][1],"_covSexHisp_covPrinComp1234_allGuthSet2",sep=""); compName=paste("Coefficient: a (",strsplit(modelFlag,"->")[[1]][1],")\nSet2: ",strsplit(modelFlag,"->")[[1]][2]," ~ ",strsplit(modelFlag,"->")[[1]][1],". Cov: Sex, hisp,\nReFACTor comp 1,2,3,4",sep="")
                names(stat2)=sub(paste("_",strsplit(modelFlag,"->")[[1]][1],sep=""),"",names(stat2))
@@ -2164,230 +2185,225 @@ for (compId in c("hlabCo12","hlabCa1","hlabCa2")) {
                stat2=stat_aml_2_2; fName1=paste("_cacoResp_meth_noHispWtSubset_covSexGestage_covEpStr_aml_bmiq",transformFlag,sep=""); compName=paste("Beta-value based\nCoefficient: meth\nAML noHispWt: caco ~ meth\nCov: sex, gestage, epistr",sep="")
                names(stat2)=sub("_meth","",names(stat2),fixed=T)
            }
-        )
-        i=match(stat2$cpgId,ann$IlmnID)
-        #stat2=stat2[which(ann$snp[i]==0),]
-        stat2=stat2[which(ann$keep[i]==1),]
-        iA2=match(stat2$cpgId,ann$IlmnID)
-        #iL=match(stat2$cpgId,dmr$CpG)
-        #table(is.na(iL))
-        
-        ann2=ann[iA2,]
-        
+	)
+	i=match(stat2$cpgId,ann$IlmnID)
+    #stat2=stat2[which(ann$snp[i]==0),]
+    stat2=stat2[which(ann$keep[i]==1),]
+    iA2=match(stat2$cpgId,ann$IlmnID)
+    #iL=match(stat2$cpgId,dmr$CpG)
+    #table(is.na(iL))
+	
+	ann2=ann[iA2,]
+	
 ####################################################################
+	
+	cat("\n\n",compName,"\n",sep="")
+	i=which(ann$keep[iA2]==1)
+	stat=stat2
+	fName=fName1
+	
+	x1=matrix(0,nrow=2,ncol=2,dimnames=list(c("dn","up"),paste(colIdPV[2],c(">=","<"),pThres,sep="")))
+	ii=i[which(stat[i,colIdEst]!=0)]
+	x2=table(stat[ii,colIdEst]>0,stat[ii,colIdPV[2]]<pThres)
+	x1[match(rownames(x2),c("FALSE","TRUE")),match(colnames(x2),c("FALSE","TRUE"))]=x2
+	print(x1)
+	
+	if (plotFlag=="_onePlot") {
+		png(paste("plots",fName,".png",sep=""),width=3*240, height=1*240)
+		par(mfcol=c(1,3))
+	}
+	
+	if (plotFlag=="") {
+		png(paste("qqplot",fName,".png",sep=""))
+		header=compName
+	} else {
+		header=""
+	}
+	pvs <- sort(na.exclude(stat[i,colIdPV[1]]))
+	qqplot(-log10(runif(length(pvs),0,1)),-log10(pvs),xlab="Expected -log10(p-values) by random",ylab="Observed -log10(p-values)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
+	abline(0,1)
+	if (plotFlag=="") {
+		dev.off()
+	}
+	
+	if (plotFlag=="") {
+		png(paste("histogram",fName,".png",sep=""))
+		header=compName
+	} else {
+		header=""
+	}
+	hist(stat[i,colIdPV[1]],xlab="P-value",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
+	if (plotFlag=="") {
+		dev.off()
+	}
+#	title(main=sub(" ReFACTor","\nReFACTor",compName))
+	title(main=compName)
 
-if (all(is.na(stat2[,colIdEst]))) {next} #{cat("No stats computed !!!\n"); next}
-
-        cat("\n\n",compName,"\n",sep="")
-        i=which(ann$keep[iA2]==1)
-        stat=stat2
-        fName=fName1
-        if (length(colListPV)!=1) {
-            fName=paste(fName1,sub("pv_","_",colIdPV[1][grep("pv_",colIdPV[1])]),sep="")
-        }
-
-        x1=matrix(0,nrow=2,ncol=2,dimnames=list(c("dn","up"),paste(colIdPV[2],c(">=","<"),pThres,sep="")))
-        ii=i[which(stat[i,colIdEst]!=0)]
-        x2=table(stat[ii,colIdEst]>0,stat[ii,colIdPV[2]]<pThres)
-        x1[match(rownames(x2),c("FALSE","TRUE")),match(colnames(x2),c("FALSE","TRUE"))]=x2
-        print(x1)
-        
-        if (plotFlag=="_onePlot") {
-            png(paste("plots",fName,".png",sep=""),width=3*240, height=1*240)
-            par(mfcol=c(1,3))
-        }
-        
-        if (plotFlag=="") {
-            png(paste("qqplot",fName,".png",sep=""))
-            header=compName
-        } else {
-            header=""
-        }
-        pvs <- sort(na.exclude(stat[i,colIdPV[1]]))
-        qqplot(-log10(runif(length(pvs),0,1)),-log10(pvs),xlab="Expected -log10(p-values) by random",ylab="Observed -log10(p-values)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
-        abline(0,1)
-        if (plotFlag=="") {
-            dev.off()
-        }
-        
-        if (plotFlag=="") {
-            png(paste("histogram",fName,".png",sep=""))
-            header=compName
-        } else {
-            header=""
-        }
-        hist(stat[i,colIdPV[1]],xlab="P-value",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
-        if (plotFlag=="") {
-            dev.off()
-        } else {
-            #title(main=sub(" ReFACTor","\nReFACTor",compName))
-            title(main=compName)
-        }
-
-        if (plotFlag=="") {
-            png(paste("volcanoPlot",fName,"_",colIdPV[1],pThres,".png",sep=""))
-            header=compName
-        } else {
-            header=""
-        }
-        iThis=i
-        if (!outlierFlag) {
-            x=quantile(abs(stat[iThis,colIdEst]),probs=.95,na.rm=T)
-            iThis=iThis[which(abs(stat[iThis,colIdEst])<=x)]
-        }
-        plot(stat[iThis,colIdEst],-log10(stat[iThis,colIdPV[1]]),xlab="Estimate",ylab="-log10(p-value)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
-        ii=iThis[which(stat[iThis,colIdPV[2]]<pThres)]
-        points(stat[ii,colIdEst],-log10(stat[ii,colIdPV[1]]),col="red")
-        if (plotFlag=="") {
-            dev.off()
-        }
-        
-        #plot(stat2$coef,-log10(stat2$pv)); iii=which(stat2$qv<.05); points(stat2$coef[iii],-log10(stat2$pv)[iii],col="red")
-        
-        if (plotFlag=="_onePlot") {
-            #par(mfrow=c(1,1))
-            #title(main=compName)
-            dev.off()
-        }
-            
-        if (F) {
-            png(paste("plots",fName,".png",sep=""),width=3*240, height=1*240)
-            par(mfcol=c(1,3))
-            plot(1:6)
-            plot(1:6)
-            title(main=sub(" ReFACTor","\nReFACTor",compName))
-            plot(1:6)
-            dev.off()
-        }
-
-        ii=i[order(stat[i,colIdPV[2]])]
-        ii=ii[stat[ii,colIdPV[2]]<pThres]
-        tbl=cbind(ann[iA2,][ii,],stat[ii,c(colIdEst,unique(colIdPV))])
-        if ("gene_genotype"%in%names(stat)) tbl=cbind(gene_genotype=stat$gene_genotype[ii],tbl)
-        write.table(tbl, file=paste("stat",fName1,"_",colIdPV[2],pThres,".txt",sep=""), append=F,col.names=T,row.names=F, sep="\t",quote=F)
-
-    ####################################################################
-    ## Gene level summarization of p-values
-    ####################################################################
-        
-        pvFlag=""
-        
-        k=which(colnames(stat2)==colIdPV[2])
-        kk=grep("Mean",colnames(stat2)[k])
-        if (length(kk)!=0) k=k[-kk]
-        
-        fName2=fName
-        # pThres=.001; prId=which(ann2$CHR%in%1:22 & !ann2$IlmnID%in%snpVec & !is.na(stat2[,k]) & stat2[,k]<pThres)
-        # prId=which(ann2$CHR%in%1:22 & !ann2$IlmnID%in%snpVec & !is.na(stat2[,k]) & stat2[,k]<pThres)
-        prId=which(ann2$keep==1 & !is.na(stat2[,k]) & stat2[,k]<pThres)
-        
-        if (length(prId)!=0) {
-            annotSel=ann2[prId,]
-            pval=stat2[,k][prId]
-            coef=stat2[,colIdEst[1]][prId]
-            signGiven=stat2$sLEU[prId]
-            
-            
-            if (F) {
-                # Assign polycomb status to each CpG
-                tmp1 = strsplit(annotSel$UCSC_RefGene_Accession,";")
-                names(tmp1)=paste(1:length(tmp1),":",sep="")
-                tmp2 = unlist(tmp1)
-                tmp3 = as.numeric(gsub("[:][[:digit:]]*$","",names(tmp2)))
-                tmp4 = data.frame(UCSC_REFGENE_ACCESSION=tmp2,
-                                  rowid=tmp3, stringsAsFactors=FALSE)
-                load("PolycombComplete-120109.RData")
-                tmp5 = merge(polycombTab,tmp4)
-                tmp6 = unique(tmp5$rowid)
-                annotSel$PcG = rep(0, dim(annotSel)[1])
-                annotSel$PcG[tmp6] = 1 
-            }
-            
-            # Get an index of CpGs by gene region
-            tmp1 = strsplit(annotSel$UCSC_RefGene_Name,";")
-            names(tmp1)=paste(1:length(tmp1),":",sep="")
-            tmp2 = unlist(tmp1)
-            tmp3 = as.numeric(gsub("[:][[:digit:]]*$","",names(tmp2)))
-            tmp4 = strsplit(annotSel$UCSC_RefGene_Group,";")
-            names(tmp4)=paste(1:length(tmp4),":",sep="")
-            tmp5 = unlist(tmp4)
-            tmp6 = as.numeric(gsub("[:][[:digit:]]*$","",names(tmp5)))
-            all(tmp3==tmp6)
-            
-            if (F) {
-                library(qvalue)
-                qval = qvalue(pval)
-                qval$pi0
-                qThresh = max(pval[qval$qv<=0.05])
-                qThresh
-            }
-            
-            GeneAnnotation = unique(data.frame(UCSC_REFGENE_NAME=tmp2,UCSC_REFGENE_GROUP=tmp5,rowid=tmp3, stringsAsFactors=FALSE))
-            GeneIndex = split(GeneAnnotation$rowid,with(GeneAnnotation,paste(UCSC_REFGENE_NAME,UCSC_REFGENE_GROUP,sep=":")))
-            GeneIndexN = sapply(GeneIndex, length)
-            
-            if (length(GeneIndexN)!=0) {
-                medPval = sapply(GeneIndex, function(u) median(pval[u],na.rm=T))
-                propHit = sapply(GeneIndex, function(u) mean(pval[u]<pThres,na.rm=T))
-                
-                #isPcG = sapply(GeneIndex, function(u) min(annotSel$PcG[u]))
-                #isNearPcG = sapply(GeneIndex, function(u) max(annotSel$PcG[u]))
-                
-                tmp1 = sapply(GeneIndex, function(u) u[which.min(annotSel$MAPINFO[u])])
-                tmp2 = sapply(GeneIndex, function(u) u[which.max(annotSel$MAPINFO[u])])
-                GeneSym1 = annotSel$UCSC_RefGene_Name[tmp1]
-                GeneSym2 = annotSel$UCSC_RefGene_Name[tmp2]
-                
-                annotSelMap <- as.numeric(annotSel$MAPINFO)
-                tmpF <- function(u) {
-                    sgn = sign(coef[u])
-                    pv = pval[u]
-                    sgnChar = ifelse(pv>pThres, ".", ifelse(sgn<0,"-","+"))
-                    paste(sgnChar[order(annotSel$CHR[u], annotSelMap[u])],collapse="")
-                }
-                #Check
-                #if (length(GeneIndex)>2) print(tmpF(GeneIndex[[3]]))
-                
-                hypohyper =sapply(GeneIndex, tmpF)
-                
-                combineSigns <- function(u) {
-                    sgn = signGiven[u]
-                    sgnChar = ifelse(sgn==0, ".", ifelse(sgn<0,"-","+"))
-                    paste(sgnChar[order(annotSel$CHR[u], annotSelMap[u])],collapse="")
-                }
-                hypohyper2 =sapply(GeneIndex, combineSigns)
-                
-                tmp = strsplit(names(GeneIndexN),":")
-                #GeneResults = data.frame(Gene=sapply(tmp,function(u)u[1]),Region=sapply(tmp,function(u)u[2]), nCpG=GeneIndexN, Sign=hypohyper, SignLeuk=hypohyper2, medPval, propHit, stringsAsFactors=FALSE, GeneSymsFirst=GeneSym1, GeneSymsLast=GeneSym2)
-                GeneResults = data.frame(Gene=sapply(tmp,function(u)u[1]),Region=sapply(tmp,function(u)u[2]), nCpG=GeneIndexN, Sign=hypohyper, medPval, propHit, stringsAsFactors=FALSE, GeneSymsFirst=GeneSym1, GeneSymsLast=GeneSym2)
-                
-                rownames(GeneResults)=NULL
-                ord = order(medPval)
-                
-                if (pThres>1) {
-                    fName=paste("geneSummary_top500_",ifelse(pvFlag=="",colIdPV[2],"pvPerm"),fName2,".txt",sep="")
-                    write.table(GeneResults[ord[1:500],which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
-                    
-                    fName=paste("geneSummary_med",ifelse(pvFlag=="",colIdPV[2],"PvPerm"),".001",fName2,".txt",sep="")
-                    write.table(GeneResults[ord[medPval[ord]<.001],which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
-                    
-                    fName=paste("geneSummary_med",ifelse(pvFlag=="",colIdPV[2],"PvPerm"),".05",fName2,".txt",sep="")
-                    write.table(GeneResults[ord[medPval[ord]<.05],which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
-                } else {
-                    fName=paste("geneSummary_",ifelse(pvFlag=="",colIdPV[2],"pvPerm"),pThres,fName2,".txt",sep="")
-                    write.table(GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
-                }
-            }
-            
-            tbl=GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))]
-            
-            i=prId[grep("FAM5C",ann2$UCSC_RefGene_Name[prId])]
-            i=i[grep("5'UTR",ann2$UCSC_RefGene_Group[i])]
-            tbl[which(tbl$Gene=="FAM5C"),]
-            stat2[i,]
-        }
-####################################################################
+	if (plotFlag=="") {
+		png(paste("volcanoPlot",fName,"_",colIdPV[1],pThres,".png",sep=""))
+		header=compName
+	} else {
+		header=""
+	}
+    iThis=i
+    if (!outlierFlag) {
+        x=quantile(abs(stat[iThis,colIdEst]),probs=.95,na.rm=T)
+        iThis=iThis[which(abs(stat[iThis,colIdEst])<=x)]
     }
+	plot(stat[iThis,colIdEst],-log10(stat[iThis,colIdPV[1]]),xlab="Estimate",ylab="-log10(p-value)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header)
+	ii=iThis[which(stat[iThis,colIdPV[2]]<pThres)]
+	points(stat[ii,colIdEst],-log10(stat[ii,colIdPV[1]]),col="red")
+    if (plotFlag=="") {
+		dev.off()
+	}
+    
+    #plot(stat2$coef,-log10(stat2$pv)); iii=which(stat2$qv<.05); points(stat2$coef[iii],-log10(stat2$pv)[iii],col="red")
+    
+    if (plotFlag=="_onePlot") {
+#		par(mfrow=c(1,1))
+#		title(main=compName)
+		dev.off()
+	}
+	
+	if (F) {
+	
+	png(paste("plots",fName,".png",sep=""),width=3*240, height=1*240)
+	par(mfcol=c(1,3))
+	plot(1:6)
+	plot(1:6)
+	title(main=sub(" ReFACTor","\nReFACTor",compName))
+	plot(1:6)
+	dev.off()
+	}
+
+ii=i[order(stat[i,colIdPV[2]])]
+ii=ii[stat[ii,colIdPV[2]]<pThres]
+tbl=cbind(ann[iA2,][ii,],stat[ii,c("coef","pv")])
+write.table(tbl, file=paste("stat",fName,"_",colIdPV[2],pThres,".txt",sep=""), append=F,col.names=T,row.names=F, sep="\t",quote=F)
+
+####################################################################
+## Gene level summarization of p-values
+####################################################################
+	
+	pvFlag=""
+	
+	k=which(colnames(stat2)==colIdPV[2])
+	kk=grep("Mean",colnames(stat2)[k])
+	if (length(kk)!=0) k=k[-kk]
+	
+	fName2=fName
+    # pThres=.001; prId=which(ann2$CHR%in%1:22 & !ann2$IlmnID%in%snpVec & !is.na(stat2[,k]) & stat2[,k]<pThres)
+    # prId=which(ann2$CHR%in%1:22 & !ann2$IlmnID%in%snpVec & !is.na(stat2[,k]) & stat2[,k]<pThres)
+    prId=which(ann2$keep==1 & !is.na(stat2[,k]) & stat2[,k]<pThres)
+    
+	if (length(prId)!=0) {
+		annotSel=ann2[prId,]
+		pval=stat2[,k][prId]
+		coef=stat2[,colIdEst[1]][prId]
+		signGiven=stat2$sLEU[prId]
+		
+		
+		if (F) {
+            # Assign polycomb status to each CpG
+			tmp1 = strsplit(annotSel$UCSC_RefGene_Accession,";")
+			names(tmp1)=paste(1:length(tmp1),":",sep="")
+			tmp2 = unlist(tmp1)
+			tmp3 = as.numeric(gsub("[:][[:digit:]]*$","",names(tmp2)))
+			tmp4 = data.frame(UCSC_REFGENE_ACCESSION=tmp2,
+							  rowid=tmp3, stringsAsFactors=FALSE)
+			load("PolycombComplete-120109.RData")
+			tmp5 = merge(polycombTab,tmp4)
+			tmp6 = unique(tmp5$rowid)
+			annotSel$PcG = rep(0, dim(annotSel)[1])
+			annotSel$PcG[tmp6] = 1 
+		}
+		
+        # Get an index of CpGs by gene region
+		tmp1 = strsplit(annotSel$UCSC_RefGene_Name,";")
+		names(tmp1)=paste(1:length(tmp1),":",sep="")
+		tmp2 = unlist(tmp1)
+		tmp3 = as.numeric(gsub("[:][[:digit:]]*$","",names(tmp2)))
+		tmp4 = strsplit(annotSel$UCSC_RefGene_Group,";")
+		names(tmp4)=paste(1:length(tmp4),":",sep="")
+		tmp5 = unlist(tmp4)
+		tmp6 = as.numeric(gsub("[:][[:digit:]]*$","",names(tmp5)))
+		all(tmp3==tmp6)
+		
+		if (F) {
+			library(qvalue)
+			qval = qvalue(pval)
+			qval$pi0
+			qThresh = max(pval[qval$qv<=0.05])
+			qThresh
+		}
+		
+		GeneAnnotation = unique(data.frame(UCSC_REFGENE_NAME=tmp2,UCSC_REFGENE_GROUP=tmp5,rowid=tmp3, stringsAsFactors=FALSE))
+		GeneIndex = split(GeneAnnotation$rowid,with(GeneAnnotation,paste(UCSC_REFGENE_NAME,UCSC_REFGENE_GROUP,sep=":")))
+		GeneIndexN = sapply(GeneIndex, length)
+		
+		if (length(GeneIndexN)!=0) {
+			medPval = sapply(GeneIndex, function(u) median(pval[u],na.rm=T))
+			propHit = sapply(GeneIndex, function(u) mean(pval[u]<pThres,na.rm=T))
+			
+			#isPcG = sapply(GeneIndex, function(u) min(annotSel$PcG[u]))
+			#isNearPcG = sapply(GeneIndex, function(u) max(annotSel$PcG[u]))
+			
+			tmp1 = sapply(GeneIndex, function(u) u[which.min(annotSel$MAPINFO[u])])
+			tmp2 = sapply(GeneIndex, function(u) u[which.max(annotSel$MAPINFO[u])])
+			GeneSym1 = annotSel$UCSC_RefGene_Name[tmp1]
+			GeneSym2 = annotSel$UCSC_RefGene_Name[tmp2]
+			
+			annotSelMap <- as.numeric(annotSel$MAPINFO)
+			tmpF <- function(u) {
+				sgn = sign(coef[u])
+				pv = pval[u]
+				sgnChar = ifelse(pv>pThres, ".", ifelse(sgn<0,"-","+"))
+				paste(sgnChar[order(annotSel$CHR[u], annotSelMap[u])],collapse="")
+			}
+			#Check
+            #if (length(GeneIndex)>2) print(tmpF(GeneIndex[[3]]))
+			
+			hypohyper =sapply(GeneIndex, tmpF)
+			
+			combineSigns <- function(u) {
+				sgn = signGiven[u]
+				sgnChar = ifelse(sgn==0, ".", ifelse(sgn<0,"-","+"))
+				paste(sgnChar[order(annotSel$CHR[u], annotSelMap[u])],collapse="")
+			}
+			hypohyper2 =sapply(GeneIndex, combineSigns)
+			
+			tmp = strsplit(names(GeneIndexN),":")
+            #GeneResults = data.frame(Gene=sapply(tmp,function(u)u[1]),Region=sapply(tmp,function(u)u[2]), nCpG=GeneIndexN, Sign=hypohyper, SignLeuk=hypohyper2, medPval, propHit, stringsAsFactors=FALSE, GeneSymsFirst=GeneSym1, GeneSymsLast=GeneSym2)
+            GeneResults = data.frame(Gene=sapply(tmp,function(u)u[1]),Region=sapply(tmp,function(u)u[2]), nCpG=GeneIndexN, Sign=hypohyper, medPval, propHit, stringsAsFactors=FALSE, GeneSymsFirst=GeneSym1, GeneSymsLast=GeneSym2)
+			
+			rownames(GeneResults)=NULL
+			ord = order(medPval)
+			
+			if (pThres>1) {
+				fName=paste("geneSummary_top500_",ifelse(pvFlag=="",colIdPV[2],"pvPerm"),fName2,".txt",sep="")
+				write.table(GeneResults[ord[1:500],which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
+				
+				fName=paste("geneSummary_med",ifelse(pvFlag=="",colIdPV[2],"PvPerm"),".001",fName2,".txt",sep="")
+				write.table(GeneResults[ord[medPval[ord]<.001],which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
+				
+				fName=paste("geneSummary_med",ifelse(pvFlag=="",colIdPV[2],"PvPerm"),".05",fName2,".txt",sep="")
+				write.table(GeneResults[ord[medPval[ord]<.05],which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
+			} else {
+				fName=paste("geneSummary_",ifelse(pvFlag=="",colIdPV[2],"pvPerm"),pThres,fName2,".txt",sep="")
+				write.table(GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
+			}
+		}
+		
+		tbl=GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))]
+		
+		i=prId[grep("FAM5C",ann2$UCSC_RefGene_Name[prId])]
+		i=i[grep("5'UTR",ann2$UCSC_RefGene_Group[i])]
+		tbl[which(tbl$Gene=="FAM5C"),]
+		stat2[i,]
+	}
+	
+####################################################################
+	
 }
 
 ####################################################################

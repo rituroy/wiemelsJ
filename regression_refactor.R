@@ -15,8 +15,13 @@ if (F) {
     qRscript regression_refactor.R "logged_PCB_170_SRS"
     qRscript regression_refactor.R "logged_PCB_180_SRS"
     qRscript regression_refactor.R "logged_PCB_aroclor1260"
+
+    qRscript regression_refactor.R "hlaB"
+    qRscript regression_refactor_0.R "hlaB"
+    qRscript regression_refactor_1.R "hlaB"
+    qRscript regression_refactor_2.R "hlaB"
     '
-    
+
     varThis="logged_PCB_105_SRS"
     varThis="logged_PCB_118_SRS"
     varThis="logged_PCB_138_SRS"
@@ -24,18 +29,22 @@ if (F) {
     varThis="logged_PCB_170_SRS"
     varThis="logged_PCB_180_SRS"
     varThis="logged_PCB_aroclor1260"
+
+    varThis="hlaB"
 }
+
+varThis="hlaB"
 
 ## ---------------------------------
 
-computerFlag=""
 computerFlag="cluster"
+computerFlag=""
 
 ## ---------------------------------
 
 nProbe=10001
-nProbe=101
 nProbe=-1
+nProbe=101
 
 ## ---------------------------------
 subsetName2=""
@@ -51,8 +60,8 @@ datType="_leuk"; subsetName2=""
 datType="_allGuthSet1"; subsetName2="_noNonRndChip"
 datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
-datType="_allGuthSet2"; subsetName2=""
 datType="_allGuthSet1Set2"; subsetName2=""
+datType="_allGuthSet2"; subsetName2=""
 
 mediationFlag=T
 mediationFlag=F
@@ -85,8 +94,11 @@ subsetFlag=""
 subsetFlag="hisp"
 subsetFlag="noHispWt"
 
-subsetFlag="case"
 subsetFlag="ctrl"
+subsetFlag="case"
+
+candGeneFlag=""
+candGeneFlag="_hlaB"
 
 #for (subsetName2 in c("_set1","_set2")) {
 #for (datType in c("_allGuthSet1","_allGuthSet2")) {
@@ -196,6 +208,10 @@ varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="c
 
 varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~caco*",varThis,sep=""); computeFlag[2]="linear"
+
 
 if (mediationFlag) {
     computeFlag=c("regression","")
@@ -260,6 +276,11 @@ if (subsetFlag!="") {
            "noHispWtCtrl"={varName=sub(")"," non-hispanic white controls)",varName)}
 		   )
 }
+
+candGeneName=""
+switch(candGeneFlag,
+    "_hlaB"={candGeneName="HLA-B"}
+)
 
 heading=paste(c(varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",covESFlag,", ",subsetFFlag,", ",datType,subsetName2,", ",normFlag,", ",transformFlag),collapse="")
 cat("\n\n============================ ",paste(computeFlag,collapse=", "),", Refactor ===========================\n\n",sep="")
@@ -1043,15 +1064,19 @@ if (computerFlag=="") {
 	snpVec=snpVec[,1]
 	ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
 }
+ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
+    strsplit(x,";")[[1]][1]
+},USE.NAMES=F)
+ann$geneSym[is.na(ann$geneSym)]=""
 
 i=match(rownames(meth),ann[,"IlmnID"])
 table(is.na(i))
 ann=ann[i,]
 
-#keep=ann$CHR%in%1:22
-keep=ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
-keep=ann$snp==0 & ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
-keep=apply(meth,1,function(x) {any(!is.na(x))})
+#ann$keep=ann$CHR%in%1:22
+ann$keep=ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
+ann$keep=ann$snp==0 & ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
+ann$keep=apply(meth,1,function(x) {any(!is.na(x))})
 
 ## ----------------------------------------------
 
@@ -1071,6 +1096,54 @@ if (datType=="_allGuthSet2") {
     phen$logSemNoSnpNoSexChr[j1]=log(x[j2])
 }
 
+if (candGeneFlag=="_hlaB") {
+    candGeneInfo=data.frame(alias=c("HLA-B","AS","HLAB","B-4901"),stringsAsFactors=F)
+    candGeneInfo$geneId=varThis
+    candGeneInfo$geneSym="HLA-B"
+    
+    probG=read.table(paste(dirCom,"hlaB/HLA-B Alleles_Probabilities.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    callG=read.table(paste(dirCom,"hlaB/HLA-B Alleles_Best Guess Calls.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    names(probG)[match("Subject.ID",names(probG))]="subjectId"
+    names(callG)[match("Columns",names(callG))]="subjectId"
+    callG=callG[match(probG$subjectId,callG$subjectId),match(names(probG),names(callG))]
+    annG=data.frame(id=names(probG)[-1],chr=6,stringsAsFactors=F)
+    phenG=data.frame(id=probG$subjectId,subjectId=probG$subjectId,stringsAsFactors=F)
+    probG=t(as.matrix(probG[,-1]))
+    callG=t(as.matrix(callG[,-1]))
+    rownames(probG)=rownames(callG)=annG$id
+    colnames(probG)=colnames(callG)=phenG$id
+    if (any(is.na(c(callG)))) {
+        cat("DO NOT RUN !!! Missing value !!!\n")
+        candGeneInfo=NULL
+    }
+
+    i=match(toupper(ann$geneSym),toupper(candGeneInfo$alias)); i1=which(!is.na(i)); i2=i[i1]
+    i2=1:nrow(annG)
+    
+    i1=1:5; i2=1:3
+    
+    j=match(phen$subjectId,phenG$subjectId); j1=which(!is.na(j)); j2=j[j1]
+    meth=meth[i1,j1]
+    ann=cbind(ann[i1,])
+    nm=c(names(phen),varThis)
+    x=rep("",nrow(phen))
+    x[1:floor(length(x)/2)]="junk"
+    phen=cbind(phen,x)[j1,]
+    names(phen)=nm
+    callG=callG[i2,j2]
+    probG=probG[i2,j2]
+    annG=annG[i2,]
+    phenG=phenG[j2,]
+} else {
+    callG=matrix(nrow=1,ncol=1)
+}
+
+
+datObj=list(meth=meth,phen=phen,callG=callG)
+
+#save.image(file=paste("tmp_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".RData",sep=""))
+#save(meth,file=paste("meth_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".RData",sep=""))
+
 ################################################
 # Regression
 ################################################
@@ -1080,6 +1153,11 @@ if (varFlag%in%c("_cacoXbirthwt","_cacoXpobw")) {
     ## CHECK !!!
     model1="~caco*predVar"
     colId=match(c("caco1","predVar","caco1:predVar"),colnames(Xunadj))
+} else if (varFlag%in%c("_cacoXhlaB")) {
+    ## CHECK !!!
+    model1="~caco*hlaB"
+    #colId=c("caco1","hlaBallele1v0","hlaBallele2v0","hlaBallele2v1","caco1:hlaBallele1v0","caco1:hlaBallele2v0","caco1:hlaBallele2v1"),colnames(Xunadj))
+    
 } else {
     if (mediationFlag) {
         #model1=paste("~",strsplit(modelFlag,"~")[[1]][2],sep="")
@@ -1128,8 +1206,13 @@ model2=sub("meth*","",sub("meth+","",model1,fixed=T),fixed=T)
 model2=as.formula(model2)
 Xunadj=model.matrix(model2,data=phen)
 samId=match(rownames(Xunadj),phen$id)
-meth=meth[keep,samId]
+meth=meth[ann$keep,samId]
 phen=phen[samId,]
+if (candGeneFlag=="_hlaB") {
+    callG=callG[,samId]
+    probG=probG[,samId]
+    phenG=phenG[samId,]
+}
 
 if (transformFlag=="_mVal") {
     meth1=meth
@@ -1155,59 +1238,80 @@ print(format(timeStamp, "%x %X"))
             out[i,2]=var(meth[i,j])
             out[i,3]=cov(phen[j,varId],meth[i,j])
         }
-        tbl=data.frame(cpgId=ann$IlmnID[keep],out,stringsAsFactors=F)
+        tbl=data.frame(cpgId=ann$IlmnID[ann$keep],out,stringsAsFactors=F)
         write.table(tbl,file=paste("stat_mediation_covariance_",sub("~","Resp_",gsub("+","_",modelFlag,fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transfomrFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
     } else {
-        #nm=c("intercept",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]])
-        nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
+        if (candGeneFlag=="_hlaB") {
+            nm=c("intercept",paste(strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]],"allele",c("1v0","2v0","2v1"),sep=""))
+            colIdA=c("cpgId","gene_genotype")
+        } else {
+            #nm=c("intercept",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]])
+            nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
+            colIdA=c("cpgId")
+        }
         if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
-        tmp=matrix(nrow=nrow(meth),ncol=length(nm),dimnames=list(rownames(meth),nm))
-        out=list(coef=tmp,se=tmp,pValue=tmp)
+        tmpMat=matrix(nrow=nrow(meth),ncol=length(nm),dimnames=list(rownames(meth),nm))
         x=strsplit(modelFlag,"~")[[1]][1]
         model1=paste(x,sub(paste(x,"+",sep=""),"",model1,fixed=T),sep="")
         model1=sub("meth","meth[i,j]",model1)
         colId2=nm
         colId=sub("caco","caco1",sub("intercept","(Intercept)",sub("meth","meth[i, j]",nm)))
         model1=as.formula(model1)
-        if (computeFlag[2]=="linear") {
-            # Run linear regresssion model
-            for (i in 1:nrow(meth)) {
-                j=!is.na(meth[i,])
-                fit=tryCatch(lm(model1, data=phen[j,]),error = function(e) e)
-                if (!inherits(fit,"error")) {
-                    res=summary(fit)$coef
-                    out$coef[i,]=res[colId,1]
-                    out$se[i,]=res[colId,2]
-                    out$pValue[i,]=res[colId,4]
-                }
+        write.table(paste(c(colIdA,paste(c("coef","se","pv"),"_",rep(colnames(tmpMat)[2:ncol(tmpMat)],each=3),sep="")),collapse="\t"),file=paste("stat_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F)
+        for (geneId in 1:nrow(callG)) {
+            if (candGeneFlag=="_hlaB") {
+                phen[,varThis]=paste("allele",callG[geneId,],sep="")
+                j=!is.na(phen[,varThis])
+                if (any(phen[j,varThis]=="allele0")) phen[j,varThis]=paste(phen[j,varThis],"v0",sep="") else phen[j,varThis]=paste(phen[j,varThis],"v1",sep="")
             }
-        } else {
-            # Run logistic regresssion model
-            for (i in 1:nrow(meth)) {
-                j=!is.na(meth[i,])
-                fit=tryCatch(glm(model1, family="binomial",data=phen[j,]),error = function(e) e)
-                if (!inherits(fit,"error")) {
-                    res=summary(fit)$coef
-                    out$coef[i,]=res[colId,1]
-                    out$se[i,]=res[colId,2]
-                    out$pValue[i,]=res[colId,4]
+            out=list(coef=tmpMat,se=tmpMat,pValue=tmpMat)
+            if (computeFlag[2]=="linear") {
+                # Run linear regresssion model
+                for (i in 1:nrow(meth)) {
+                    j=!is.na(meth[i,])
+                    fit=tryCatch(lm(model1, data=phen[j,]),error = function(e) e)
+                    if (!inherits(fit,"error")) {
+                        res=summary(fit)$coef
+                        k=match(colId,rownames(res)); k1=!is.na(k); k2=k[k1]
+                        out$coef[i,k1]=res[colId[k2],1]
+                        out$se[i,k1]=res[colId[k2],2]
+                        out$pValue[i,k1]=res[colId[k2],4]
+                    }
                 }
-            }
-        }
-        for (kk in 2:ncol(out$coef)) {
-            k=colId2[kk]
-            tbl2=cbind(out$coef[,k],out$se[,k],out$pValue[,k])
-            if (kk==2) {
-                tbl=tbl2
             } else {
-                tbl=cbind(tbl,tbl2)
+                # Run logistic regresssion model
+                for (i in 1:nrow(meth)) {
+                    j=!is.na(meth[i,])
+                    fit=tryCatch(glm(model1, family="binomial",data=phen[j,]),error = function(e) e)
+                    if (!inherits(fit,"error")) {
+                        res=summary(fit)$coef
+                        k=match(colId,rownames(res)); k1=!is.na(k); k2=k[k1]
+                        out$coef[i,k1]=res[colId[k2],1]
+                        out$se[i,k1]=res[colId[k2],2]
+                        out$pValue[i,k1]=res[colId[k2],4]
+                    }
+                }
             }
+            for (kk in 2:ncol(out$coef)) {
+                k=colId2[kk]
+                tbl2=cbind(out$coef[,k],out$se[,k],out$pValue[,k])
+                if (kk==2) {
+                    tbl=tbl2
+                } else {
+                    tbl=cbind(tbl,tbl2)
+                }
+            }
+            colnames(tbl)=paste(c("coef","se","pv"),"_",rep(colnames(out$coef)[2:ncol(out$coef)],each=3),sep="")
+            if (candGeneFlag=="_hlaB") {
+                tbl=data.frame(cpgId=ann$IlmnID[ann$keep],gene_genotype=rep(annG$id[geneId],nrow(tbl)),tbl,stringsAsFactors=F)
+            } else {
+                tbl=data.frame(cpgId=ann$IlmnID[ann$keep],tbl,stringsAsFactors=F)
+            }
+            write.table(tbl,file=paste("stat_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F, append=T)
         }
-        colnames(tbl)=paste(c("coef","se","pv"),"_",rep(colnames(out$coef)[2:ncol(out$coef)],each=3),sep="")
-        tbl=data.frame(cpgId=ann$IlmnID[keep],tbl,stringsAsFactors=F)
-        write.table(tbl,file=paste("stat_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
     }
 #}
 timeStamp=c(timeStamp,Sys.time())
 print(format(timeStamp[2], "%x %X"))
 print(diff(timeStamp))
+
