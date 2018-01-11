@@ -17,9 +17,19 @@ if (F) {
     qRscript regression_refactor.R "logged_PCB_aroclor1260"
 
     qRscript regression_refactor.R "hlaB"
-    qRscript regression_refactor_0.R "hlaB"
-    qRscript regression_refactor_1.R "hlaB"
-    qRscript regression_refactor_2.R "hlaB"
+    
+    qRscript regression_refactor_4.R "smoke_mo_ever"
+    qRscript regression_refactor_4.R "smoke_fa_ever"
+    qRscript regression_refactor_4.R "smoke_mo_preg"
+    qRscript regression_refactor_4.R "smoke_mo_3months"
+    qRscript regression_refactor_4.R "smoke_fa_3months"
+    qRscript regression_refactor_4.R "smoke_mo_bf"
+    qRscript regression_refactor_4.R "smoke_mo_after"
+    qRscript regression_refactor_4.R "smoke_mo_preg_N"
+    qRscript regression_refactor_4.R "smoke_mo_3months_N"
+    qRscript regression_refactor_4.R "smoke_fa_3months_N"
+    qRscript regression_refactor_4.R "smoke_mo_bf_N"
+    qRscript regression_refactor_4.R "smoke_mo_after_N"
     '
 
     varThis="logged_PCB_105_SRS"
@@ -31,6 +41,36 @@ if (F) {
     varThis="logged_PCB_aroclor1260"
 
     varThis="hlaB"
+    
+    varThis="_smoke_moEver"
+    varThis="_smoke_faEver"
+    varThis="_smoke_moPreg"
+    varThis="_smoke_mo3m"
+    varThis="_smoke_fa3m"
+    varThis="_smoke_moBf"
+    varThis="_smoke_moAfter"
+    varThis="_smoke_moPregN"
+    varThis="_smoke_mo3mN"
+    varThis="_smoke_fa3mN"
+    varThis="_smoke_moBfN"
+    varThis="_smoke_moAfterN"
+    varThis="_smoke3"
+    varThis="_smoke2"
+    
+    varThis="smoke_mo_ever"
+    varThis="smoke_fa_ever"
+    varThis="smoke_mo_preg"
+    varThis="smoke_mo_3months"
+    varThis="smoke_fa_3months"
+    varThis="smoke_mo_bf"
+    varThis="smoke_mo_after"
+    varThis="smoke_mo_preg_N"
+    varThis="smoke_mo_3months_N"
+    varThis="smoke_fa_3months_N"
+    varThis="smoke_mo_bf_N"
+    varThis="smoke_mo_after_N"
+ 
+
 }
 
 varThis="hlaB"
@@ -88,11 +128,11 @@ subsetFlag="noHispWtCtrl"
 subsetFlag="female"
 subsetFlag="male"
 
-subsetFlag=""
-
 #subsetFlag="noHisp"
 subsetFlag="hisp"
 subsetFlag="noHispWt"
+
+subsetFlag=""
 
 subsetFlag="ctrl"
 subsetFlag="case"
@@ -102,7 +142,72 @@ candGeneFlag="_hlaB"
 
 #for (subsetName2 in c("_set1","_set2")) {
 #for (datType in c("_allGuthSet1","_allGuthSet2")) {
-		
+
+## ---------------------------------
+
+if (subsetFlag=="ctrl") {varFlag="_birthWt"; covFlag="_covHisp"; varName=""; termName=""}
+if (subsetFlag=="case") {varFlag="_birthWt"; covFlag="_covSexHisp"; varName=""; termName=""}
+varFlag="_cacoXbirthwt"; covFlag=""; varName=""; termName=c("caco","birthWt","interaction")
+varFlag="_pobw"; covFlag=""; varName=""; termName=""
+varFlag="_cacoXpobw"; covFlag=""; varName=""; termName=c("caco","pobw","interaction")
+
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~pobw"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~pobwBi"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*pobw"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*pobwBi"; computeFlag[2]="logistic"
+
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*birthWt"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*birthWtBi"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~birthWt"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~birthWtBi"; computeFlag[2]="linear"
+
+
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmi"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiOverOrObese"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiOver"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiObese"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiUnder"; computeFlag[2]="logistic"
+
+## ---------------------------------
+
+varFlag="_hyperdipTelaml"; covFlag="_covEthnGestage"; varName=""; termName=""
+varFlag="_hyperdipNonHypTelaml"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
+varFlag="_telamlNonHypTelaml"; covFlag="_covRace3"; varName=""; termName=""
+
+varFlag="_leukPreb"; covFlag=""; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
+varFlag="_caco"; covFlag=""; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""
+
+varFlag="_caco"; covFlag="_covSexGestageSnpPC1"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexGestageSnpPC12"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexGestageSnpPC123"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexGestageSnpPC1234"; varName=""; termName=""
+
+varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexEthn"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covEthnGestage"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+
+## ---------------------------------
+
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*sem"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSem"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*semNoSexChr"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSemNoSexChr"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*semNoSnpNoSexChr"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSemNoSnpNoSexChr"; computeFlag[2]="logistic"
+
+## ---------------------------------
+
+varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+
 ## ---------------------------------
 
 ## All smoke variables from set1 & set2
@@ -150,68 +255,16 @@ if (datType%in%c("_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
 }
 
 varFlag="_smoke"; covFlag=""; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""; modelFlag=paste("caco~meth*",varThis,sep=""); computeFlag[2]="logistic"
 
-if (subsetFlag=="ctrl") {varFlag="_birthWt"; covFlag="_covHisp"; varName=""; termName=""}
-if (subsetFlag=="case") {varFlag="_birthWt"; covFlag="_covSexHisp"; varName=""; termName=""}
-varFlag="_cacoXbirthwt"; covFlag=""; varName=""; termName=c("caco","birthWt","interaction")
-varFlag="_pobw"; covFlag=""; varName=""; termName=""
-varFlag="_cacoXpobw"; covFlag=""; varName=""; termName=c("caco","pobw","interaction")
-
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~pobw"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~pobwBi"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*pobw"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*pobwBi"; computeFlag[2]="logistic"
-
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*birthWt"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*birthWtBi"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~birthWt"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="meth~birthWtBi"; computeFlag[2]="linear"
-
-
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmi"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiOverOrObese"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiOver"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiObese"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiUnder"; computeFlag[2]="logistic"
-
-varFlag="_hyperdipTelaml"; covFlag="_covEthnGestage"; varName=""; termName=""
-varFlag="_hyperdipNonHypTelaml"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
-varFlag="_telamlNonHypTelaml"; covFlag="_covRace3"; varName=""; termName=""
-
-varFlag="_leukPreb"; covFlag=""; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
-varFlag="_caco"; covFlag=""; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""
-
-varFlag="_caco"; covFlag="_covSexGestageSnpPC1"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexGestageSnpPC12"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexGestageSnpPC123"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexGestageSnpPC1234"; varName=""; termName=""
-
-varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexEthn"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covEthnGestage"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
-
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*sem"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSem"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*semNoSexChr"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSemNoSexChr"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*semNoSnpNoSexChr"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth*logSemNoSnpNoSexChr"; computeFlag[2]="logistic"
+## ---------------------------------
 
 varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
-
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*hlaB"; computeFlag[2]="logistic"
 varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
-varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
-varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~caco*",varThis,sep=""); computeFlag[2]="linear"
 
+## ---------------------------------
 
 if (mediationFlag) {
     computeFlag=c("regression","")
@@ -229,6 +282,8 @@ if (mediationFlag) {
     
     varFlag="_caco"; covFlag="_covSexHisp"; varName=""
 }
+
+## ---------------------------------
 
 covPCFlag="_covPrinComp123456"
 covPCFlag="_covPrinComp12"
@@ -1096,7 +1151,16 @@ if (datType=="_allGuthSet2") {
     phen$logSemNoSnpNoSexChr[j1]=log(x[j2])
 }
 
+save.image(paste(paste("tmp_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".RData",sep=""),sep=""))
+
 if (candGeneFlag=="_hlaB") {
+    if (computerFlag=="cluster") {
+        datadir="data/"
+    } else {
+        datadir="docs/all/hlaB/"
+    }
+    candGeneId=read.table(paste(datadir,"hlabCpgIdFromSemira.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    
     candGeneInfo=data.frame(alias=c("HLA-B","AS","HLAB","B-4901"),stringsAsFactors=F)
     candGeneInfo$geneId=varThis
     candGeneInfo$geneSym="HLA-B"
@@ -1117,10 +1181,13 @@ if (candGeneFlag=="_hlaB") {
         candGeneInfo=NULL
     }
 
-    i=match(toupper(ann$geneSym),toupper(candGeneInfo$alias)); i1=which(!is.na(i)); i2=i[i1]
+    #i=match(toupper(ann$geneSym),toupper(candGeneInfo$alias)); i1=which(!is.na(i)); i2=i[i1]
+    i=match(ann$IlmnID,candGeneId$cpgId); i1=which(!is.na(i)); i2=1:nrow(annG)
     i2=1:nrow(annG)
     
-    i1=1:5; i2=1:3
+    if (nrow(meth)<20000) {
+        i1=1:5; i2=1:3
+    }
     
     j=match(phen$subjectId,phenG$subjectId); j1=which(!is.na(j)); j2=j[j1]
     meth=meth[i1,j1]
@@ -1215,7 +1282,6 @@ if (candGeneFlag=="_hlaB") {
 }
 
 if (transformFlag=="_mVal") {
-    meth1=meth
     methInfo=read.table(paste(dirCom,"summaryBeta.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
     k=which(methInfo$cohort==datType)
     meth[which(meth==0)]=methInfo$minBeta*0.5; meth[which(meth==1)]=methInfo$maxBeta+(1-methInfo$maxBeta)*0.5
@@ -1242,14 +1308,20 @@ print(format(timeStamp, "%x %X"))
         write.table(tbl,file=paste("stat_mediation_covariance_",sub("~","Resp_",gsub("+","_",modelFlag,fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transfomrFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
     } else {
         if (candGeneFlag=="_hlaB") {
-            nm=c("intercept",paste(strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]],"allele",c("1v0","2v0","2v1"),sep=""))
             colIdA=c("cpgId","gene_genotype")
+            #nm=c("intercept",paste(strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]],"allele",c("1v0","2v0","2v1"),sep=""))
+            nm1=paste("hlaBallele",c("1v0","2v0","2v1"),sep="")
+            nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
+            k=which(nm=="hlaB"); nm=c(nm[1:(k-1)],nm1)
+            if (length(grep("*hlaB",modelFlag,fixed=T))) {
+                nm=c(nm,paste(paste(sub("*hlaB",":",strsplit(modelFlag,"~")[[1]][2],fixed=T),nm1,sep="")))
+            }
         } else {
+            colIdA=c("cpgId")
             #nm=c("intercept",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]])
             nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
-            colIdA=c("cpgId")
+            if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
         }
-        if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
         tmpMat=matrix(nrow=nrow(meth),ncol=length(nm),dimnames=list(rownames(meth),nm))
         x=strsplit(modelFlag,"~")[[1]][1]
         model1=paste(x,sub(paste(x,"+",sep=""),"",model1,fixed=T),sep="")
@@ -1273,9 +1345,14 @@ print(format(timeStamp, "%x %X"))
                     if (!inherits(fit,"error")) {
                         res=summary(fit)$coef
                         k=match(colId,rownames(res)); k1=!is.na(k); k2=k[k1]
-                        out$coef[i,k1]=res[colId[k2],1]
-                        out$se[i,k1]=res[colId[k2],2]
-                        out$pValue[i,k1]=res[colId[k2],4]
+                        if (F) {
+                            out$coef[i,k1]=res[colId[k2],1]
+                            out$se[i,k1]=res[colId[k2],2]
+                            out$pValue[i,k1]=res[colId[k2],4]
+                        }
+                        out$coef[i,k1]=res[k2,1]
+                        out$se[i,k1]=res[k2,2]
+                        out$pValue[i,k1]=res[k2,4]
                     }
                 }
             } else {
@@ -1286,9 +1363,14 @@ print(format(timeStamp, "%x %X"))
                     if (!inherits(fit,"error")) {
                         res=summary(fit)$coef
                         k=match(colId,rownames(res)); k1=!is.na(k); k2=k[k1]
-                        out$coef[i,k1]=res[colId[k2],1]
-                        out$se[i,k1]=res[colId[k2],2]
-                        out$pValue[i,k1]=res[colId[k2],4]
+                        if (F) {
+                            out$coef[i,k1]=res[colId[k2],1]
+                            out$se[i,k1]=res[colId[k2],2]
+                            out$pValue[i,k1]=res[colId[k2],4]
+                        }
+                        out$coef[i,k1]=res[k2,1]
+                        out$se[i,k1]=res[k2,2]
+                        out$pValue[i,k1]=res[k2,4]
                     }
                 }
             }
