@@ -73,7 +73,7 @@ if (F) {
 
 }
 
-varThis="hlaB"
+varThis="ahrr"
 
 ## ---------------------------------
 
@@ -132,13 +132,15 @@ subsetFlag="male"
 subsetFlag="hisp"
 subsetFlag="noHispWt"
 
-subsetFlag=""
-
 subsetFlag="ctrl"
 subsetFlag="case"
 
+subsetFlag=""
+
 candGeneFlag=""
-candGeneFlag="_hlaB"
+if (varThis%in%c("hlaB","ahrr")) {
+    candGeneFlag=paste("_",varThis,sep="")
+}
 
 #for (subsetName2 in c("_set1","_set2")) {
 #for (datType in c("_allGuthSet1","_allGuthSet2")) {
@@ -210,6 +212,12 @@ varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("me
 
 ## ---------------------------------
 
+varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*hlaB"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+
+## ---------------------------------
+
 ## All smoke variables from set1 & set2
 ## All smoke variables in set2 are in set1
 varSmoke=data.frame(varIn=c("passive_sm_home_post","smoke_mo_ever","smoke_mo_preg","M_SM_BF_DI","smoke_mo_3months","smoke_mo_3months_N","smoke_mo_preg_N","m_cignum_bf","smoke_mo_after","smoke_mo_after_N","smoke_fa_ever","smoke_fa_3months","smoke_fa_3months_N","smoke_mo_bf","smoke_mo_bf_N","smoke3","smoke2"),
@@ -257,12 +265,6 @@ if (datType%in%c("_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
 varFlag="_smoke"; covFlag=""; varName=""; termName=""
 varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""; modelFlag=paste("caco~meth*",varThis,sep=""); computeFlag[2]="logistic"
-
-## ---------------------------------
-
-varFlag="_caco"; covFlag="_covSet"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*hlaB"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
 ## ---------------------------------
 
@@ -334,7 +336,8 @@ if (subsetFlag!="") {
 
 candGeneName=""
 switch(candGeneFlag,
-    "_hlaB"={candGeneName="HLA-B"}
+    "_hlaB"={candGeneName="HLA-B"},
+    "_ahrr"={candGeneName="AHRR"}
 )
 
 heading=paste(c(varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",covESFlag,", ",subsetFFlag,", ",datType,subsetName2,", ",normFlag,", ",transformFlag),collapse="")
@@ -1201,10 +1204,21 @@ if (candGeneFlag=="_hlaB") {
     probG=probG[i2,j2]
     annG=annG[i2,]
     phenG=phenG[j2,]
+} else if (candGeneFlag=="_ahrr") {
+    i2=grep("AHRR", ann$UCSC_RefGene_Name)
+    i1=which(ann$IlmnID%in%c("cg00618725","cg02022136","cg02802904","cg05068430","cg12434587","cg12981137","cg14194875","cg16215402","cg18026026","cg19706602"))
+    
+    if (nrow(meth)<20000) {
+        i1=1:5; i2=1:3
+    }
+    
+    callG=meth[i2,]
+    meth=meth[i1,]
+    ann=cbind(ann[i1,])
+    phen$ahrr=1:nrow(phen)
 } else {
     callG=matrix(nrow=1,ncol=1)
 }
-
 
 datObj=list(meth=meth,phen=phen,callG=callG)
 
@@ -1279,6 +1293,8 @@ if (candGeneFlag=="_hlaB") {
     callG=callG[,samId]
     probG=probG[,samId]
     phenG=phenG[samId,]
+} else if (candGeneFlag=="_ahrr") {
+    callG=callG[,samId]
 }
 
 if (transformFlag=="_mVal") {
@@ -1289,7 +1305,6 @@ if (transformFlag=="_mVal") {
     cat("Max meth:",max(meth),max(meth,na.rm=T),"\n")
     meth=log2(meth/(1-meth))
 }
-
 
 timeStamp=Sys.time()
 print(format(timeStamp, "%x %X"))
@@ -1317,7 +1332,7 @@ print(format(timeStamp, "%x %X"))
                 nm=c(nm,paste(paste(sub("*hlaB",":",strsplit(modelFlag,"~")[[1]][2],fixed=T),nm1,sep="")))
             }
         } else {
-            colIdA=c("cpgId")
+            colIdA=c("cpgId","cpgId_ahrr")
             #nm=c("intercept",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]])
             nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
             if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
@@ -1331,16 +1346,20 @@ print(format(timeStamp, "%x %X"))
         model1=as.formula(model1)
         write.table(paste(c(colIdA,paste(c("coef","se","pv"),"_",rep(colnames(tmpMat)[2:ncol(tmpMat)],each=3),sep="")),collapse="\t"),file=paste("stat_",ifelse(mediationFlag,"mediation_",""),sub("~","Resp_",gsub("*","X",gsub("+","_",modelFlag,fixed=T),fixed=T)),subsetName,covFlag,covPCFlag,covESFlag,subsetFFlag,datType,subsetName2,normFlag,transformFlag,".txt",sep=""), sep="\t", col.names=F, row.names=F, quote=F)
         for (geneId in 1:nrow(callG)) {
+            j1=rep(T,nrow(phen))
             if (candGeneFlag=="_hlaB") {
                 phen[,varThis]=paste("allele",callG[geneId,],sep="")
                 j=!is.na(phen[,varThis])
                 if (any(phen[j,varThis]=="allele0")) phen[j,varThis]=paste(phen[j,varThis],"v0",sep="") else phen[j,varThis]=paste(phen[j,varThis],"v1",sep="")
+            } else if (candGeneFlag=="_ahrr") {
+                phen[,varThis]=callG[geneId,]
+                j1=!is.na(phen[,varThis])
             }
             out=list(coef=tmpMat,se=tmpMat,pValue=tmpMat)
             if (computeFlag[2]=="linear") {
                 # Run linear regresssion model
                 for (i in 1:nrow(meth)) {
-                    j=!is.na(meth[i,])
+                    j=j1 & !is.na(meth[i,])
                     fit=tryCatch(lm(model1, data=phen[j,]),error = function(e) e)
                     if (!inherits(fit,"error")) {
                         res=summary(fit)$coef
@@ -1358,7 +1377,7 @@ print(format(timeStamp, "%x %X"))
             } else {
                 # Run logistic regresssion model
                 for (i in 1:nrow(meth)) {
-                    j=!is.na(meth[i,])
+                    j=j1 & !is.na(meth[i,])
                     fit=tryCatch(glm(model1, family="binomial",data=phen[j,]),error = function(e) e)
                     if (!inherits(fit,"error")) {
                         res=summary(fit)$coef
@@ -1386,6 +1405,9 @@ print(format(timeStamp, "%x %X"))
             colnames(tbl)=paste(c("coef","se","pv"),"_",rep(colnames(out$coef)[2:ncol(out$coef)],each=3),sep="")
             if (candGeneFlag=="_hlaB") {
                 tbl=data.frame(cpgId=ann$IlmnID[ann$keep],gene_genotype=rep(annG$id[geneId],nrow(tbl)),tbl,stringsAsFactors=F)
+            } else if (candGeneFlag=="_ahrr") {
+                tbl=data.frame(cpgId=ann$IlmnID[ann$keep],cpgId_ahrr=rep(rownames(callG)[geneId],nrow(tbl)),tbl,stringsAsFactors=F)
+                
             } else {
                 tbl=data.frame(cpgId=ann$IlmnID[ann$keep],tbl,stringsAsFactors=F)
             }
