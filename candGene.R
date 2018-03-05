@@ -217,7 +217,7 @@ covESFlag="_covEpStr"
 
 varList=c("hlaBallele1v0")
 vId=1
-colId=paste("coef_",varList[vId],sep="")
+colIdEst=paste("coef_",varList[vId],sep="")
 colIdPV=paste("holm_",varList[vId],sep="")
 compList=c("signifCaCo","signifCoNotCa","signifCaNotCo")
 compList=c("signifCaCo","signifCoNotCa","signifCaNotCo","signifCoCa1","signifCoCa2","signifCoNotCa1","signifCoNotCa2","signifCa1NotCo","signifCa2NotCo")
@@ -235,7 +235,7 @@ for (modelFlag in c("meth~caco+genotype","meth~caco*genotype")) {
                 i=which(stat0[i0,colIdPV]<pThres & stat1[i1,colIdPV]>=pThres & stat2[i2,colIdPV]>=pThres)
             },
             "signifCaNotCo"={
-                header="Significant set1 case & set2 case but not in in set1+set2 ctrl"
+                header="Significant set1 case & set2 case but not in set1+set2 ctrl"
                 i=which(stat0[i0,colIdPV]>=pThres & stat1[i1,colIdPV]<pThres & stat2[i2,colIdPV]<pThres)
             },
             "signifCoCa1"={
@@ -255,11 +255,11 @@ for (modelFlag in c("meth~caco+genotype","meth~caco*genotype")) {
                 i=which(stat0[i0,colIdPV]<pThres & stat2[i2,colIdPV]>=pThres)
             },
             "signifCa1NotCo"={
-                header="Significant set1 case but not in in set1+set2 ctrl"
+                header="Significant set1 case but not in set1+set2 ctrl"
                 i=which(stat0[i0,colIdPV]>=pThres & stat1[i1,colIdPV]<pThres)
             },
             "signifCa2NotCo"={
-                header="Significant set2 case but not in in set1+set2 ctrl"
+                header="Significant set2 case but not in set1+set2 ctrl"
                 i=which(stat0[i0,colIdPV]>=pThres & stat2[i2,colIdPV]<pThres)
             }
         )
@@ -330,6 +330,13 @@ for (modelFlag in c("meth~caco+genotype","meth~caco*genotype")) {
     write.table(tbl,file=fName, append=F,col.names=T,row.names=F, sep="\t",quote=F)
 }
 
+header=paste(varList[vId],": Significant in set1+set2 ctrl but not in set1 case or set2 case",sep="")
+i=which(stat0[i0,colIdPV]<pThres & stat1[i1,colIdPV]>=pThres & stat2[i2,colIdPV]>=pThres)
+#sort(unique(paste(stat0$cpgId[i0][i],stat0$gene_genotype[i0][i])))
+fName=paste("stat_methResp_hlaB_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet1Set2_",colIdPV,"_",pThres,"_notSignifInCases.txt",sep="")
+write.table(header,file=fName,append=F,col.names=F,row.names=F, sep="\t",quote=F)
+write.table(stat0[i0,][i,],file=fName,append=T,col.names=T,row.names=F, sep="\t",quote=F)
+
 for (modelFlag in c("meth~caco+genotype","meth~caco*genotype")) {
     switch(modelFlag,
     "meth~caco+genotype"={
@@ -360,57 +367,6 @@ for (modelFlag in c("meth~caco+genotype","meth~caco*genotype")) {
         }
     }
 }
-"
------------------------------
-With refactor & epistructure:
------------------------------
-
-Model: meth~caco+genotype
------------------------------
-Significant in set1+set2 ctrl & set2 case
------------------------------
-holm_caco: No. of loci significant 1
-holm_hlaBallele1v0: No. of loci significant 5
-holm_hlaBallele2v0: No. of loci significant 1
-
-Model: meth~caco*genotype
------------------------------
-Significant in set1+set2 ctrl but not in set1 case or set2 case
------------------------------
-holm_caco: No. of loci significant 2
-holm_hlaBallele1v0: No. of loci significant 14
-holm_hlaBallele2v0: No. of loci significant 1
-holm_caco.hlaBallele1v0: No. of loci significant 0
-holm_caco.hlaBallele2v0: No. of loci significant 1
-
-
-
------------------------------
-Without refactor & epistructure:
------------------------------
-
-Model: meth~caco+genotype
------------------------------
-holm_caco: No. of loci significant 0
-holm_hlaBallele1v0: No. of loci significant 91
-holm_hlaBallele2v0: No. of loci significant 0
-
-Model: meth~caco+genotype
------------------------------
-Significant in set1+set2 ctrl but not in set1 case or set2 case
------------------------------
-holm_caco: No. of loci significant 1
-holm_hlaBallele1v0: No. of loci significant 22
-holm_hlaBallele2v0: No. of loci significant 0
-
-Model: meth~caco*genotype
------------------------------
-holm_caco: No. of loci significant 3
-holm_hlaBallele1v0: No. of loci significant 63
-holm_hlaBallele2v0: No. of loci significant 0
-holm_caco.hlaBallele1v0: No. of loci significant 0
-holm_caco.hlaBallele2v0: No. of loci significant 0
-"
 
 pp=1
 grpInfo=data.frame(grp=unique(paste(tblA$cpgId,tblA$genotype)),stringsAsFactors=F)

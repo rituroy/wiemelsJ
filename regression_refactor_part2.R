@@ -1490,7 +1490,22 @@ if ("Goodman"%in%testFlag) {
 }
 
 
+
 ## -------------------
+load("/Users/royr/UCSF/JoeWiemels/leukMeth/tmp2_hlaB.RData")
+stat_hlabCa1_1=stat_hlabCa1
+stat_hlabCa2_1=stat_hlabCa2
+stat_hlabCo12_1=stat_hlabCo12
+load("/Users/royr/UCSF/JoeWiemels/leukMeth/tmp2.RData")
+stat_hlabCa1_2=stat_hlabCa1
+stat_hlabCa2_2=stat_hlabCa2
+stat_hlabCo12_2=stat_hlabCo12
+for (k in c("holm_hlaBallele1v0","holm_hlaBallele1v0","holm_hlaBallele2v1")) {
+    
+}
+
+## -------------------
+
 library(qvalue)
 source(paste(dirSrc,"functions/TTest.9.1.7.R",sep=""))
 
@@ -1505,9 +1520,9 @@ compList=c("aml_cc_1_00","aml_cc_1_0","aml_cc_1_1","aml_cc_1_2","aml_cc_2_00","a
 compList=c("cc_2","cc_fs_2","cc_ms_2","cc_he_2","cc_we_2","cc_3")
 compList=c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")
 compList=c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")
-compList=c("hlabCo12","hlabCa1","hlabCa2")
 compList=c(paste("s",1:12,sep=""),paste("ms",1:12,sep=""))
 compList=c("ahrrCo2","ahrrCC2")
+compList=c("hlabCo12","hlabCa1","hlabCa2")
 for (compId in compList) {
     colIdPV="pv"
 	cat("\n\n==================",compId,"==================\n")
@@ -1825,20 +1840,28 @@ for (compId in compList) {
     for (cId in 1:length(colIdPV)) {
         stat2$qv=NA
         if (candGeneFlag$adjP=="mgmt") {
-            i=which(tolower(ann$geneSym[iA2])==candGeneFlag$adjP)
+            i1=which(tolower(ann$geneSym[iA2])==candGeneFlag$adjP)
         } else if (candGeneFlag$adjP=="mgmt13") {
-            i=which(tolower(ann[iA2,candGeneFlag$variable])%in%candGeneFlag[[candGeneFlag$variable]])
+            i1=which(tolower(ann[iA2,candGeneFlag$variable])%in%candGeneFlag[[candGeneFlag$variable]])
         } else if (candGeneFlag$adjP=="nonSnp") {
-            #i=which(ann$snp[iA2]==0 & ann$CHR[iA2]%in%1:22)
-            i=which(ann$keep[iA2]==1)
+            #i1=which(ann$snp[iA2]==0 & ann$CHR[iA2]%in%1:22)
+            i1=which(ann$keep[iA2]==1)
         } else {
-            i=1:nrow(stat2)
+            i1=1:nrow(stat2)
         }
-        stat2$qv[i]=getAdjustedPvalue(stat2[i,colIdPV[cId]],method=adjPFlag,strict=T)
-        if (all(is.na(stat2$qv))) {
-            cat("Using BH method !!!\n")
-            stat2$qv[i]=getAdjustedPvalue(stat2[i,colIdPV[cId]],method=adjPFlag,strict=F)
-            #stat2$qv[i]=p.adjust(stat2[i,colIdPV[cId]],method="BH")
+        if (substr(compId,1,nchar("hlab"))=="hlab") {
+            x=nchar(stat2$gene_genotype[i1])
+            i1=list(i1[which(x==8)],i1[which(x==10)])
+        } else {
+            i1=list(i1)
+        }
+        for (iThis in 1:length(i1)) {
+            stat2$qv[i1[[iThis]]]=getAdjustedPvalue(stat2[i1[[iThis]],colIdPV[cId]],method=adjPFlag,strict=T)
+            if (all(is.na(stat2$qv[i1[[iThis]]]))) {
+                cat("Using BH method !!!\n")
+                stat2$qv[i1[[iThis]]]=getAdjustedPvalue(stat2[i1[[iThis]],colIdPV[cId]],method=adjPFlag,strict=F)
+                #stat2$qv[i1[[iThis]]]=p.adjust(stat2[i1[[iThis]],colIdPV[cId]],method="BH")
+            }
         }
         i=which(stat2$qv<.05)
         if (any(stat2$qv[i]<stat2[i,colIdPV[cId]])) {cat("Q-value < p-value !!!\n")}
@@ -2179,11 +2202,11 @@ plotFlag="_onePlot"
 plotFlag="_manhattanPlot"
 
 parList=list(ylimM=c(0,8.5))
-parList=list()
 parList=list(ylimM=c(0,3))
+parList=list()
 
-geneSumFlag=F
 geneSumFlag=T
+geneSumFlag=F
 
 outlierFlag=F
 outlierFlag=T
@@ -2200,11 +2223,11 @@ compList=c("aml_cc_1_0","aml_cc_1_1","aml_cc_1_2","aml_cc_2_00","aml_cc_2_0","am
 compList=c("cc_2","cc_fs_2","cc_ms_2","cc_he_2","cc_we_2","cc_3")
 compList=c("cc_s1","cc_s2","cc_s3","cc_s4","cc_s5","cc_s6")
 compList=c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")
-compList=c("hlabCo12","hlabCa1","hlabCa2")
 compList=c(paste("s",1:12,sep=""))
 compList=c(paste("ms",1:12,sep=""))
 compList=c(paste("s",1:12,sep=""),paste("ms",1:12,sep=""))
 compList=c("ahrrCo2","ahrrCC2")
+compList=c("hlabCo12","hlabCa1","hlabCa2")
 #compList="ms1"
 if (plotFlag[1]%in%c("_qqPlot","_histogram","_volcanoPlot","_manhattanPlot")) {
     png(paste(sub("_","",plotFlag[1]),"_%1d.png",sep=""),width=3*240, height=2*240)
@@ -2234,8 +2257,8 @@ for (compId in compList) {
         if (substr(compId,1,nchar("hlab"))=="hlab" | substr(compId,1,nchar("ahrr"))=="ahrr") {
             colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],colListPV[cId]); pThres=0.5
             colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],colListPV[cId]); pThres=0.05
-            colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],sub("pv",adjPFlag,colListPV[cId])); pThres=0.05
             colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],colListPV[cId]); pThres=99
+            colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],sub("pv",adjPFlag,colListPV[cId])); pThres=0.05
         }
         pThresName=ifelse(pThres>1,1,pThres)
         nm=c()
@@ -2704,7 +2727,7 @@ for (compId in compList) {
                 header=""
             }
             iThis=i
-            if ("ylimM"%in%names(parList)) yLim=parList$ylimM else yLim=NULLL
+            if ("ylimM"%in%names(parList)) yLim=parList$ylimM else yLim=NULL
             plot(ann[iA2[iThis],"MAPINFO"],-log10(stat[iThis,colIdPV[1]]),xlab=paste("Chromosome ",ann[iA2[iThis][1],"CHR"],sep=""),ylim=yLim,ylab="-log10(p-value)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header,col="grey")
             ii=iThis[which(stat[iThis,colIdPV[2]]<pThres)]
             points(ann[iA2[ii],"MAPINFO"],-log10(stat[ii,colIdPV[1]]),pch=19,col="red")
@@ -2732,7 +2755,7 @@ for (compId in compList) {
         }
         
         ii=i[order(stat[i,colIdPV[2]])]
-        ii=ii[stat[ii,colIdPV[2]]<pThres]
+        ii=ii[which(stat[ii,colIdPV[2]]<pThres)]
         if (length(ii)!=0) {
             #tbl=cbind(ann[iA2,][ii,],stat[ii,c(colIdEst,unique(colIdPV))])
             colId=c("IlmnID","Infinium_Design_Type","CHR","MAPINFO","UCSC_RefGene_Name","Relation_to_UCSC_CpG_Island","snp")
@@ -2862,14 +2885,17 @@ for (compId in compList) {
                         fName=paste("geneSummary_",ifelse(pvFlag=="",colIdPV[2],"pvPerm"),pThres,fName2,".txt",sep="")
                         write.table(GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))], file=fName, append=FALSE,col.names=T,row.names=FALSE, sep="\t",quote=FALSE)
                     }
+                    
+                    if (F) {
+                        tbl=GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))]
+                        
+                        i=prId[grep("FAM5C",ann2$UCSC_RefGene_Name[prId])]
+                        i=i[grep("5'UTR",ann2$UCSC_RefGene_Group[i])]
+                        tbl[which(tbl$Gene=="FAM5C"),]
+                        stat2[i,]
+                    }
                 }
                 
-                tbl=GeneResults[ord,which(!names(GeneResults)%in%c("isPcG","isNearPcG"))]
-                
-                i=prId[grep("FAM5C",ann2$UCSC_RefGene_Name[prId])]
-                i=i[grep("5'UTR",ann2$UCSC_RefGene_Group[i])]
-                tbl[which(tbl$Gene=="FAM5C"),]
-                stat2[i,]
             }
         }
         ####################################################################
