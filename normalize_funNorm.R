@@ -1,5 +1,5 @@
-computerFlag="cluster"
 computerFlag=""
+computerFlag="cluster"
 
 if (computerFlag=="cluster") {
 } else {
@@ -11,21 +11,25 @@ if (computerFlag=="cluster") {
 ####################################################################
 ####################################################################
 
+cat("\n================== normalize_funNorm.R ===============\n\n")
+
 cohortFlag="_aml"
 cohortFlag="_allGuthSet2"
 cohortFlag="_leuk"
-cohortFlag="_allGuthSet1Set2"
-cohortFlag="_allGuthSet1"
 #cohortFlag="_tcgaGbm"
 cohortFlag="_birthDefect"
 cohortFlag="_uscEpic"
 cohortFlag="_bloodCard"
+cohortFlag="_allGuthSet1Set2"
+cohortFlag="_allGuthSet1"
 
 subsetFlag="_ctrl"
 subsetFlag="_case"
 subsetFlag=""
 
 subsetName=ifelse(subsetFlag=="",subsetFlag,paste(subsetFlag,"Subset",sep=""))
+
+cat("\n================== ",cohortFlag,", ",subsetFlag," ===============\n\n",sep="")
 
 ### R code from vignette source 'vignettes/minfi/inst/doc/minfi.Rnw'
 
@@ -47,6 +51,9 @@ if (computerFlag=="cluster") {
     dirMain="data/"
 } else {
     dirMain="docs/"
+    if (cohortFlag%in%c("_allGuthSet1","_allGuthSet2","_allGuthSet1","_leuk")) {
+        dirMain=paste(dirMain,"all/",sep="")
+    }
 }
 if (cohortFlag%in%c("_allGuthSet1","_allGuthSet2","_allGuthSet1","_leuk")) {
     dirMeth=dirClin=paste(dirMain,"all/",sep="")
@@ -56,7 +63,9 @@ if (cohortFlag=="_leuk") {
     #} else if (cohortFlag=="_aml") {
     #dirMeth="data/aml/I169_DataFiles_part4_110311/"
 } else {
-    dirMeth=dirClin=paste(dirMain,sub("_","",cohortFlag),"/",sep="")
+    #dirMeth=dirClin=paste(dirMain,sub("_","",cohortFlag),"/",sep="")
+    #dirMeth=dirClin=paste(dirMain,sub("_|allGuth","",cohortFlag),"/",sep="")
+    dirMeth=dirClin=paste(dirMain,tolower(sub("_allGuth","",cohortFlag)),"/",sep="")
 }
 dirMeth=paste(dirMeth,"idat/",sep="")
 
@@ -87,7 +96,8 @@ if (cohortFlag=="_allGuthSet1") {
     #targets=read.table(paste(dirClin,"clinGuthrieReplJune2012.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     targets=read.table(paste(dirClin,"clin_guthrieSet2_20140619.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 } else if (cohortFlag=="_allGuthSet1Set2") {
-    targets=read.table(paste(dirClin,"clin_guthrieSet1Set2_20140619.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    #targets=read.table(paste(dirClin,"clin_guthrieSet1Set2_20140619.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    targets=read.table(paste(dirClin,"clin_allGuthSet1Set2_20160523.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     #targets$guthrieId=paste("X",targets$guthrieId,sep="")
 } else if (cohortFlag=="_leuk") {
     clin=read.delim(paste(dirClin,"i.LEU.v2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
@@ -287,6 +297,7 @@ if (cohortFlag=="_allGuthSet1") {
 #save(rgsetRaw,file="rgsetRaw_read.450k.exp.RData")
 
 rgsetRaw=read.metharray.exp(base=dirMeth, recursive=T)
+save(rgsetRaw,file="rgsetRaw_read.metharray.exp.RData")
 #save(rgsetRaw,file="rgsetRaw_read.metharray.exp.RData")
 
 if (cohortFlag%in%c("_leuk","_birthDefect","_tcgaGbm","_uscEpic","_bloodCard")) {
@@ -317,10 +328,13 @@ if (!cohortFlag%in%c("_leuk","_birthDefect","_tcgaGbm","_uscEpic","_bloodCard"))
 	targets$id=paste("X",targets$guthrieId,sep="")
 	if (length(j)!=0) {targets$id[j]=paste(targets$Beadchip,"_",targets$Position,sep="")[j]}
 }
-pData(rgsetRaw)=targets[match(sampleNames(rgsetRaw),paste(targets$Beadchip,"_",targets$Position,sep="")),]
+#pData(rgsetRaw)=targets[match(sampleNames(rgsetRaw),paste(targets$Beadchip,"_",targets$Position,sep="")),]
+targets=targets[match(sampleNames(rgsetRaw),paste(targets$Beadchip,"_",targets$Position,sep="")),]
+pData(rgsetRaw)=DataFrame(targets)
 sampleNames(rgsetRaw)=pData(rgsetRaw)$id
 
-pd=pData(rgsetRaw)
+#pd=pData(rgsetRaw)
+pd=targets
 #pd[1:5,1:4]
 
 #rgsetRaw2=read.450k.exp(file.path(dirMeth, "5723646052"))
@@ -502,7 +516,7 @@ for (datType in c("mDat","beta")) {
 	snpVec=snpVec[,1]
 	ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
 
-	ann$keep = ann$snp==0 & !ann$CHR%in%c(23,24)
+    ann$keep = ann$snp==0 & ann$CHR%in%1:22
 
 	i=match(rownames(dat),ann$IlmnID); i1=which(!is.na(i)); i2=i[i1]
 	dat=dat[i1,j1]

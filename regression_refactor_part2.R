@@ -53,7 +53,7 @@ if (computerFlag=="cluster") {
 } else {
 	ann <- read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
 	snpVec <- read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	dmr <- read.table(paste("docs/SeungTae/leukemia.DMRs/leukemia.DMRs.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    #dmr <- read.table(paste("docs/SeungTae/leukemia.DMRs/leukemia.DMRs.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 }
 ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
 ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
@@ -194,7 +194,7 @@ stat_ahrrCC2=stat_ahrrCC2[which(stat_ahrrCC2$cpgId_ahrr=="cg05575921"),]
 candGeneFlag=list(adjP="mgmt",gene="mgmt",variable="geneSym",geneSym="MGMT")
 candGeneFlag=list(adjP="allLoci",gene="mgmt",variable="geneSym")
 candGeneFlag=list(adjP="mgmt13",gene="mgmt13",variable="IlmnID",IlmnID=c("cg00618725","cg01341123","cg02022136","cg02802904","cg05068430","cg12434587","cg12981137","cg14194875","cg16215402","cg18026026","cg19706602","cg23998405","cg25946389"))
-## Removed highly correlated CpGs. From candGene.R MGMT section
+## Removed highly correlated CpGs. From candGene.R "Identify correlated CpGs" section
 candGeneFlag=list(adjP="mgmt13",gene="mgmt13",variable="IlmnID",IlmnID=c("cg00618725","cg02022136","cg02802904","cg05068430","cg12434587","cg12981137","cg14194875","cg16215402","cg18026026","cg19706602"))
 
 #candGeneInfo=data.frame(cpgId=c("cg00618725","cg01341123","cg02022136","cg02802904","cg05068430","cg12434587","cg12981137","cg14194875","cg16215402","cg18026026","cg19706602","cg23998405","cg25946389"),stringsAsFactors=F)
@@ -231,6 +231,36 @@ stat_ms9=read.table(paste(datadir,"stat_cacoResp_methXsmoke_mo_3months_N_covSex_
 stat_ms10=read.table(paste(datadir,"stat_cacoResp_methXsmoke_fa_3months_N_covSex_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 stat_ms11=read.table(paste(datadir,"stat_cacoResp_methXsmoke_mo_bf_N_covSex_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 stat_ms12=read.table(paste(datadir,"stat_cacoResp_methXsmoke_mo_after_N_covSex_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+
+## --------------
+
+datadir="results/telaml/"
+tbl=read.table(paste(datadir,"cpgId_telaml.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
+x=tbl[,1]
+nm=c("ETV6","RUNX1")
+k1=which(x%in%nm); k2=c(k1[2:length(k1)]-1,length(x))
+tmpC=rep("",length(x)-length(nm))
+candGeneInfo=data.frame(IlmnID=tmpC,geneSym=tmpC,stringsAsFactors=F)
+jj=0
+for (k in 1:length(k1)) {
+    j=(k1[k]+1):k2[k]
+    candGeneInfo$IlmnID[jj+(1:length(j))]=x[j]
+    candGeneInfo$geneSym[jj+(1:length(j))]=x[k1[k]]
+    jj=jj+length(j)
+}
+candGeneFlag=list(adjP="telaml",gene="telaml",variable="IlmnID",IlmnID=candGeneInfo$IlmnID,geneSym=candGeneInfo$geneSym)
+## Removed highly correlated CpGs. From candGene.R "Identify correlated CpGs" section
+i=which(candGeneInfo$IlmnID%in%c("cg22035498","cg11930279","cg13496511","cg26373351","cg01664727","cg03142697","cg01725383","cg16367085","cg03017480","cg16066237","cg07961283","cg23508333","cg04357830","cg11564339","cg02635869","cg01337293","cg13521940","cg15091747","cg26360881","cg11704631","cg00291213","cg05000748","cg11498607","cg04228935","cg08433011","cg09221269","cg14641757","cg05644223","cg16071713","cg07201215","cg02413040","cg05973398","cg01519261","cg04915566","cg13030790","cg15242225","cg19836199","cg08443845"))
+candGeneFlag=list(adjP="telaml38",gene="telaml38",variable="IlmnID",IlmnID=candGeneInfo$IlmnID[i],geneSym=candGeneInfo$geneSym[i])
+
+transformFlag=""
+transformFlag="_mVal"
+
+datadir="results/comparison/"
+
+stat_t2=read.table(paste(datadir,"stat_methResp_telamlCtrl_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_tl=read.table(paste(datadir,"stat_methResp_telamlNonTelaml_covEthn_leuk_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+stat_htl=read.table(paste(datadir,"stat_methResp_HyperdipTelaml_covEthn_leuk_bmiq",transformFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 
 ## --------------
 
@@ -1523,10 +1553,23 @@ compList=c("pcb105","pcb118","pcb138","pcb153","pcb170","pcb180","pcb1260")
 compList=c(paste("s",1:12,sep=""),paste("ms",1:12,sep=""))
 compList=c("ahrrCo2","ahrrCC2")
 compList=c("hlabCo12","hlabCa1","hlabCa2")
+compList=c("tel2","tell","htl")
 for (compId in compList) {
     colIdPV="pv"
 	cat("\n\n==================",compId,"==================\n")
 	switch(compId,
+        "tel2"={
+            stat2=stat_t2
+            colIdPV=names(stat2)[grep("pv_",names(stat2))]
+        },
+        "tell"={
+            stat2=stat_tl
+            colIdPV=names(stat2)[grep("pv_",names(stat2))]
+        },
+        "htl"={
+            stat2=stat_htl
+            colIdPV=names(stat2)[grep("pv_",names(stat2))]
+        },
         "ahrrCo2"={
             stat2=stat_ahrrCo2
             colIdPV=names(stat2)[grep("pv_",names(stat2))]
@@ -1841,7 +1884,7 @@ for (compId in compList) {
         stat2$qv=NA
         if (candGeneFlag$adjP=="mgmt") {
             i1=which(tolower(ann$geneSym[iA2])==candGeneFlag$adjP)
-        } else if (candGeneFlag$adjP=="mgmt13") {
+        } else if (candGeneFlag$adjP%in%c("mgmt13","telaml","telaml38")) {
             i1=which(tolower(ann[iA2,candGeneFlag$variable])%in%candGeneFlag[[candGeneFlag$variable]])
         } else if (candGeneFlag$adjP=="nonSnp") {
             #i1=which(ann$snp[iA2]==0 & ann$CHR[iA2]%in%1:22)
@@ -1884,6 +1927,15 @@ for (compId in compList) {
         
     }
 	switch(compId,
+        "tel2"={
+            stat_t2=stat2
+        },
+        "tell"={
+            stat_tl=stat2
+        },
+        "htl"={
+            stat_htl=stat2
+        },
         "ahrrCo2"={
             stat_ahrrCo2=stat2
         },
@@ -2196,14 +2248,27 @@ interaction.plot()
 
 plotFlag=""
 plotFlag=c("","manhattanPlot")
-plotFlag="_volcanoPlot"
 plotFlag=c("","_volcanoPlot")
 plotFlag="_onePlot"
+plotFlag="_qqPlot"
 plotFlag="_manhattanPlot"
+plotFlag="_volcanoPlot"
 
 parList=list(ylimM=c(0,8.5))
 parList=list(ylimM=c(0,3))
 parList=list()
+if (candGeneFlag$gene%in%c("telaml","telaml38")) {
+    # tel-aml1 region
+    x=c(12022498,36421955)
+    parList=list(xlimM=c(x[1]-diff(x)/2,x[2]+diff(x)/2))
+    grp=candGeneFlag$geneSym
+    grpUniq=unique(grp)
+    x=c()
+    for (gId in 1:length(grpUniq)) {
+        x=c(x,range(ann$MAPINFO[which(ann$IlmnID%in%candGeneFlag$IlmnID[which(grp==grpUniq[gId])])],na.rm=T))
+    }
+    parList=list(xlimM=matrix(x,ncol=2,byrow=T),ylimM=c(0,7),xlabM=grpUniq)
+}
 
 geneSumFlag=T
 geneSumFlag=F
@@ -2228,6 +2293,9 @@ compList=c(paste("ms",1:12,sep=""))
 compList=c(paste("s",1:12,sep=""),paste("ms",1:12,sep=""))
 compList=c("ahrrCo2","ahrrCC2")
 compList=c("hlabCo12","hlabCa1","hlabCa2")
+compList=c("tel2","tell","htl")
+compList=c("tel2","tell")
+compList=c("htl")
 #compList="ms1"
 if (plotFlag[1]%in%c("_qqPlot","_histogram","_volcanoPlot","_manhattanPlot")) {
     png(paste(sub("_","",plotFlag[1]),"_%1d.png",sep=""),width=3*240, height=2*240)
@@ -2251,8 +2319,9 @@ for (compId in compList) {
         colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=10^-28
         colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.05
         colIdEst="coef"; colIdPV=c("pvGI","qvGI"); 	pThres=0.05
+        colIdEst="coef"; colIdPV=c("pv","pv"); pThres=99
         colIdEst="coef"; colIdPV=c("pv","pv"); 	pThres=0.05
-        colIdEst="coef"; colIdPV=c("pv",adjPFlag); 	pThres=0.05
+        colIdEst="coef"; colIdPV=c("pv",adjPFlag); pThres=0.05
         
         if (substr(compId,1,nchar("hlab"))=="hlab" | substr(compId,1,nchar("ahrr"))=="ahrr") {
             colIdEst=names(stat2)[grep("coef",names(stat2))][cId]; colIdPV=c(colListPV[cId],colListPV[cId]); pThres=0.5
@@ -2263,6 +2332,18 @@ for (compId in compList) {
         pThresName=ifelse(pThres>1,1,pThres)
         nm=c()
         switch(compId,
+        "tel2"={
+            stat2=stat_t2; fName1=paste("_methResp_telamlCtrl_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nSet2: meth ~ telaml/ctrl\nCov: ReFACTor comp 1,2,3,4, epistructure",sep="")
+            names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+        },
+        "tell"={
+            stat2=stat_tl; fName1=paste("_methResp_telamlNonTelaml_covEthn_leuk_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nLeukemia: meth ~ telaml/non-telaml\nCov: ethnicity",sep="")
+            names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+        },
+        "htl"={
+            stat2=stat_htl; fName1=paste("_methResp_hyperdipTelaml_covEthn_leuk_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nLeukemia: meth ~ hyperdiploid/telaml1\nCov: ethnicity",sep="")
+            names(stat2)=sapply(names(stat2),function(x) {strsplit(x,"_")[[1]][1]},USE.NAMES=F)
+        },
         "ahrrCo2"={
             stat2=stat_ahrrCo2; fName1=paste("_methResp_ahrr_ctrlSubset_covSet_covPrinComp1234_covEpStr_allGuthSet2_bmiq",transformFlag,sep=""); compName=paste("M-value based. Coefficient: ",sub("pv_","",colIdPV[1][grep("pv_",colIdPV[1])]),"\nSet2 ctrl: meth ~ AHRR\nCov: ReFACTor comp 1,2,3,4, epistructure",sep="")
         },
@@ -2615,10 +2696,10 @@ for (compId in compList) {
             names(stat2)=sub("_meth","",names(stat2),fixed=T)
         }
         )
-        if (!colListPV[cId]%in%names(stat2)) next
+        if (!colListPV[cId]%in%names(stat2)) {cat(colListPV[cId]," not a column in stat file!!!\n",sep=""); next}
         if (length(nm)==0) nm=names(stat2)
         i=match(stat2$cpgId,ann$IlmnID)
-        if (candGeneFlag$gene%in%c("mgmt","mgmt13")) {
+        if (candGeneFlag$gene%in%c("mgmt","mgmt13","telaml","telaml38")) {
             compName=sub("Coefficient:","Coef:",sub("M-value based",paste(toupper(candGeneFlag$gene),". Mval based",sep=""),compName))
             fName=paste("_",candGeneFlag$gene,fName1,sep="")
             #i=match(stat2$cpgId,ann$IlmnID)
@@ -2636,7 +2717,7 @@ for (compId in compList) {
         
         ####################################################################
         
-        if (all(is.na(stat2[,colIdEst]))) {next} #{cat("No stats computed !!!\n"); next}
+        if (all(is.na(stat2[,colIdEst]))) {cat("No stats computed !!!\n"); next}
         
         cat("\n\n",compName,"\n",sep="")
         if (candGeneFlag$gene=="") {
@@ -2728,9 +2809,13 @@ for (compId in compList) {
             }
             iThis=i
             if ("ylimM"%in%names(parList)) yLim=parList$ylimM else yLim=NULL
-            plot(ann[iA2[iThis],"MAPINFO"],-log10(stat[iThis,colIdPV[1]]),xlab=paste("Chromosome ",ann[iA2[iThis][1],"CHR"],sep=""),ylim=yLim,ylab="-log10(p-value)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header,col="grey")
-            ii=iThis[which(stat[iThis,colIdPV[2]]<pThres)]
-            points(ann[iA2[ii],"MAPINFO"],-log10(stat[ii,colIdPV[1]]),pch=19,col="red")
+            xLab=""; xLim=NULL
+            if ("xlabM"%in%names(parList)) {xLab=parList$xlabM; xLim=parList$xlimM}
+            for (p in 1:length(xLab)) {
+                plot(ann[iA2[iThis],"MAPINFO"],-log10(stat[iThis,colIdPV[1]]),xlab=paste(xLab[p],": Chromosome ",ann[iA2[iThis][1],"CHR"],sep=""),xlim=xLim[p,],ylim=yLim,ylab="-log10(p-value)",pch=19,cex.axis=1.5,cex.lab=1.5,main=header,col="grey")
+                ii=iThis[which(stat[iThis,colIdPV[2]]<pThres)]
+                points(ann[iA2[ii],"MAPINFO"],-log10(stat[ii,colIdPV[1]]),pch=19,col="red")
+            }
             if (plotFlag[1]=="") {
                 dev.off()
             }
@@ -2759,6 +2844,7 @@ for (compId in compList) {
         if (length(ii)!=0) {
             #tbl=cbind(ann[iA2,][ii,],stat[ii,c(colIdEst,unique(colIdPV))])
             colId=c("IlmnID","Infinium_Design_Type","CHR","MAPINFO","UCSC_RefGene_Name","Relation_to_UCSC_CpG_Island","snp")
+            colId=c("IlmnID","Infinium_Design_Type","CHR","MAPINFO","UCSC_RefGene_Name","Relation_to_UCSC_CpG_Island","snp","Probe_SNPs","Probe_SNPs_10")
             tbl=cbind(ann[iA2,colId][ii,],stat[ii,which(!nm%in%c("cpgId","gene_genotype","cpgId_ahrr"))])
             names(tbl)=c(colId,nm[which(!nm%in%c("cpgId","gene_genotype","cpgId_ahrr"))])
             if ("gene_genotype"%in%names(stat)) tbl=cbind(gene_genotype=stat$gene_genotype[ii],tbl)

@@ -74,6 +74,12 @@ if (F) {
 }
 
 varThis="ahrr"
+varThis=""
+varThis="telamlCtrl"
+varThis="telamlNonTelaml"
+varThis="hyperdipTelaml"
+
+cat("\n\n============================ regression_refactor.R ===========================\n\n",sep="")
 
 ## ---------------------------------
 
@@ -96,12 +102,12 @@ normFlag="_bmiq"
 transformFlag=""
 transformFlag="_mVal"
 
-datType="_leuk"; subsetName2=""
 datType="_allGuthSet1"; subsetName2="_noNonRndChip"
 datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
 datType="_allGuthSet1Set2"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
+datType="_leuk"; subsetName2=""
 
 mediationFlag=T
 mediationFlag=F
@@ -169,33 +175,6 @@ varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmi
 varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiOver"; computeFlag[2]="logistic"
 varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiObese"; computeFlag[2]="logistic"
 varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag="caco~meth*moBmiUnder"; computeFlag[2]="logistic"
-
-## ---------------------------------
-
-varFlag="_hyperdipTelaml"; covFlag="_covEthnGestage"; varName=""; termName=""
-varFlag="_hyperdipNonHypTelaml"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
-varFlag="_telamlNonHypTelaml"; covFlag="_covRace3"; varName=""; termName=""
-
-varFlag="_leukPreb"; covFlag=""; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
-varFlag="_caco"; covFlag=""; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""
-
-varFlag="_caco"; covFlag="_covSexGestageSnpPC1"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexGestageSnpPC12"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexGestageSnpPC123"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexGestageSnpPC1234"; varName=""; termName=""
-
-varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexEthn"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covEthnGestage"; varName=""; termName=""
-varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
-varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
-varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
 
 ## ---------------------------------
 
@@ -268,6 +247,37 @@ varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""; modelFlag=paste("ca
 
 ## ---------------------------------
 
+varFlag="_caco"; covFlag="_covSexGestageSnpPC1"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexGestageSnpPC12"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexGestageSnpPC123"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexGestageSnpPC1234"; varName=""; termName=""
+
+varFlag="_caco"; covFlag="_covSex"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexEthn"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covEthnGestage"; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="caco~meth"; computeFlag[2]="logistic"
+varFlag="_caco"; covFlag="_covGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+
+varFlag="_hyperdipTelaml"; covFlag="_covEthnGestage"; varName=""; termName=""
+varFlag="_hyperdipNonHypTelaml"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
+varFlag="_telamlNonHypTelaml"; covFlag="_covRace3"; varName=""; termName=""
+
+varFlag="_caco"; covFlag="_covSexRace3Gestage"; varName=""; termName=""
+varFlag="_caco"; covFlag=""; varName=""; termName=""
+varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""
+varFlag="_leukPreb"; covFlag=""; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+
+varFlag="_telamlOther"; covFlag="_covSet"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_telamlCtrl"; covFlag=""; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+
+## ---------------------------------
+
 if (mediationFlag) {
     computeFlag=c("regression","")
     modelFlag="caco~pobw"; computeFlag[2]="logistic" # Model 1
@@ -289,11 +299,11 @@ if (mediationFlag) {
 
 covPCFlag="_covPrinComp123456"
 covPCFlag="_covPrinComp12"
-covPCFlag=""
 covPCFlag="_covPrinComp1234"
+covPCFlag=""
 
+covESFlag="_covEpStr"
 covESFlag=""
-covESFlag="_covEpStr" # do not adjust for cell mixture since refactor components are regressed out when estimating epistructures
 
 ## ---------------------------------
 
@@ -376,10 +386,12 @@ if (computerFlag=="cluster") {
         },
 		"_leuk"={
 		   dirMeth=dirClin=dirClin2="data/set1/"
-		   fNameMeth=paste("beta",normFlag,datFlag,sep="")
+		   fNameMeth=paste("beta",normFlag,datType,sep="")
 		   fNameClin="i.LEU.v2"
 		   fNameClin2="0708011 Sample_Sheet (Fetal blood)"
-		},
+           #dirClin3="data/set1/"
+           #fNameClin3="clin_allGuthSet1_20160928"
+        },
 		"_allGuthSet1Set2Combat"={
 		   dirMeth=dirClin="data/set1set2/"
 		   fNameMeth="combatAdjustedBeta_allGuthSet1Set2_set"
@@ -425,11 +437,13 @@ if (computerFlag=="cluster") {
        },
 		"_leuk"={
 		   dirMeth="docs/all/set1/"
-		   fNameMeth=paste("beta",normFlag,datFlag,sep="")
+		   fNameMeth=paste("beta",normFlag,datType,sep="")
 		   dirClin="docs/all/set1/LEU.data/"
 		   fNameClin="i.LEU.v2"
 		   dirClin2="docs/all/set1/preBcell/"
 		   fNameClin2="0708011 Sample_Sheet (Fetal blood)"
+           #dirClin3="docs/all/set1/"
+           #fNameClin3="clin_allGuthSet1_20160928"
            dirRefactor=dirClin
         },
 		"_aml"={
@@ -645,8 +659,13 @@ switch(datType,
 		clin$id=sapply(clin$Sample,function(x) {if (is.na(as.integer(substr(x,1,1)))) x else paste("X",x,sep="")},USE.NAMES=F)
 		clin$group="Leukemia"
 		clin$group2="Leuk"
-		
-		tbl1=read.table(paste(dirClin2,fNameClin2,".csv",sep=""),sep=",",h=T,quote="",comment.char="",as.is=T,fill=T,skip=14)
+        clin$subtype=rep("",nrow(clin))
+        clin$subtype[which(clin$Subtype=="hyperdiploid")]="hyperdiploid"
+        clin$subtype[which(clin$Subtype=="t1221")]="telaml"
+        clin$subtype[which(clin$Subtype%in%c("mll","others","t119"))]="nonHypTelaml"
+        clin$subtype[which(clin$Subtype%in%c("unknown"))]=NA
+        
+        tbl1=read.table(paste(dirClin2,fNameClin2,".csv",sep=""),sep=",",h=T,quote="",comment.char="",as.is=T,fill=T,skip=14)
 		names(tbl1)[match(c("Sample_Name","Sample_Well","Sample_Plate","Sample_Group","Pool_ID","Sentrix_ID","Sentrix_Position"),names(tbl1))]=c("id1","Sample_Well","Sample_Plate","group","Pool_ID","Beadchip","Position")
 		tbl1$id=tbl1$id1
 		j=which(!is.na(as.integer(tbl1$id1)))
@@ -655,19 +674,30 @@ switch(datType,
 		tbl1$group2[which(tbl1$group=="Allcell-B")]="B"
 		tbl1$group2[which(tbl1$group=="Allcell-non-B")]="nB"
 		tbl1$id=paste(tbl1$group2,"_",tbl1$id1,sep="")
-		tbl1$sex=NA
+		tbl1$sex=tbl1$int_ch_ethnicity=tbl1$int_ch_race=NA
+        tbl1$subtype=NA; tbl1$subtype=as.character(tbl1$subtype)
 		tbl1[tbl1$id%in%tbl1$id[duplicated(tbl1$id)],]
 		k=match(names(clin),names(tbl1)); k1=which(!is.na(k)); k2=k[k1]
 		clin=rbind(clin[,k1],tbl1[!duplicated(tbl1$id),k2])
-		
-		
+        
+        switch(varThis,
+            "telamlNonTelaml"={
+                clin$telamlNonTelaml=as.integer(clin$subtype=="telaml")
+            },
+            "hyperdipTelaml"={
+                clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
+                clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
+            }
+        )
+
         #x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
 		x=gsub("_+","_",gsub("(","_",gsub(" |-|)","_",clin$id),fixed=T))
 		j=which(substr(x,nchar(x),nchar(x))=="_")
 		if (length(j)!=0) x[j]=substr(x[j],1,nchar(x[j])-1)
 		clin$id=x
-		
+        
 		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        colnames(beta)=sub("_$","",gsub("_+","_",gsub(".","_",colnames(beta),fixed=T)))
 		probeId=beta$probeId
 		beta=as.matrix(beta[,-1])
 		rownames(beta)=probeId
@@ -846,21 +876,23 @@ if ("pobw"%in%names(phen)) {
     print(summary(phen$pobw))
     phen$pobwBi=as.integer(phen$pobw>cutoff)
 }
-phen$moBmi=phen$motherWt/((phen$motherHt/100)^2)
-phen$moBmiCat=NA
-phen$moBmiCat[which(round(phen$moBmi,1)>=30)]="obese"
-phen$moBmiCat[which(round(phen$moBmi,1)>=25 & round(phen$moBmi,1)<30)]="overweight"
-phen$moBmiCat[which(round(phen$moBmi,1)>=18.5 & round(phen$moBmi,1)<25)]="normal"
-phen$moBmiCat[which(round(phen$moBmi,1)<18.5)]="underweight"
-phen$moBmiOverOrObese=phen$moBmiOver=phen$moBmiObese=phen$moBmiUnder=phen$moBmiCat
-phen$moBmiOverOrObese=as.integer(phen$moBmiCat%in%c("overweight","obese"))
-phen$moBmiOverOrObese[!phen$moBmiCat%in%c("normal","overweight","obese")]=NA
-phen$moBmiOver=as.integer(phen$moBmiCat%in%c("overweight"))
-phen$moBmiOver[!phen$moBmiCat%in%c("normal","overweight")]=NA
-phen$moBmiObese=as.integer(phen$moBmiCat%in%c("obese"))
-phen$moBmiObese[!phen$moBmiCat%in%c("normal","obese")]=NA
-phen$moBmiUnder=as.integer(phen$moBmiCat%in%c("underweight"))
-phen$moBmiUnder[!phen$moBmiCat%in%c("normal","underweight")]=NA
+if ("motherWt"%in%names(phen)) {
+    phen$moBmi=phen$motherWt/((phen$motherHt/100)^2)
+    phen$moBmiCat=NA
+    phen$moBmiCat[which(round(phen$moBmi,1)>=30)]="obese"
+    phen$moBmiCat[which(round(phen$moBmi,1)>=25 & round(phen$moBmi,1)<30)]="overweight"
+    phen$moBmiCat[which(round(phen$moBmi,1)>=18.5 & round(phen$moBmi,1)<25)]="normal"
+    phen$moBmiCat[which(round(phen$moBmi,1)<18.5)]="underweight"
+    phen$moBmiOverOrObese=phen$moBmiOver=phen$moBmiObese=phen$moBmiUnder=phen$moBmiCat
+    phen$moBmiOverOrObese=as.integer(phen$moBmiCat%in%c("overweight","obese"))
+    phen$moBmiOverOrObese[!phen$moBmiCat%in%c("normal","overweight","obese")]=NA
+    phen$moBmiOver=as.integer(phen$moBmiCat%in%c("overweight"))
+    phen$moBmiOver[!phen$moBmiCat%in%c("normal","overweight")]=NA
+    phen$moBmiObese=as.integer(phen$moBmiCat%in%c("obese"))
+    phen$moBmiObese[!phen$moBmiCat%in%c("normal","obese")]=NA
+    phen$moBmiUnder=as.integer(phen$moBmiCat%in%c("underweight"))
+    phen$moBmiUnder[!phen$moBmiCat%in%c("normal","underweight")]=NA
+}
 if (length(grep("PCB",names(phen)))!=0) {
     pcb=read.table(paste(dirCom,"pcb.txt",sep=""), sep=" ", h=F, quote="", comment.char="",as.is=T,fill=T,skip=5)
     names(pcb)=c("pcbNo","clPos","aroclor1016","aroclor1242","aroclor1248A3.5","aroclor1248G3.5","aroclor1254Late","aroclor1254","aroclor1260")
@@ -950,12 +982,13 @@ if (length(grep("_allGuth",datType)!=0)) {
 		phen$race2=phen$ethn
 	}
 }
-if (datType=="_aml") {
-	phen$ethn=as.factor(phen$int_ch_ethnicity)
-	phen$race2=phen$ethn
+if (datType%in%c("_leuk","_aml")) {
+    if ("int_ch_race"%in%names(phen)) phen$race=as.factor(phen$int_ch_race)
+    if ("int_ch_ethnicity"%in%names(phen)) phen$ethn=as.factor(phen$int_ch_ethnicity)
+    phen$race2=phen$ethn
 }
 
-for (k in which(names(phen)%in%c("caco","sex","Beadchip"))) {
+for (k in which(names(phen)%in%c("caco","sex","Beadchip","race","ethn"))) {
 	phen[,k]=as.factor(phen[,k])
 }
 
@@ -989,7 +1022,12 @@ switch(varFlag,
 	   phen$caco=NA
 	   phen$caco[which(phen$subtype=="control")]=0
 	   phen$caco[which(phen$subtype=="nonHypTelaml")]=1
-	},
+    },
+    "_telamlOther"={
+           phen$caco=NA
+           phen$caco[which(phen$group=="Leukemia")]=0
+           phen$caco[which(phen$subtype=="telaml")]=1
+    },
 	"_leukPreb"={
 		phen$caco=NA
 		phen$caco[which(phen$group%in%c("S2","S3","S4"))]=0
@@ -1083,6 +1121,18 @@ switch(varFlag,
 	},
 	"_chipPos"={phen$caco=phen$Position}
 )
+switch(varThis,
+    "telamlCtrl"={
+           phen$telamlCtrl=NA
+           phen$telamlCtrl[which(phen$subtype=="control")]=0
+           phen$telamlCtrl[which(phen$subtype=="telaml")]=1
+    },
+    "telamlOther"={
+        phen$telamlOther=NA
+        phen$telamlOther[which(phen$group=="Leukemia")]=0
+        phen$telamlOther[which(phen$subtype=="telaml")]=1
+    }
+)
 if (varFlag%in%paste("_smoke_",varSmoke$varOut,sep="")) {
 	k=match(varSmoke$varIn,names(phen)); k2=which(!is.na(k)); k1=k[k2]
 	names(phen)[k1]=varSmoke$varOut[k2]
@@ -1090,7 +1140,7 @@ if (varFlag%in%paste("_smoke_",varSmoke$varOut,sep="")) {
 }
 
 #phen=phen[,c("caco","Leukemia","sex","Beadchip")]
-if (!varFlag%in%c("_dfeFood","_dfeFort","_dfeNat","_dfeTot",paste("_smoke_",c("mo3mN","moPregN","moAfterN","fa3mN","moBfN"),sep=""),"_smoke","_birthWt","_pobw","_cacoVbirthWt","_cacoXpobw")) {
+if ("caco"%in%names(phen) & !varFlag%in%c("_dfeFood","_dfeFort","_dfeNat","_dfeTot",paste("_smoke_",c("mo3mN","moPregN","moAfterN","fa3mN","moBfN"),sep=""),"_smoke","_birthWt","_pobw","_cacoVbirthWt","_cacoXpobw")) {
 	phen$caco=as.factor(phen$caco)
 }
 
@@ -1331,9 +1381,13 @@ print(format(timeStamp, "%x %X"))
             if (length(grep("*hlaB",modelFlag,fixed=T))) {
                 nm=c(nm,paste(paste(sub("*hlaB",":",strsplit(modelFlag,"~")[[1]][2],fixed=T),nm1,sep="")))
             }
-        } else {
+        } else if (candGeneFlag!="") {
             colIdA=c("cpgId","cpgId_ahrr")
             #nm=c("intercept",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]])
+            nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
+            if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
+        } else {
+            colIdA=c("cpgId")
             nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
             if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
         }
@@ -1407,7 +1461,6 @@ print(format(timeStamp, "%x %X"))
                 tbl=data.frame(cpgId=ann$IlmnID[ann$keep],gene_genotype=rep(annG$id[geneId],nrow(tbl)),tbl,stringsAsFactors=F)
             } else if (candGeneFlag=="_ahrr") {
                 tbl=data.frame(cpgId=ann$IlmnID[ann$keep],cpgId_ahrr=rep(rownames(callG)[geneId],nrow(tbl)),tbl,stringsAsFactors=F)
-                
             } else {
                 tbl=data.frame(cpgId=ann$IlmnID[ann$keep],tbl,stringsAsFactors=F)
             }

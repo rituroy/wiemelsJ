@@ -456,21 +456,35 @@ for (model2Flag in c("meth~caco+genotype","meth~caco*genotype")) {
 
 ####################################################################
 ####################################################################
-## MGMT - smoking variables
+## Identify correlated CpGs
 
-header="MGMT (13 CpGs)"
+cohortFlag="_leuk"
+cohortFlag="_allGuthSet2"
 
-stat2=stat_s1
-load("methAll/data_allGuthSet2.RData")
-meth=meth[rownames(meth)%in%stat2$cpgId[which(!is.na(stat2$holm_smoke_mo_ever))],]
+switch(candGeneFlag$gene,
+    "mgmt"={
+        ## MGMT - smoking variables
+        header="MGMT (13 CpGs)"
+        colIdPV="holm_smoke_mo_ever"
+        stat2=stat_s1
+    },
+    "telaml"={
+        header="TEL-AML1"
+        colIdPV="holm_telamlCtrl"
+        stat2=stat_t2
+    }
+)
+
+load(paste("methAll/data",cohortFlag,".RData",sep=""))
+meth=meth[rownames(meth)%in%stat2$cpgId[which(!is.na(stat2[,colIdPV]))],]
 
 cThres=0.7
-x=cor(t(meth))
+x=cor(t(meth),use="complete.obs")
 summary(x[lower.tri(x)])
 table(x[lower.tri(x)]<cThres)
-png(paste("corrPlot_",candGeneFlag$gene,".png",sep=""))
+png(paste("corrPlot_",candGeneFlag$gene,cohortFlag,".png",sep=""))
 plot(sort(x[lower.tri(x)]),main=header,xlab="",ylab="Pearson correlation coefficient")
-abline(h=.7)
+abline(h=c(-cThres,cThres))
 dev.off()
 
 grp=paste(rep(colnames(x),nrow(x)),rownames(x),sep="_")
@@ -479,7 +493,7 @@ n=ncol(x)*(ncol(x)-1)/2
 tmp=rep(NA,n); tmpC=rep("",n)
 tbl=data.frame(cpgId1=tmpC,cpgId2=tmpC,corrP=tmp,stringsAsFactors=F)
 k=1
-png(paste("pairPlot_highCorr_",candGeneFlag$gene,"_%1d.png",sep=""),width=3*480,height=2*480)
+png(paste("pairPlot_highCorr_",candGeneFlag$gene,cohortFlag,"_%1d.png",sep=""),width=3*480,height=2*480)
 par(mfrow=c(2,3))
 par(mar=c(5, 4, 4, 2) + 0.1)
 par(mar=c(6, 6, 4, .5) + 0.1)
@@ -488,7 +502,7 @@ for (k1 in 1:(ncol(x)-1)) {
         tbl$cpgId1[k]=colnames(x)[k1]
         tbl$cpgId2[k]=colnames(x)[k2]
         tbl$corrP[k]=x[k1,k2]
-        if (x[k1,k2]>=cThres) {
+        if (abs(x[k1,k2])>=cThres) {
             #png(paste("pairPlot_highCorr_",colnames(x)[k1],"_",colnames(x)[k2],"_",candGeneFlag$gene,".png",sep=""))
             plot(meth[which(rownames(meth)==colnames(x)[k1]),],meth[which(rownames(meth)==colnames(x)[k2]),],main=paste("Pearson correlation coefficient: ",round(x[k1,k2],2),sep=""),xlab=paste(colnames(x)[k1],": M-value",sep=""),ylab=paste(colnames(x)[k2],": M-value",sep=""),cex.main=2,cex.lab=2,cex.axis=2)
             fit=lm(meth[which(rownames(meth)==colnames(x)[k2]),]~meth[which(rownames(meth)==colnames(x)[k1]),])
@@ -499,7 +513,30 @@ for (k1 in 1:(ncol(x)-1)) {
     }
 }
 dev.off()
-tbl[which(tbl$corrP>cThres),]
+tbl[which(abs(tbl$corrP)>cThres),]
+y=tbl[which(abs(tbl$corrP)>cThres),]
+unique(y$cpgId1[y$cpgId1%in%y$cpgId2]) ## To identify correlated CpGs
+x=candGeneFlag$IlmnID
+switch(paste(candGeneFlag$gene,cohortFlag,sep=""),
+    "mgmt_allGuthSet2"={
+        
+    },
+    "telaml_allGuthSet2"={
+        x=c(x[!x%in%c(y$cpgId1,y$cpgId2)],c("cg03142697","cg15091747"))
+        candGene2=x
+    },
+    "telaml_leuk"={
+        x=c(x[!x%in%c(y$cpgId1,y$cpgId2)],c("cg22035498","cg01664727","cg16367085","cg23508333","cg15091747","cg19836199"))
+        candGeneL=x
+    }
+)
+candGene2[!candGene2%in%candGeneL]
+candGeneL[!candGeneL%in%candGene2]
+paste(candGeneFlag$IlmnID[candGeneFlag$IlmnID%in%c(candGene2,candGeneL)],collapse=",")
+
+
+## ------------------------------
+## MGMT - smoking variables
 
 cpgId="cg18026026"
 stat2=stat_ms1
@@ -552,6 +589,45 @@ for (k in which(stat2$holm_ahrr<pThres)) {
     #dev.off()
 }
 dev.off()
+
+####################################################################
+####################################################################
+## Functional consequence of germline GAB2 mutations
+
+dirSrc3=paste("/Users/royr/Downloads/wiemelsJ-all/",sep="")
+source(paste(dirSrc3,"funcs.R",sep=""))
+res=getClinData(setFlag=setFlag,subsetFlag=subsetFlag)
+clin1=res$clin1
+clin2=res$clin2
+rm(res)
+
+source(paste(dirSrc3,"funcs.R",sep=""))
+res=getClinData(setFlag=setFlag,subsetFlag=subsetFlag)
+clin1=res$clin1
+clin2=res$clin2
+datadir11=res$dirClin1
+datadir21=res$dirClin2
+datadir12=res$dirMeth1
+datadir22=res$dirMeth2
+rm(res)
+
+tbl=read.table(paste(datadir,"HD-ALL patients with epigenetic mutations.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+names(tbl)[match(c("Subject.ID","Tumor.sequencing.ID","New.Patient.ID","Epigenetic.regulatory.germline.mutation","Epigenetic.mutations.yes.no"),names(tbl))]=c("subjectId","tumorSeqId","newPatientId","epiRegGermMut","epiMutStatus")
+
+k=match(names(clin1),names(clin2)); k1=which(!is.na(k)); k2=k[k1]
+clin=rbind(cbind(clin1[,k1],cohort=rep("set1",nrow(clin1))),cbind(clin2[,k2],cohort=rep("set2",nrow(clin2))))
+clin12=clin
+j=match(clin$subjectId,tbl$subjectId); j1=which(!is.na(j)); j2=j[j1]
+clin=cbind(clin[j1,],tbl[j2,which(!names(tbl)%in%names(clin))])
+
+table(clin$caco,clin$cohort)
+table(clin$Beadchip)
+j=which(clin12$Beadchip%in%clin$Beadchip)
+table(clin12$Beadchip[j],clin12$caco[j])
+clin$subjectId[which(clin$Beadchip%in%c(6042316164,6042324081))]
+
+write.table(clin,"HD-ALL patients with epigenetic mutations and methylation.txt",sep="\t",col.names=T,row.names=F,quote=F)
+
 
 ####################################################################
 ####################################################################
