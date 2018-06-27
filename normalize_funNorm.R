@@ -367,6 +367,12 @@ rgsetFN=preprocessFunnorm(rgsetRaw)
 save(rgsetFN,file=paste("rgsetFN",cohortFlag,subsetName,".RData",sep=""))
 #load(paste("rgsetFN",cohortFlag,subsetName,".RData",sep=""))
 
+###################################################
+## Check for outlier samples
+
+x=getSex(rgsetFN)
+colData(rgsetFN)$predictedSex=x$predictedSex
+
 if (cohortFlag%in%c("_leuk","_birthDefect")) {
 	colId=c("id","sex","predictedSex","Beadchip","Position")
 	k="id"
@@ -422,9 +428,10 @@ if (F) {
     dev.off()
 }
 
-###################################################
-
 save.image("tmp1.RData")
+
+###################################################
+## Run rest of script after removing outliers
 
 load("tmp1.RData")
 

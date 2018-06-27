@@ -1,5 +1,7 @@
 ## Linear or logistic regression
 ## Additive or multiplicative model
+## Before 04/03/18, used files *_allGuthSet1Set2_ctrlSubset* instead of *_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset* files
+## and epistructure_allGuthSet1Set2 instead of epistructure_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset
 
 argv=commandArgs(TRUE)
 varThis=argv[1]
@@ -105,8 +107,8 @@ transformFlag="_mVal"
 datType="_allGuthSet1"; subsetName2="_noNonRndChip"
 datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
-datType="_allGuthSet1Set2"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
+datType="_allGuthSet1Set2"; subsetName2=""
 datType="_leuk"; subsetName2=""
 
 mediationFlag=T
@@ -272,9 +274,10 @@ varFlag="_caco"; covFlag=""; varName=""; termName=""
 varFlag="_caco"; covFlag="_covSexEthnGestage"; varName=""; termName=""
 varFlag="_leukPreb"; covFlag=""; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
 
-varFlag="_telamlOther"; covFlag="_covSet"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
 varFlag="_telamlCtrl"; covFlag=""; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
+varFlag="_telamlOther"; covFlag="_covSet"; varName=""; termName=""; modelFlag="meth~caco"; computeFlag[2]="linear"
 varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
 ## ---------------------------------
 
@@ -299,11 +302,11 @@ if (mediationFlag) {
 
 covPCFlag="_covPrinComp123456"
 covPCFlag="_covPrinComp12"
-covPCFlag="_covPrinComp1234"
 covPCFlag=""
+covPCFlag="_covPrinComp1234"
 
-covESFlag="_covEpStr"
 covESFlag=""
+covESFlag="_covEpStr"
 
 ## ---------------------------------
 
@@ -326,22 +329,24 @@ if (computerFlag=="cluster") {
 }
 
 subsetName=subsetFlag
+subsetFNName=""
 if (subsetFlag!="") {
 	#varFlag=paste(varFlag,"_",subsetFlag,"Subset",sep="")
 	subsetName=paste("_",subsetFlag,"Subset",sep="")
 	switch(subsetFlag,
-		   "case"={varName=sub(")"," cases)",varName)},
-		   "ctrl"={varName=sub(")"," controls)",varName)},
-           "female"={varName=sub(")"," females)",varName)},
-           "male"={varName=sub(")"," males)",varName)},
-           "hisp"={varName=sub(")"," hispanics)",varName)},
-		   "noHisp"={varName=sub(")"," non-hispanics)",varName)},
-		   "hyperdip"={varName=sub(")"," hyperdiploids)",varName)},
-		   "telaml"={varName=sub(")"," tel/aml1s)",varName)},
-		   "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)},
-           "hispCtrl"={varName=sub(")"," hispanic controls)",varName)},
-           "noHispWtCtrl"={varName=sub(")"," non-hispanic white controls)",varName)}
-		   )
+       "case"={varName=sub(")"," cases)",varName)},
+       "ctrl"={varName=sub(")"," controls)",varName)},
+       "female"={varName=sub(")"," females)",varName)},
+       "male"={varName=sub(")"," males)",varName)},
+       "hisp"={varName=sub(")"," hispanics)",varName)},
+       "noHisp"={varName=sub(")"," non-hispanics)",varName)},
+       "hyperdip"={varName=sub(")"," hyperdiploids)",varName)},
+       "telaml"={varName=sub(")"," tel/aml1s)",varName)},
+       "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)},
+       "hispCtrl"={varName=sub(")"," hispanic controls)",varName)},
+       "noHispWtCtrl"={varName=sub(")"," non-hispanic white controls)",varName)}
+    )
+    if (datType=="_allGuthSet1Set2") subsetFNName=paste("_",subsetFlag,"SubsetFunNorm",sep="")
 }
 
 candGeneName=""
@@ -368,27 +373,34 @@ if (computerFlag=="cluster") {
 		"_allGuthSet2"={
 		   dirMeth=dirClin="data/set2/"
 		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
-		   fNameClin="clin_guthrieSet2_20140619"
-           fNameClin="clin_allGuthSet2_20160928"
+           #fNameClin="clin_guthrieSet2_20140619"
+           #fNameClin="clin_allGuthSet2_20160928"
+           fNameClin="clin_allGuthSet2_20180409"
         },
 		"_allGuthSet1"={
 		   dirMeth=dirClin="data/set1/"
 		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
-		   fNameClin="final"
-           fNameClin="clin_allGuthSet1_20160928"
-		   dirMethLeuk=dirMeth
-		   fNameMethLeuk="i.LEU.v2"
+           #fNameClin="final"
+           #fNameClin="clin_allGuthSet1_20160928"
+           fNameClin="clin_allGuthSet1_20180409"
+           dirMethLeuk=dirMeth
+           #fNameMethLeuk="i.LEU.v2"
+           fNameMethLeuk="clin_leuk_20180409"
         },
         "_allGuthSet1Set2"={
             dirMeth=dirClin="data/set1set2/"
-            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),sep="")
-            fNameClin="clin_guthrieSet1Set2_20151022"
+            #fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),sep="")
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),subsetFNName,subsetName,sep="")
+            #fNameClin="clin_guthrieSet1Set2_20151022"
+            #fNameClin="clin_allGuthSet1Set2_20160523"
+            fNameClin="clin_allGuthSet1Set2_20180409"
         },
 		"_leuk"={
 		   dirMeth=dirClin=dirClin2="data/set1/"
 		   fNameMeth=paste("beta",normFlag,datType,sep="")
-		   fNameClin="i.LEU.v2"
-		   fNameClin2="0708011 Sample_Sheet (Fetal blood)"
+           #fNameClin="i.LEU.v2"
+           #fNameClin2="0708011 Sample_Sheet (Fetal blood)"
+           fNameClin="clin_leuk_20180409"
            #dirClin3="data/set1/"
            #fNameClin3="clin_allGuthSet1_20160928"
         },
@@ -416,32 +428,39 @@ if (computerFlag=="cluster") {
 		"_allGuthSet2"={
 		   dirMeth=dirClin="docs/all/set2/"
 		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
-		   fNameClin="clin_guthrieSet2_20140619"
-           fNameClin="clin_allGuthSet2_20160928"
+           #fNameClin="clin_guthrieSet2_20140619"
+           #fNameClin="clin_allGuthSet2_20160928"
+           fNameClin="clin_allGuthSet2_20180409"
            dirRefactor=dirClin
 	   },
 	   "_allGuthSet1"={
 			dirMeth=dirClin="docs/all/set1/"
 			fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
-			fNameClin="final"
-            fNameClin="clin_allGuthSet1_20160928"
-			dirMethLeuk="docs/all/set1/LEU.data/"
-			fNameMethLeuk="i.LEU.v2"
+            #fNameClin="final"
+            #fNameClin="clin_allGuthSet1_20160928"
+            fNameClin="clin_allGuthSet1_20180409"
+            dirMethLeuk="docs/all/set1/LEU.data/"
+            #fNameMethLeuk="i.LEU.v2"
+            fNameMethLeuk="clin_leuk_20180409"
             dirRefactor=dirClin
        },
        "_allGuthSet1Set2"={
            dirMeth=dirClin="docs/all/set1set2/"
-           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
-           fNameClin="clin_guthrieSet1Set2_20151022"
+           #fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetFNName,subsetName,sep="")
+           #fNameClin="clin_guthrieSet1Set2_20151022"
+           #fNameClin="clin_allGuthSet1Set2_20160523"
+           fNameClin="clin_allGuthSet1Set2_20180409"
            dirRefactor=dirClin
        },
 		"_leuk"={
 		   dirMeth="docs/all/set1/"
 		   fNameMeth=paste("beta",normFlag,datType,sep="")
 		   dirClin="docs/all/set1/LEU.data/"
-		   fNameClin="i.LEU.v2"
-		   dirClin2="docs/all/set1/preBcell/"
-		   fNameClin2="0708011 Sample_Sheet (Fetal blood)"
+           #fNameClin="i.LEU.v2"
+           fNameClin="clin_leuk_20180409"
+           #dirClin2="docs/all/set1/preBcell/"
+           #fNameClin2="0708011 Sample_Sheet (Fetal blood)"
            #dirClin3="docs/all/set1/"
            #fNameClin3="clin_allGuthSet1_20160928"
            dirRefactor=dirClin
@@ -461,8 +480,8 @@ if (computerFlag=="cluster") {
 	)
 }
 
-if (datType%in%c("_allGuthSet1Set2") & length(grep("ctrl",tolower(subsetFlag)))==1) {
-    samInfo=read.table(paste(dirClin,"summaryBeta_forSample_allGuthSet1Set2_ctrlSubset.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+if (datType%in%c("_allGuthSet1Set2") & subsetFlag!="") {
+    samInfo=read.table(paste(dirClin,"summaryBeta_forSample",datType,subsetFNName,subsetName,".txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
 } else if (datType%in%c("_allGuthSet2","_allGuthSet1","_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
     samInfo=read.table(paste(dirCom,"summaryBeta_forSample.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
 }
@@ -470,31 +489,33 @@ if (datType%in%c("_allGuthSet1Set2") & length(grep("ctrl",tolower(subsetFlag)))=
 switch(datType,
 	"_allGuthSet2"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        #names(clin)[match(c("subjectID","birth_wt"),names(clin))]=c("subjectId","birthWt")
-		clin$id=paste("X",clin$guthrieId,sep="")
-        #clin$Leukemia=clin$caco
-		
-		clin$subtype=rep("",nrow(clin))
-		clin$subtype[which(clin$smhyper==1)]="hyperdiploid"
-		clin$subtype[which(clin$smtelaml==1)]="telaml" ## include subject with smhyper=1
-		clin$subtype[which(clin$smhyper==0 & clin$smtelaml==0)]="nonHypTelaml"
-		clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
-		clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
-		clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
-		clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
-		clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
-		clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
-		
-		clin$birthWt=as.numeric(clin$birthWt)
-		bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-		names(bw)[match("SubjectID",names(bw))]=c("subjectId")
-		j=match(clin$subjectId,bw$subjectId)
-		j1=which(!is.na(j)); j2=j[j1]
-		clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
-		clin$dbirwt[j1]=bw$dbirwt[j2]
-		clin$pred_btw[j1]=bw$pred_btw[j2]
-		clin$pobw[j1]=bw$pobw[j2]
-		
+        if (F) {
+            #names(clin)[match(c("subjectID","birth_wt"),names(clin))]=c("subjectId","birthWt")
+            clin$id=paste("X",clin$guthrieId,sep="")
+            #clin$Leukemia=clin$caco
+            
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[which(clin$smhyper==1)]="hyperdiploid"
+            clin$subtype[which(clin$smtelaml==1)]="telaml" ## include subject with smhyper=1
+            clin$subtype[which(clin$smhyper==0 & clin$smtelaml==0)]="nonHypTelaml"
+            #clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
+            #clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
+            #clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
+            #clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
+            #clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
+            #clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
+            
+            clin$birthWt=as.numeric(clin$birthWt)
+            bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+            j=match(clin$subjectId,bw$subjectId)
+            j1=which(!is.na(j)); j2=j[j1]
+            clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+            clin$dbirwt[j1]=bw$dbirwt[j2]
+            clin$pred_btw[j1]=bw$pred_btw[j2]
+            clin$pobw[j1]=bw$pobw[j2]
+        }
+        
         if (F) {
             load(paste(dirRefactor,"Refactor_set1_and_2_K_6.RData",sep=""))
             Refactor_set=Refactor_set2
@@ -509,9 +530,8 @@ switch(datType,
             clin=cbind(clin,tmp)
             rm(Refactor_set1,Refactor_set2,Refactor_set,tmp)
         }
-
-		
-		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        
+        beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
 		probeId=beta$probeId
 		beta=as.matrix(beta[,-1])
 		rownames(beta)=probeId
@@ -532,17 +552,19 @@ switch(datType,
         clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
         rm(clin2,tmp,id)
         
-        clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
-        id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
-        tmp=clin2[1:length(id),]
-        for (k in 1:ncol(tmp)) tmp[,k]=NA
-        tmp$subjectId=id
-        clin2=rbind(clin2,tmp)
-        clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
-        rm(clin2,tmp,id)
-        
-        load(paste(dirClin,"sem",datType,".RData",sep=""))
+        if (F) {
+            clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+            id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$subjectId=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+            rm(clin2,tmp,id)
+            
+            load(paste(dirClin,"sem",datType,".RData",sep=""))
+        }
 
 		phen=clin
 		phen=phen[match(colnames(meth),phen$id),]
@@ -555,37 +577,39 @@ switch(datType,
 	},
 	"_allGuthSet1"={
         clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        #names(clin)[match(c("Subject_ID","birth_weight"),names(clin))]=c("subjectId","birthWt")
-        #clin$id=paste("X",clin$TargetID,sep="")
-        clin$id=paste("X",clin$guthrieId,sep="")
-        clin$Beadchip=substr(clin$Bead_Position,1,10)
-        if ("Position1"%in%names(clin)) clin$Position=clin$Position1 else clin$Position=clin$Position.1
-        clin$caco=clin$Leukemia
-        clin$int_ch_ethnicity=clin$ch_ethnicity
+        if (F) {
+            #names(clin)[match(c("Subject_ID","birth_weight"),names(clin))]=c("subjectId","birthWt")
+            #clin$id=paste("X",clin$TargetID,sep="")
+            clin$id=paste("X",clin$guthrieId,sep="")
+            clin$Beadchip=substr(clin$Bead_Position,1,10)
+            if ("Position1"%in%names(clin)) clin$Position=clin$Position1 else clin$Position=clin$Position.1
+            clin$caco=clin$Leukemia
+            clin$int_ch_ethnicity=clin$ch_ethnicity
 
-        clin2=read.table(paste(dirMethLeuk,fNameMethLeuk,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        j=match(clin$subjectId,clin2$Subject_ID)
-        j1=which(!is.na(j)); j2=j[j1]
+            clin2=read.table(paste(dirMethLeuk,fNameMethLeuk,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            j=match(clin$subjectId,clin2$Subject_ID)
+            j1=which(!is.na(j)); j2=j[j1]
 
-        clin$subtype=rep("",nrow(clin))
-        clin$subtype[j1][which(clin2$Subtype[j2]=="hyperdiploid")]="hyperdiploid"
-        clin$subtype[j1][which(clin2$Subtype[j2]=="t1221")]="telaml"
-        clin$subtype[j1][which(clin2$Subtype[j2]%in%c("mll","others","t119"))]="nonHypTelaml"
-        clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
-        clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
-        clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
-        clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
-        clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
-        clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[j1][which(clin2$Subtype[j2]=="hyperdiploid")]="hyperdiploid"
+            clin$subtype[j1][which(clin2$Subtype[j2]=="t1221")]="telaml"
+            clin$subtype[j1][which(clin2$Subtype[j2]%in%c("mll","others","t119"))]="nonHypTelaml"
+            #clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
+            #clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
+            #clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
+            #clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
+            #clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
+            #clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
 
-        bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        names(bw)[match("SubjectID",names(bw))]=c("subjectId")
-        j=match(clin$subjectId,bw$subjectId)
-        j1=which(!is.na(j)); j2=j[j1]
-        clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
-        clin$dbirwt[j1]=bw$dbirwt[j2]
-        clin$pred_btw[j1]=bw$pred_btw[j2]
-        clin$pobw[j1]=bw$pobw[j2]
+            bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+            j=match(clin$subjectId,bw$subjectId)
+            j1=which(!is.na(j)); j2=j[j1]
+            clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+            clin$dbirwt[j1]=bw$dbirwt[j2]
+            clin$pred_btw[j1]=bw$pred_btw[j2]
+            clin$pobw[j1]=bw$pobw[j2]
+        }
 
         if (F) {
             load(paste(dirRefactor,"Refactor_set1_and_2_K_6.RData",sep=""))
@@ -634,15 +658,17 @@ switch(datType,
         clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
         rm(clin2,tmp,id)
 
-        clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
-        id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
-        tmp=clin2[1:length(id),]
-        for (k in 1:ncol(tmp)) tmp[,k]=NA
-        tmp$subjectId=id
-        clin2=rbind(clin2,tmp)
-        clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
-        rm(clin2,tmp,id)
+        if (f) {
+            clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+            id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$subjectId=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+            rm(clin2,tmp,id)
+        }
 
         phen=clin
         phen=phen[match(colnames(meth),phen$id),]
@@ -655,46 +681,38 @@ switch(datType,
 	},
 	"_leuk"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-		names(clin)[match(c("Plate","Sentrix_ID","Sentrix_Position"),names(clin))]=c("Batch","Beadchip","Position")
-		clin$id=sapply(clin$Sample,function(x) {if (is.na(as.integer(substr(x,1,1)))) x else paste("X",x,sep="")},USE.NAMES=F)
-		clin$group="Leukemia"
-		clin$group2="Leuk"
-        clin$subtype=rep("",nrow(clin))
-        clin$subtype[which(clin$Subtype=="hyperdiploid")]="hyperdiploid"
-        clin$subtype[which(clin$Subtype=="t1221")]="telaml"
-        clin$subtype[which(clin$Subtype%in%c("mll","others","t119"))]="nonHypTelaml"
-        clin$subtype[which(clin$Subtype%in%c("unknown"))]=NA
-        
-        tbl1=read.table(paste(dirClin2,fNameClin2,".csv",sep=""),sep=",",h=T,quote="",comment.char="",as.is=T,fill=T,skip=14)
-		names(tbl1)[match(c("Sample_Name","Sample_Well","Sample_Plate","Sample_Group","Pool_ID","Sentrix_ID","Sentrix_Position"),names(tbl1))]=c("id1","Sample_Well","Sample_Plate","group","Pool_ID","Beadchip","Position")
-		tbl1$id=tbl1$id1
-		j=which(!is.na(as.integer(tbl1$id1)))
-		tbl1$group[j]=paste("S",tbl1$group[j],sep="")
-		tbl1$group2=tbl1$group
-		tbl1$group2[which(tbl1$group=="Allcell-B")]="B"
-		tbl1$group2[which(tbl1$group=="Allcell-non-B")]="nB"
-		tbl1$id=paste(tbl1$group2,"_",tbl1$id1,sep="")
-		tbl1$sex=tbl1$int_ch_ethnicity=tbl1$int_ch_race=NA
-        tbl1$subtype=NA; tbl1$subtype=as.character(tbl1$subtype)
-		tbl1[tbl1$id%in%tbl1$id[duplicated(tbl1$id)],]
-		k=match(names(clin),names(tbl1)); k1=which(!is.na(k)); k2=k[k1]
-		clin=rbind(clin[,k1],tbl1[!duplicated(tbl1$id),k2])
-        
-        switch(varThis,
-            "telamlNonTelaml"={
-                clin$telamlNonTelaml=as.integer(clin$subtype=="telaml")
-            },
-            "hyperdipTelaml"={
-                clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
-                clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
-            }
-        )
+        if (F) {
+            names(clin)[match(c("Plate","Sentrix_ID","Sentrix_Position"),names(clin))]=c("Batch","Beadchip","Position")
+            clin$id=sapply(clin$Sample,function(x) {if (is.na(as.integer(substr(x,1,1)))) x else paste("X",x,sep="")},USE.NAMES=F)
+            clin$group="Leukemia"
+            clin$group2="Leuk"
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[which(clin$Subtype=="hyperdiploid")]="hyperdiploid"
+            clin$subtype[which(clin$Subtype=="t1221")]="telaml"
+            clin$subtype[which(clin$Subtype%in%c("mll","others","t119"))]="nonHypTelaml"
+            clin$subtype[which(clin$Subtype%in%c("unknown"))]=NA
+            
+            tbl1=read.table(paste(dirClin2,fNameClin2,".csv",sep=""),sep=",",h=T,quote="",comment.char="",as.is=T,fill=T,skip=14)
+            names(tbl1)[match(c("Sample_Name","Sample_Well","Sample_Plate","Sample_Group","Pool_ID","Sentrix_ID","Sentrix_Position"),names(tbl1))]=c("id1","Sample_Well","Sample_Plate","group","Pool_ID","Beadchip","Position")
+            tbl1$id=tbl1$id1
+            j=which(!is.na(as.integer(tbl1$id1)))
+            tbl1$group[j]=paste("S",tbl1$group[j],sep="")
+            tbl1$group2=tbl1$group
+            tbl1$group2[which(tbl1$group=="Allcell-B")]="B"
+            tbl1$group2[which(tbl1$group=="Allcell-non-B")]="nB"
+            tbl1$id=paste(tbl1$group2,"_",tbl1$id1,sep="")
+            tbl1$sex=tbl1$int_ch_ethnicity=tbl1$int_ch_race=NA
+            tbl1$subtype=NA; tbl1$subtype=as.character(tbl1$subtype)
+            tbl1[tbl1$id%in%tbl1$id[duplicated(tbl1$id)],]
+            k=match(names(clin),names(tbl1)); k1=which(!is.na(k)); k2=k[k1]
+            clin=rbind(clin[,k1],tbl1[!duplicated(tbl1$id),k2])
 
-        #x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
-		x=gsub("_+","_",gsub("(","_",gsub(" |-|)","_",clin$id),fixed=T))
-		j=which(substr(x,nchar(x),nchar(x))=="_")
-		if (length(j)!=0) x[j]=substr(x[j],1,nchar(x[j])-1)
-		clin$id=x
+            #x=gsub("(",".",gsub(" |-|)",".",clin$id),fixed=T)
+            x=gsub("_+","_",gsub("(","_",gsub(" |-|)","_",clin$id),fixed=T))
+            j=which(substr(x,nchar(x),nchar(x))=="_")
+            if (length(j)!=0) x[j]=substr(x[j],1,nchar(x[j])-1)
+            clin$id=x
+        }
         
 		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
         colnames(beta)=sub("_$","",gsub("_+","_",gsub(".","_",colnames(beta),fixed=T)))
@@ -712,16 +730,18 @@ switch(datType,
 	"_allGuthSet1Set2"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         
-        bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        names(bw)[match("SubjectID",names(bw))]=c("subjectId")
-        j=match(clin$subjectId,bw$subjectId)
-        j1=which(!is.na(j)); j2=j[j1]
-        clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
-        clin$dbirwt[j1]=bw$dbirwt[j2]
-        clin$pred_btw[j1]=bw$pred_btw[j2]
-        clin$pobw[j1]=bw$pobw[j2]
+        if (F) {
+            bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+            j=match(clin$subjectId,bw$subjectId)
+            j1=which(!is.na(j)); j2=j[j1]
+            clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+            clin$dbirwt[j1]=bw$dbirwt[j2]
+            clin$pred_btw[j1]=bw$pred_btw[j2]
+            clin$pobw[j1]=bw$pobw[j2]
+        }
         
-        clin2=read.table(paste(dirClin,"epistructure",datType,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        clin2=read.table(paste(dirClin,"epistructure",datType,subsetFNName,subsetName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         id=clin$id[!clin$id%in%clin2$id]
         tmp=clin2[1:length(id),]
         for (k in 1:ncol(tmp)) tmp[,k]=NA
@@ -730,22 +750,39 @@ switch(datType,
         clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
         rm(clin2,tmp,id)
         
-        clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
-        id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
-        tmp=clin2[1:length(id),]
-        for (k in 1:ncol(tmp)) tmp[,k]=NA
-        tmp$subjectId=id
-        clin2=rbind(clin2,tmp)
-        clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
-        rm(clin2,tmp,id)
-        
-        if (length(grep("ctrl",tolower(subsetFlag)))==1) {
-            beta=read.table(paste(dirMeth,fNameMeth,"_ctrlSubset.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
-        } else {
-            beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        if (F) {
+            clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+            id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$subjectId=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+            rm(clin2,tmp,id)
+            
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[which(clin$Subtype=="hyperdiploid")]="hyperdiploid"
+            clin$subtype[which(clin$Subtype=="t1221")]="telaml"
+            clin$subtype[which(clin$Subtype%in%c("mll","others","t119"))]="nonHypTelaml"
+            #clin$hyperdipTelaml=as.integer(clin$subtype=="hyperdiploid")
+            #clin$hyperdipTelaml[!clin$subtype%in%c("hyperdiploid","telaml")]=NA
+            #clin$hyperdipNonHypTelaml=as.integer(clin$subtype=="hyperdiploid")
+            #clin$hyperdipNonHypTelaml[!clin$subtype%in%c("hyperdiploid","nonHypTelaml")]=NA
+            #clin$telamlNonHypTelaml=as.integer(clin$subtype=="telaml")
+            #clin$telamlNonHypTelaml[!clin$subtype%in%c("telaml","nonHypTelaml")]=NA
         }
-		probeId=beta$probeId
+        
+        #if (length(grep("ctrl",tolower(subsetFlag)))==1) {
+        #    #beta=read.table(paste(dirMeth,fNameMeth,"_ctrlSubset.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        #    beta=read.table(paste(dirMeth,fNameMeth,"_ctrlSubsetFunNorm_ctrlSubset.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        #} else if (length(grep("case",tolower(subsetFlag)))==1) {
+        #    beta=read.table(paste(dirMeth,fNameMeth,"_caseSubsetFunNorm_caseSubset.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        #} else {
+        #    beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        #}
+        beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        probeId=beta$probeId
 		beta=as.matrix(beta[,-1])
 		rownames(beta)=probeId
 		meth=beta
@@ -768,11 +805,7 @@ switch(datType,
 		phen=clin
 		phen=phen[match(colnames(meth),phen$id),]
         
-        if (length(grep("ctrl",tolower(subsetFlag)))==1) {
-            load(paste(dirRefactor,"Refactor_dat",datType,"_ctrlSubset.RData",sep=""))
-        } else {
-            load(paste(dirRefactor,"Refactor_dat",datType,".RData",sep=""))
-        }
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetFNName,subsetName,".RData",sep=""))
         colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
         j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
         meth=meth[,j1]
@@ -1121,6 +1154,7 @@ switch(varFlag,
 	},
 	"_chipPos"={phen$caco=phen$Position}
 )
+
 switch(varThis,
     "telamlCtrl"={
            phen$telamlCtrl=NA
@@ -1131,6 +1165,14 @@ switch(varThis,
         phen$telamlOther=NA
         phen$telamlOther[which(phen$group=="Leukemia")]=0
         phen$telamlOther[which(phen$subtype=="telaml")]=1
+    },
+    "telamlNonTelaml"={
+        phen$telamlNonTelaml=as.integer(phen$subtype=="telaml")
+        phen$telamlNonTelaml[phen$caco!=1 | phen$subtype==""]=NA
+    },
+    "hyperdipTelaml"={
+        phen$hyperdipTelaml=as.integer(phen$subtype=="hyperdiploid")
+        phen$hyperdipTelaml[!phen$subtype%in%c("hyperdiploid","telaml")]=NA
     }
 )
 if (varFlag%in%paste("_smoke_",varSmoke$varOut,sep="")) {
@@ -1188,7 +1230,7 @@ ann$keep=apply(meth,1,function(x) {any(!is.na(x))})
 
 ## ----------------------------------------------
 
-if (datType=="_allGuthSet2") {
+if ("sem"%in%names(phen) & datType=="_allGuthSet2") {
     phen$logSemNoSnpNoSexChr=phen$semNoSnpNoSexChr=logSemNoSexChr=phen$semNoSexChr=phen$logSem=phen$sem=NA
     x=apply(sem,2,function(x) {sum(!is.na(x))})
     j=match(phen$id,names(x)); j1=which(!is.na(j)); j2=j[j1]

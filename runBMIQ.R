@@ -1,12 +1,12 @@
 ## ---------------------------------
 
-computerFlag="cluster"
 computerFlag=""
+computerFlag="cluster"
 
 ## ---------------------------------
 
-nProbe=-1
 nProbe=101
+nProbe=-1
 
 ## ---------------------------------
 datType="_aml"
@@ -70,7 +70,8 @@ if (computerFlag=="cluster") {
 		"_allGuthSet1Set2"={
 		   dirClin=dirMeth="data/set1set2/"
            fNameMeth=paste("beta_funNorm",datType,ifelse(subsetFNFlag=="","",paste("_",subsetFNFlag,"Subset",sep="")),".txt",sep="")
-		   fNameClin=paste("clin_guthrieSet1Set2_20140619.txt",sep="")
+           #fNameClin=paste("clin_guthrieSet1Set2_20140619.txt",sep="")
+           fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
         },
         "_leuk"={
             dirClin=dirMeth=dirClin2="data/set1/"
@@ -96,10 +97,11 @@ if (computerFlag=="cluster") {
            fNameMeth=paste("beta_funNorm",datType,ifelse(subsetFNFlag=="","",paste("_",subsetFNFlag,"Subset",sep="")),".txt",sep="")
 		   fNameClin=paste("final.txt",sep="")
 	   },
-	   "_allGuthSet1"={
+	   "_allGuthSet1Set2"={
 		   dirClin=dirMeth="docs/all/set1set2/"
            fNameMeth=paste("beta_funNorm",datType,ifelse(subsetFNFlag=="","",paste("_",subsetFNFlag,"Subset",sep="")),".txt",sep="")
-		   fNameClin=paste("clin_guthrieSet1Set2_20140619.txt",sep="")
+           #fNameClin=paste("clin_guthrieSet1Set2_20140619.txt",sep="")
+           fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
        },
        "_leuk"={
            dirMeth="docs/all/set1/"
@@ -218,7 +220,7 @@ if (computerFlag=="cluster") {
 
 for (samId in 1:ncol(meth)) {
 	i=!is.na(meth[,samId])
-	res=BMIQ(beta.v=meth[i,samId],design.v=designType[i],nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.v=NULL,niter=5,tol=0.001,plots=TRUE,sampleID=colnames(meth)[samId],fNameSuf=paste(datType,subsetName,sep=""))
+	res=BMIQ(beta.v=meth[i,samId],design.v=designType[i],nL=3,doH=TRUE,nfit=50000,th1.v=c(0.2,0.75),th2.v=NULL,niter=5,tol=0.001,plots=TRUE,sampleID=colnames(meth)[samId],fNameSuf=paste(datType,subsetFNName,subsetName,sep=""))
 	beta[i,samId]=res$nbeta
 }
 

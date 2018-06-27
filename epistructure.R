@@ -1,4 +1,6 @@
 ## Use subsetted clinical & refactor data instead of all samples
+## Before 04/03/18, used files *_allGuthSet1Set2_ctrlSubset* instead of *_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset* files
+## and summaryBeta_forSample for allGuthSet1Set2/ctrlSubset
 ## ---------------------------------
 
 computerFlag=""
@@ -7,8 +9,8 @@ computerFlag="cluster"
 ## ---------------------------------
 
 nProbe=101
-nProbe=10001
 nProbe=-1
+nProbe=10001
 
 ## ---------------------------------
 subsetName2=""
@@ -72,6 +74,7 @@ if (computerFlag=="cluster") {
 }
 
 subsetName=subsetFlag
+subsetFNName=""
 if (subsetFlag!="") {
 	#varFlag=paste(varFlag,"_",subsetFlag,"Subset",sep="")
 	subsetName=paste("_",subsetFlag,"Subset",sep="")
@@ -86,10 +89,11 @@ if (subsetFlag!="") {
 		   "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)}
         )
     }
+    if (datType=="_allGuthSet1Set2") subsetFNName=paste("_",subsetFlag,"SubsetFunNorm",sep="")
 }
 
 heading=paste(c(varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",datType,subsetName2,", ",normFlag),collapse="")
-cat("\n\n============================ Linear Regression, Refactor ===========================\n\n")
+cat("\n\n============================ Epistructure ===========================\n\n")
 cat("\n\n============================",varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",datType,subsetName2,", ",normFlag,"===========================\n\n")
 
 ##############################################
@@ -120,7 +124,7 @@ if (computerFlag=="cluster") {
         },
         "_allGuthSet1Set2"={
             dirMeth=dirClin="data/set1set2/"
-            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),subsetName,sep="")
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),subsetFNName,subsetName,sep="")
             fNameClin="clin_guthrieSet1Set2_20140619"
             fNameClin="clin_guthrieSet1Set2_20151022"
             fNameClin="clin_allGuthSet1Set2_20160523"
@@ -172,7 +176,7 @@ if (computerFlag=="cluster") {
        "_allGuthSet1Set2"={
            dirMeth=dirClin="docs/all/set1set2/"
            dirRefactor=dirClin
-           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetName,sep="")
+           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetFNName,subsetName,sep="")
            fNameClin="clin_allGuthSet1Set2_20160523"
        },
        "_leuk"={
@@ -199,8 +203,10 @@ if (computerFlag=="cluster") {
 	)
 }
 
-if (datType%in%c("_allGuthSet2","_allGuthSet1","_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
-	samInfo=read.table(paste(dirCom,"summaryBeta_forSample.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+if (datType%in%c("_allGuthSet1Set2") & subsetFlag!="") {
+    samInfo=read.table(paste(dirClin,"summaryBeta_forSample",datType,subsetFNName,subsetName,".txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+} else if (datType%in%c("_allGuthSet2","_allGuthSet1","_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
+    samInfo=read.table(paste(dirCom,"summaryBeta_forSample.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
 }
 
 switch(datType,
@@ -390,8 +396,8 @@ switch(datType,
 	},
 	"_allGuthSet1Set2"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
-		probeId=beta$probeId
+        beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        probeId=beta$probeId
 		beta=as.matrix(beta[,-1])
 		rownames(beta)=probeId
 		meth=beta
@@ -408,7 +414,7 @@ switch(datType,
 		phen=clin
 		phen=phen[match(colnames(meth),phen$id),]
         
-        load(paste(dirRefactor,"Refactor_dat",datType,subsetName,".RData",sep=""))
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetFNName,subsetName,".RData",sep=""))
         colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
         j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
         meth=meth[,j1]
@@ -521,7 +527,7 @@ if (mediationFlag) {
 }
 
 if (length(grep("_allGuth",datType)!=0)) {
-	phen$subtype[which(phen$caco==0)]="control"
+	if ("subtype"%in%names(phen)) phen$subtype[which(phen$caco==0)]="control"
 
 	phen$caco=as.factor(phen$caco)
 	phen$Beadchip=as.factor(phen$Beadchip)
@@ -558,49 +564,49 @@ rm(clin)
 
 ## ----------------------------------------------
 if (F) {
-if (computerFlag=="") {
-	load(file="ann.RData")
-} else {
-	if (computerFlag=="cluster") {
-		ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-		#snpVec=read.table(paste("data/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
-		snpVec=read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	} else {
-		ann=read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-		#snpVec=read.table(paste("docs/ShwetaChoudhry/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
-		snpVec=read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	}
-	ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
-	ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
-	ann[,"CHR"]=as.integer(ann[,"CHR"])
-	ann=ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
-	for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
-	i=match(rownames(meth),ann[,"IlmnID"])
-	table(is.na(i))
-	ann=ann[i,]
+    if (computerFlag=="") {
+        load(file="ann.RData")
+    } else {
+        if (computerFlag=="cluster") {
+            ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+            #snpVec=read.table(paste("data/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
+            snpVec=read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        } else {
+            ann=read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+            #snpVec=read.table(paste("docs/ShwetaChoudhry/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
+            snpVec=read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        }
+        ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
+        ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
+        ann[,"CHR"]=as.integer(ann[,"CHR"])
+        ann=ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
+        for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
+        i=match(rownames(meth),ann[,"IlmnID"])
+        table(is.na(i))
+        ann=ann[i,]
 
-	snpVec=snpVec[,1]
-	ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
-}
+        snpVec=snpVec[,1]
+        ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
+    }
 
 
-ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
-    strsplit(x,";")[[1]][1]
-},USE.NAMES=F)
-ann$geneSym[is.na(ann$geneSym)]=""
+    ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
+        strsplit(x,";")[[1]][1]
+    },USE.NAMES=F)
+    ann$geneSym[is.na(ann$geneSym)]=""
 
-#keep=!ann$CHR%in%c(23,24)
-keep=!ann$CHR%in%c(23,24) & apply(meth,1,function(x) {any(!is.na(x))})
-keep=ann$snp==0 & !ann$CHR%in%c(23,24) & apply(meth,1,function(x) {any(!is.na(x))})
-keep=ann$snp==0 & ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
+    #keep=!ann$CHR%in%c(23,24)
+    keep=!ann$CHR%in%c(23,24) & apply(meth,1,function(x) {any(!is.na(x))})
+    keep=ann$snp==0 & !ann$CHR%in%c(23,24) & apply(meth,1,function(x) {any(!is.na(x))})
+    keep=ann$snp==0 & ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
 }
 
 ################################################
 # Regression
 ################################################
 
-save.image("tmp.RData")
-load("tmp.RData")
+save.image(paste("tmp",datType,subsetFNName,subsetName,".RData",sep=""))
+load(paste("tmp",datType,subsetFNName,subsetName,".RData",sep=""))
 ann=data.frame(IlmnID=rownames(meth),id=rownames(meth),stringsAsFactors=T)
 
 prId=read.table(paste(dirEpistructure,"epistructure_reference_sites.txt",sep=""), sep="\t", h=F, quote="", comment.char="",as.is=T,fill=T)
@@ -634,4 +640,4 @@ epistr5=res_PCA $var$coord[, c(5)]
 epistr=cbind(epistr1, epistr2, epistr3, epistr4, epistr5)
 
 tbl=cbind(id=rownames(epistr),as.data.frame(epistr))
-write.table(tbl,file=paste("epistructure",datType,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+write.table(tbl,file=paste("epistructure",datType,subsetFNName,subsetName,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)

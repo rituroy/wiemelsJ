@@ -11,11 +11,11 @@ nProbe=-1
 ## ---------------------------------
 
 if (computerFlag=="cluster") {
-	setwd("/home/royr/project/JoeWiemels")
+    setwd("/home/royr/project/JoeWiemels")
 } else {
-	dirSrc="/Users/royr/UCSF/"
-	dirSrc2=dirSrc
-	setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
+    dirSrc="/Users/royr/UCSF/"
+    dirSrc2=dirSrc
+    setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
 }
 
 ## ---------------------------------
@@ -32,19 +32,19 @@ library(FactoMineR)
 # return the variable position in dataset
 
 number <- function(data) {
-	data_matrix <- matrix(c(1:dim(data)[2],(names(data))),,2)
-	data_matrix
-	}
+    data_matrix <- matrix(c(1:dim(data)[2],(names(data))),,2)
+    data_matrix
+}
 
 # Remove NAs if more than 3% of the row
 remove_NAs <- function(x){
-	if (table(is.na(x))/ length(x) < 0.97) {TRUE} else {FALSE}
-	}
+    if (table(is.na(x))/ length(x) < 0.97) {TRUE} else {FALSE}
+}
 
 # Impute mean values on missing data
 
 impute_mean <- function(x) {
-	ifelse (is.na(x), mean(x, na.rm = TRUE), x)
+    ifelse (is.na(x), mean(x, na.rm = TRUE), x)
 }
 
 # Load the clinical data
@@ -54,146 +54,158 @@ impute_mean <- function(x) {
 
 # Load the annotations file
 
+cat("\n\n============================ cell-mixt_reFACTor_BMIQ_V4_acc_to_matlab_code_RR.R ===========================\n\n",sep="")
+
 ## ----------------------------------------------
 if (F) {
-	if (computerFlag=="cluster") {
-		ann <- read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-		snpVec <- read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	} else {
-		ann <- read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-		snpVec <- read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	}
-	ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
-	ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
-	ann[,"CHR"]=as.integer(ann[,"CHR"])
-	ann <- ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
-	for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
-	snpVec=snpVec[,1]
-	ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
-	rm(snpVec)
-	save(ann,file="ann.RData")
-	load("ann.RData")
+    if (computerFlag=="cluster") {
+        ann <- read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+        snpVec <- read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    } else {
+        ann <- read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+        snpVec <- read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    }
+    ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
+    ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
+    ann[,"CHR"]=as.integer(ann[,"CHR"])
+    ann <- ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
+    for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
+    snpVec=snpVec[,1]
+    ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
+    rm(snpVec)
+    save(ann,file="ann.RData")
+    load("ann.RData")
 }
 
 
-load("data/ann.RData")
+load("annAll.RData")
 ann$keep=ann$snp==0 & ann$CHR%in%1:22
-
-
-
-
 
 datType="_aml"
 datType="_allGuthSet2"
 datType="_allGuthSet1"
 datType="_allGuthSet1Set2"
 datType="_allGuthSet1Set2_ctrlSubset"
+datType="_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset"
+datType="_allGuthSet1Set2_caseSubsetFunNorm_caseSubset"
 
+cat("\n\n============================",datType,"===========================\n\n")
 
 if (F) {
-#for (datType in c("_allGuthSet1","_allGuthSet2","_aml")) {
-	
-	if (computerFlag=="cluster") {
-		dirClin=dirMeth="data/"
-		switch(datType,
-			   "_allGuthSet2"={
-			   dirClin=dirMeth="data/set2/"
-			   fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-			   fNameClin=paste("clin_guthrieSet2_20140619.txt",sep="")
-			   },
-			   "_allGuthSet1"={
-			   dirClin=dirMeth="data/set1/"
-			   fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-			   fNameClin=paste("final.txt",sep="")
-               },
-               "_allGuthSet1Set2"={
-               dirClin=dirMeth="data/set1set2/"
-               fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-               fNameClin=paste("clin_guthrieSet1Set2_20151022.txt",sep="")
-               },
-               "_allGuthSet1Set2_ctrlSubset"={
-               dirClin=dirMeth="data/set1set2/"
-               fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-               fNameClin=paste("clin_guthrieSet1Set2_20151022.txt",sep="")
-			   },
-			   "_aml"={
-			   dirClin=dirMeth="data/aml/"
-			   fNameMeth=paste("beta_bmiq_aml.txt",sep="")
-			   fNameClin=paste("clin_aml_20150114.txt",sep="")
-			   }
-			   )
-	} else {
-		switch(datType,
-			   "_allGuthSet2"={
-			   dirClin=dirMeth="docs/all/set2/"
-			   fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-			   fNameClin=paste("clin_guthrieSet2_20140619.txt",sep="")
-			   },
-			   "_allGuthSet1"={
-			   dirClin=dirMeth="docs/all/set1/"
-			   fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-			   fNameClin=paste("final.txt",sep="")
-               },
-               "_allGuthSet1Set2"={
-               dirClin=dirMeth="docs/all/set1set2/"
-               fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
-               fNameClin=paste("clin_guthrieSet1Set2_20151022.txt",sep="")
-			   },
-			   "_aml"={
-			   dirClin=dirMeth="docs/aml/"
-			   fNameMeth=paste("beta_bmiq_aml.txt",sep="")
-			   fNameClin=paste("clin_aml_20150114.txt",sep="")
-			   }
-			   )
-	}
-	phen=read.table(paste(dirClin,fNameClin,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    #for (datType in c("_allGuthSet1","_allGuthSet2","_aml")) {
+    
+    if (computerFlag=="cluster") {
+        dirClin=dirMeth="data/"
+        switch(datType,
+        "_allGuthSet2"={
+            dirClin=dirMeth="data/set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_guthrieSet2_20140619.txt",sep="")
+        },
+        "_allGuthSet1"={
+            dirClin=dirMeth="data/set1/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("final.txt",sep="")
+        },
+        "_allGuthSet1Set2"={
+            dirClin=dirMeth="data/set1set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
+        },
+        "_allGuthSet1Set2_ctrlSubset"={
+            dirClin=dirMeth="data/set1set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
+        },
+        "_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset"={
+            dirClin=dirMeth="data/set1set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
+        },
+        "_allGuthSet1Set2_caseSubsetFunNorm_caseSubset"={
+            dirClin=dirMeth="data/set1set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
+        },
+        "_aml"={
+            dirClin=dirMeth="data/aml/"
+            fNameMeth=paste("beta_bmiq_aml.txt",sep="")
+            fNameClin=paste("clin_aml_20150114.txt",sep="")
+        }
+        )
+    } else {
+        switch(datType,
+        "_allGuthSet2"={
+            dirClin=dirMeth="docs/all/set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_guthrieSet2_20140619.txt",sep="")
+        },
+        "_allGuthSet1"={
+            dirClin=dirMeth="docs/all/set1/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("final.txt",sep="")
+        },
+        "_allGuthSet1Set2"={
+            dirClin=dirMeth="docs/all/set1set2/"
+            fNameMeth=paste("beta_bmiq",datType,".txt",sep="")
+            fNameClin=paste("clin_allGuthSet1Set2_20160523.txt",sep="")
+        },
+        "_aml"={
+            dirClin=dirMeth="docs/aml/"
+            fNameMeth=paste("beta_bmiq_aml.txt",sep="")
+            fNameClin=paste("clin_aml_20150114.txt",sep="")
+        }
+        )
+    }
+    phen=read.table(paste(dirClin,fNameClin,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     meth=read.table(paste(dirMeth,fNameMeth,sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
-	rownames(meth)=meth$probeId
-	meth=as.matrix(meth[,-1])
-	switch(datType,
-		   "_allGuthSet2"={
-		   names(phen)[match(c("subjectID","birth_wt"),names(phen))]=c("subjectId","birthWt")
-		   phen$id=paste("X",phen$guthrieId,sep="")
-		   },
-		   "_allGuthSet1"={
-		   names(phen)[match(c("Subject_ID","birth_weight"),names(phen))]=c("subjectId","birthWt")
-		   phen$id=paste("X",phen$TargetID,sep="")
-		   },
-		   "_aml"={
-		   phen$id=paste("X",phen$guthrieId,sep="")
-		   }
-		   )
-	j=match(colnames(meth),phen$id); j1=which(!is.na(j)); j2=j[j1]
-	meth=meth[,j1]
-	phen=phen[j2,]
-	rownames(phen)=phen$id
-if (F) {
-	switch(datType,
-		   "_allGuthSet2"={
-		   clin_set1=phen
-		   beta_set2=meth
-		   },
-		   "_allGuthSet1"={
-		   clin_set2=phen
-		   beta_set1=meth
-		   },
-		   "_aml"={
-		   clin_aml=phen
-		   beta_aml=meth
-		   }
-		   )
-}
-#}
-clinThis=phen
-betaThis=meth
-save(betaThis,clinThis,file="tmp.RData")
-rm(phen,meth)
-#rm(clin_aml,beta_aml)
-
-#require(stringr)
-#colnames(set1) <- str_sub(colnames(set1), 2,end=100)
-
-
+    rownames(meth)=meth$probeId
+    meth=as.matrix(meth[,-1])
+    switch(datType,
+    "_allGuthSet2"={
+        names(phen)[match(c("subjectID","birth_wt"),names(phen))]=c("subjectId","birthWt")
+        phen$id=paste("X",phen$guthrieId,sep="")
+    },
+    "_allGuthSet1"={
+        names(phen)[match(c("Subject_ID","birth_weight"),names(phen))]=c("subjectId","birthWt")
+        phen$id=paste("X",phen$TargetID,sep="")
+    },
+    "_aml"={
+        phen$id=paste("X",phen$guthrieId,sep="")
+    }
+    )
+    j=match(colnames(meth),phen$id); j1=which(!is.na(j)); j2=j[j1]
+    meth=meth[,j1]
+    phen=phen[j2,]
+    rownames(phen)=phen$id
+    if (F) {
+        switch(datType,
+        "_allGuthSet2"={
+            clin_set1=phen
+            beta_set2=meth
+        },
+        "_allGuthSet1"={
+            clin_set2=phen
+            beta_set1=meth
+        },
+        "_aml"={
+            clin_aml=phen
+            beta_aml=meth
+        }
+        )
+    }
+    #}
+    clinThis=phen
+    betaThis=meth
+    #save(betaThis,clinThis,file="tmp.RData")
+    rm(phen,meth)
+    save.image(file=paste("tmp",datType,".RData",sep=""))
+    #rm(clin_aml,beta_aml)
+    
+    #require(stringr)
+    #colnames(set1) <- str_sub(colnames(set1), 2,end=100)
+    
+    
 }
 
 
@@ -203,58 +215,69 @@ rm(phen,meth)
 
 if (F) {
     ## Find sample outliers
-	
-	load("tmp.RData")
-	i=match(rownames(betaThis),ann$IlmnID); i1=which(!is.na(i)); i2=i[i1]
-	betaThis=betaThis[i1,]
-	ann=ann[i2,]
-
-	IDs_to_keep=1:ncol(betaThis)
-	x=apply(betaThis,1,function(x) mean(!is.na(x)))
-	CpG_to_keep <- which(ann$snp==0 & ann$CHR%in%1:22 & x>=0.03)
-
-	betaThis <- betaThis[CpG_to_keep,IDs_to_keep]
-	betaThis=t(betaThis)
-	R_est <- PCA(betaThis, graph = F, ncp =6)
-	save(R_est,file=paste("R_est_init",datType,".RData",sep=""))
-	Refactor_dat <- R_est$ind$coord[,c(1:6)]
-	png("pca_1.png")
-	plot(R_est,xlim=c(-2000,1000),ylim=c(-2000,1000))
-	abline(c(0,1),lty="dotted")
-	dev.off()
+    
+    load(file=paste("tmp",datType,".RData",sep=""))
+    i=match(rownames(betaThis),ann$IlmnID); i1=which(!is.na(i)); i2=i[i1]
+    betaThis=betaThis[i1,]
+    ann=ann[i2,]
+    
+    IDs_to_keep=1:ncol(betaThis)
+    x=apply(betaThis,1,function(x) mean(!is.na(x)))
+    CpG_to_keep <- which(ann$snp==0 & ann$CHR%in%1:22 & x>=0.03)
+    
+    betaThis <- betaThis[CpG_to_keep,IDs_to_keep]
+    betaThis=t(betaThis)
+    R_est <- PCA(betaThis, graph = F, ncp =6)
+    save(R_est,file=paste("R_est_init",datType,".RData",sep=""))
+    Refactor_dat <- R_est$ind$coord[,c(1:6)]
+    thPCA=c(-200,200)
+    if (datType%in%c("_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset","_allGuthSet1Set2_caseSubsetFunNorm_caseSubset")) thPCA=c(-500,500)
+    png(paste("pca_1",datType,".png",sep=""))
+    plot(R_est,xlim=c(-2000,1000),ylim=c(-2000,1000))
+    abline(c(0,1),lty="dotted")
+    dev.off()
     ## Outliers are those outside the dotted lines
-	png("pca_1_1.png")
-	plot(R_est$ind$coord[,1],R_est$ind$coord[,2],xlim=c(-2000,1000),ylim=c(-2000,1000))
-	abline(c(0,1),lty="dotted"); abline(h=0,lty="dotted"); abline(v=0,lty="dotted")
-	abline(h=c(-200,200),lty="dotted")
-	abline(v=c(-200,200),lty="dotted")
-	dev.off()
-	png("pca_1_2.png")
-	plot(R_est,xlim=c(-2000,1000),ylim=c(-2000,1000),label="none")
-	abline(c(0,1),lty="dotted")
-	dev.off()
-
+    png(paste("pca_1_1",datType,".png",sep=""))
+    plot(R_est$ind$coord[,1],R_est$ind$coord[,2],xlim=c(-2000,1000),ylim=c(-2000,1000))
+    i=which(abs(R_est$ind$coord[,1])>thPCA[2] | abs(R_est$ind$coord[,2])>thPCA[2])
+    points(R_est$ind$coord[i,1],R_est$ind$coord[i,2],,col="green")
+    abline(c(0,1),lty="dotted"); abline(h=0,lty="dotted"); abline(v=0,lty="dotted")
+    abline(h=thPCA,lty="dotted")
+    abline(v=thPCA,lty="dotted")
+    dev.off()
+    png(paste("pca_1_2",datType,".png",sep=""))
+    plot(R_est,xlim=c(-2000,1000),ylim=c(-2000,1000),label="none")
+    abline(c(0,1),lty="dotted")
+    dev.off()
+    
     load(file=paste("R_est_init",datType,".RData",sep=""))
-    table((abs(R_est$ind$coord[,1])>200 | abs(R_est$ind$coord[,2])>200))
+    table((abs(R_est$ind$coord[,1])>thPCA[2] | abs(R_est$ind$coord[,2])>thPCA[2]))
     ## Outliers
-	paste(rownames(R_est$ind$coord)[which(abs(R_est$ind$coord[,1])>200 | abs(R_est$ind$coord[,2])>200)],collapse=",")
+    paste(rownames(R_est$ind$coord)[which(abs(R_est$ind$coord[,1])>thPCA[2] | abs(R_est$ind$coord[,2])>thPCA[2])],collapse=",")
 }
 
-
-
-load("tmp.RData")
+load(file=paste("tmp",datType,".RData",sep=""))
 i=match(rownames(betaThis),ann$IlmnID); i1=which(!is.na(i)); i2=i[i1]
 betaThis=betaThis[i1,]
 ann=ann[i2,]
 
 ## Exclude outliers
-if (datType=="_allGuthSet1") {
-    IDs_to_keep=which(!colnames(betaThis)%in%c("X1218G","X0580G","X0404G","X1336G","X1225G","X1202G","X1162G","X1224G","X0527G","X0665G","X0451G","X0557G","X1664G","X0498G","X0419G","X1446G","X2006G","X1577G","X0486G","X1419G","X1739G","X1540G","X1736G","X1988G","X1718G","X0525G","X2221G","X1749G","X0420G","X1769G","X0511G","X0563G","X1650G","X1237G","X1328G","X1297G","X0993G","X1114G","X1042G","X1116G","X1870G","X1240G","X1967G","X1011G","X1439G","X1906G","X1070G","X1933G","X0935G","X1244G","X1639G","X1384G","X2045G","X1246G","X1579G","X1205G","X0489G","X0280G","X0183G","X0924G","X0470G","X0162G","X0481G","X1288G","X1578G","X1037G","X1157G","X0384G","X0283G","X0716G","X1323G","X1965G","X0804G","X1392G","X1221G","X0284G","X0194G","X0264G","X0285G","X0459G","X1141G","X1098G","X0594G","X0586G","X1280G","X0401G","X0136G","X0504G","X0332G","X0381G","X0584G","X0541G"))
-} else if (datType=="_allGuthSet1Set2_ctrlSubset") {
-    IDs_to_keep=which(!colnames(betaThis)%in%c("X1218G","X0580G","X1336G","X1204G","X1225G","X1202G","X1252G","X1162G","X1224G","X0527G","X0665G","X0465G","X0471G","X1477G","X1562G","X0486G","X1718G","X0525G","X1769G","X1650G","X0311G","X0469G","X1248G","X1639G","X1384G","X1579G","X0885G","X1341G","X1008G","X1205G","X1117G","X1405G","X1288G","X1578G","X1260G","X0874G","X1700G","X1326G","X1164G","X1359G","X1392G","X1147G","X1221G","X1141G","X1098G","X0594G","X0586G","X1280G","X1404G","X0552G","X2046G","X1770G","X1824G","X2029G","X0247G","X1658G","X0080G","X1360G","X1024G","X1173G","X0229G","X1021G","X1994G","X0132G","X0091G","X0137G","X0197G","X0531G","X1881G","X1781G","X0784G","X0184G","X1285G","X0053G","X1230G","X1920G","X0380G","X0231G","X0876G","X0125G","X0815G","X0036G","X0643G","X1628G","X1092G","X1901G","X0827G","X1169G","X1807G","X1884G","X1777G","X0513G","X0270G","X0437G","X1834G","X1946G","X1277G","X1843G","X1859G","X0173G","X0107G","X1123G","X1996G","X2188G","X0065G","X0225G","X0149G","X1184G"))
-} else {
-    IDs_to_keep=which(!colnames(betaThis)%in%c("X1288G","X1466G","X0153G","X0077G","X0201G","X1191G","X1264G","X1219G","X0873G","X0927G","X1075G","X1766G","X0691G"))
-}
+IDs_to_keep=1:ncol(betaThis)
+IDs_to_keep=which(!colnames(betaThis)%in%c("X1288G","X1466G","X0153G","X0077G","X0201G","X1191G","X1264G","X1219G","X0873G","X0927G","X1075G","X1766G","X0691G"))
+switch(datType,
+    "_allGuthSet1"={
+        IDs_to_keep=which(!colnames(betaThis)%in%c("X1218G","X0580G","X0404G","X1336G","X1225G","X1202G","X1162G","X1224G","X0527G","X0665G","X0451G","X0557G","X1664G","X0498G","X0419G","X1446G","X2006G","X1577G","X0486G","X1419G","X1739G","X1540G","X1736G","X1988G","X1718G","X0525G","X2221G","X1749G","X0420G","X1769G","X0511G","X0563G","X1650G","X1237G","X1328G","X1297G","X0993G","X1114G","X1042G","X1116G","X1870G","X1240G","X1967G","X1011G","X1439G","X1906G","X1070G","X1933G","X0935G","X1244G","X1639G","X1384G","X2045G","X1246G","X1579G","X1205G","X0489G","X0280G","X0183G","X0924G","X0470G","X0162G","X0481G","X1288G","X1578G","X1037G","X1157G","X0384G","X0283G","X0716G","X1323G","X1965G","X0804G","X1392G","X1221G","X0284G","X0194G","X0264G","X0285G","X0459G","X1141G","X1098G","X0594G","X0586G","X1280G","X0401G","X0136G","X0504G","X0332G","X0381G","X0584G","X0541G"))
+    },
+    "_allGuthSet1Set2_ctrlSubset"={
+        IDs_to_keep=which(!colnames(betaThis)%in%c("X1218G","X0580G","X1336G","X1204G","X1225G","X1202G","X1252G","X1162G","X1224G","X0527G","X0665G","X0465G","X0471G","X1477G","X1562G","X0486G","X1718G","X0525G","X1769G","X1650G","X0311G","X0469G","X1248G","X1639G","X1384G","X1579G","X0885G","X1341G","X1008G","X1205G","X1117G","X1405G","X1288G","X1578G","X1260G","X0874G","X1700G","X1326G","X1164G","X1359G","X1392G","X1147G","X1221G","X1141G","X1098G","X0594G","X0586G","X1280G","X1404G","X0552G","X2046G","X1770G","X1824G","X2029G","X0247G","X1658G","X0080G","X1360G","X1024G","X1173G","X0229G","X1021G","X1994G","X0132G","X0091G","X0137G","X0197G","X0531G","X1881G","X1781G","X0784G","X0184G","X1285G","X0053G","X1230G","X1920G","X0380G","X0231G","X0876G","X0125G","X0815G","X0036G","X0643G","X1628G","X1092G","X1901G","X0827G","X1169G","X1807G","X1884G","X1777G","X0513G","X0270G","X0437G","X1834G","X1946G","X1277G","X1843G","X1859G","X0173G","X0107G","X1123G","X1996G","X2188G","X0065G","X0225G","X0149G","X1184G"))
+    },
+    "_allGuthSet1Set2_ctrlSubsetFunNorm_ctrlSubset"={
+        IDs_to_keep=which(!colnames(betaThis)%in%c("X1218G","X1336G","X1225G","X1202G","X1224G","X1650G","X1205G","X1288G","X1392G","X1221G","X0594G","X2046G","X0137G","X1881G","X0053G","X1230G","X0125G","X1277G","X1184G"))
+    },
+    "_allGuthSet1Set2_caseSubsetFunNorm_caseSubset"={
+        IDs_to_keep=which(!colnames(betaThis)%in%c("X1237G","X1967G","X1906G","X1933G","X1246G","X0162G","X1157G","X1965G","X0381G","X1111G","X1174G","X1168G","X0111G","X1458G","X1256G","X1139G","X1227G"))
+    }
+)
 x=apply(betaThis,1,function(x) mean(!is.na(x)))
 CpG_to_keep <- which(ann$snp==0 & ann$CHR%in%1:22 & x>=0.03)
 betaThis <- betaThis[CpG_to_keep,IDs_to_keep]
@@ -266,8 +289,8 @@ clinThis=clinThis[IDs_to_keep,]
 # # --------------------------------
 # # set 1
 # remove_NAs <- function(x){
-	# if (table(is.na(x))/ length(x) < 0.97) {TRUE} else {FALSE}
-	# }
+# if (table(is.na(x))/ length(x) < 0.97) {TRUE} else {FALSE}
+# }
 
 # res_set1 <- apply(set1, 1, remove_NAs)
 
@@ -314,8 +337,8 @@ O_prime <- (betaThis)
 
 # z score
 zscore <- function(x){
-	(x - mean(x)) / sd(x)
-	}
+    (x - mean(x)) / sd(x)
+}
 
 z_norm_O_prime <- t(apply(O_prime, 1, zscore))
 
@@ -342,11 +365,11 @@ Bn <- t(apply(x, 1, zscore))
 # An=bsxfun(@times,An,1./sqrt(sum(An.^2,1)));
 
 low_rank <- function(data){
-	data2 <- (data^2)
-	data3 <- sum(data2)
-	data4 <- sqrt(data3)
-	data5 <- 1/data4
-	data*data5
+    data2 <- (data^2)
+    data3 <- sum(data2)
+    data4 <- sqrt(data3)
+    data5 <- 1/data4
+    data*data5
 }
 An2 <- t(apply(An, 1, low_rank))
 
