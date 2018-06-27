@@ -448,6 +448,184 @@ for (datType in c("_allGuthSet1","_allGuthSet2","_allGuthSet1Set2")) {
 259     1713G  4252.5 4253
 "
 
+## -----------------------------
+fName="_20180409"
+normFlag="_bmiq"
+
+for (datType in c("_allGuthSet1","_allGuthSet2","_allGuthSet1Set2","_leuk")) {
+    cat("\n\n===================",datType,"\n")
+    dirBW="docs/birthWeight/"
+    dirCom="docs/all/"
+    switch(datType,
+        "_allGuthSet2"={
+            dirMeth=dirClin="docs/all/set2/"
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+            fNameClin="clin_allGuthSet2_20160928"
+        },
+        "_allGuthSet1"={
+            dirMeth=dirClin="docs/all/set1/"
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
+            fNameClin="clin_allGuthSet1_20160928"
+            dirMethLeuk="docs/all/set1/LEU.data/"
+            fNameMethLeuk="i.LEU.v2"
+        },
+        "_allGuthSet1Set2"={
+            dirMeth=dirClin="docs/all/set1set2/"
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+            fNameClin="clin_allGuthSet1Set2_20160523"
+        },
+        "_leuk"={
+            dirMeth="docs/all/set1/"
+            fNameMeth=paste("beta",normFlag,datType,sep="")
+            dirClin="docs/all/set1/LEU.data/"
+            fNameClin="i.LEU.v2"
+            dirClin2="docs/all/set1/preBcell/"
+            fNameClin2="0708011 Sample_Sheet (Fetal blood)"
+            dirRefactor=dirClin
+        }
+    )
+    clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    switch(datType,
+        "_allGuthSet2"={
+            clin$id=paste("X",clin$guthrieId,sep="")
+            
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[which(clin$smhyper==1)]="hyperdiploid"
+            clin$subtype[which(clin$smtelaml==1)]="telaml" ## include subject with smhyper=1
+            clin$subtype[which(clin$smhyper==0 & clin$smtelaml==0)]="nonHypTelaml"
+            
+            clin$birthWt=as.numeric(clin$birthWt)
+            bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+            j=match(clin$subjectId,bw$subjectId)
+            j1=which(!is.na(j)); j2=j[j1]
+            clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+            clin$dbirwt[j1]=bw$dbirwt[j2]
+            clin$pred_btw[j1]=bw$pred_btw[j2]
+            clin$pobw[j1]=bw$pobw[j2]
+            
+            clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+            id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$subjectId=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+        },
+        "_allGuthSet1"={
+            clin$id=paste("X",clin$guthrieId,sep="")
+            clin$Beadchip=substr(clin$Bead_Position,1,10)
+            if ("Position1"%in%names(clin)) clin$Position=clin$Position1 else clin$Position=clin$Position.1
+            clin$caco=clin$Leukemia
+            
+            clin2=read.table(paste(dirMethLeuk,fNameMethLeuk,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            j=match(clin$subjectId,clin2$Subject_ID); j1=which(!is.na(j)); j2=j[j1]
+            clin$Subtype=""
+            clin$Subtype[j1]=clin2$Subtype[j2]
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[j1][which(clin2$Subtype[j2]=="hyperdiploid")]="hyperdiploid"
+            clin$subtype[j1][which(clin2$Subtype[j2]=="t1221")]="telaml"
+            clin$subtype[j1][which(clin2$Subtype[j2]%in%c("mll","others","t119"))]="nonHypTelaml"
+            
+            bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+            j=match(clin$subjectId,bw$subjectId)
+            j1=which(!is.na(j)); j2=j[j1]
+            clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+            clin$dbirwt[j1]=bw$dbirwt[j2]
+            clin$pred_btw[j1]=bw$pred_btw[j2]
+            clin$pobw[j1]=bw$pobw[j2]
+            
+            clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+            id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$subjectId=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+        },
+        "_allGuthSet1Set2"={
+            k=match(names(phen1),names(phen2)); k1=which(!is.na(k)); k2=k[k1]
+            clin2=rbind(phen1[,k1],phen2[,k2])
+            j=match(clin$guthrieId,clin2$guthrieId); j1=which(!is.na(j)); j2=j[j1]
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[j1]=clin2$subtype[j2]
+            
+            bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(bw)[match("SubjectID",names(bw))]=c("subjectId")
+            j=match(clin$subjectId,bw$subjectId)
+            j1=which(!is.na(j)); j2=j[j1]
+            clin$pobw=clin$pred_btw=clin$dbirwt=rep(NA,nrow(clin))
+            clin$dbirwt[j1]=bw$dbirwt[j2]
+            clin$pred_btw[j1]=bw$pred_btw[j2]
+            clin$pobw[j1]=bw$pobw[j2]
+            
+            clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
+            id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$subjectId=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$subjectId,clin2$subjectId),grep("_PCB",names(clin2))])
+        },
+        "_leuk"={
+            names(clin)[match(c("Plate","Sentrix_ID","Sentrix_Position"),names(clin))]=c("Batch","Beadchip","Position")
+            clin$id=sapply(clin$Sample,function(x) {if (is.na(as.integer(substr(x,1,1)))) x else paste("X",x,sep="")},USE.NAMES=F)
+            clin$group="Leukemia"
+            clin$group2="Leuk"
+            clin$subtype=rep("",nrow(clin))
+            clin$subtype[which(clin$Subtype=="hyperdiploid")]="hyperdiploid"
+            clin$subtype[which(clin$Subtype=="t1221")]="telaml"
+            clin$subtype[which(clin$Subtype%in%c("mll","others","t119"))]="nonHypTelaml"
+            clin$subtype[which(clin$Subtype%in%c("unknown"))]=""
+            
+            tbl1=read.table(paste(dirClin2,fNameClin2,".csv",sep=""),sep=",",h=T,quote="",comment.char="",as.is=T,fill=T,skip=14)
+            names(tbl1)[match(c("Sample_Name","Sample_Well","Sample_Plate","Sample_Group","Pool_ID","Sentrix_ID","Sentrix_Position"),names(tbl1))]=c("id1","Sample_Well","Sample_Plate","group","Pool_ID","Beadchip","Position")
+            tbl1$id=tbl1$id1
+            j=which(!is.na(as.integer(tbl1$id1)))
+            tbl1$group[j]=paste("S",tbl1$group[j],sep="")
+            tbl1$group2=tbl1$group
+            tbl1$group2[which(tbl1$group=="Allcell-B")]="B"
+            tbl1$group2[which(tbl1$group=="Allcell-non-B")]="nB"
+            tbl1$id=paste(tbl1$group2,"_",tbl1$id1,sep="")
+            tbl1$sex=tbl1$int_ch_ethnicity=tbl1$int_ch_race=NA
+            tbl1$subtype=""
+            tbl1[tbl1$id%in%tbl1$id[duplicated(tbl1$id)],]
+            k=match(names(clin),names(tbl1)); k1=which(!is.na(k)); k2=k[k1]
+            tbl2=clin[1:nrow(tbl1),is.na(k)]
+            for (k in 1:ncol(tbl2)) {
+                tbl2[,k]=NA
+            }
+            tbl1=cbind(tbl1,tbl2)
+            k=match(names(clin),names(tbl1)); k1=which(!is.na(k)); k2=k[k1]
+            clin=rbind(clin[,k1],tbl1[!duplicated(tbl1$id),k2])
+            
+            x=gsub("_+","_",gsub("(","_",gsub(" |-|)","_",clin$id),fixed=T))
+            j=which(substr(x,nchar(x),nchar(x))=="_")
+            if (length(j)!=0) x[j]=substr(x[j],1,nchar(x[j])-1)
+            clin$id=x
+        }
+    )
+    switch(datType,
+        "_allGuthSet2"={
+            phen2=clin
+        },
+        "_allGuthSet1"={
+            phen1=clin
+        },
+        "_allGuthSet1Set2"={
+            phen12=clin
+        },
+        "_leuk"={
+            phenL=clin
+        }
+    )
+    write.table(clin,file=paste("clin",datType,fName,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+}
+
 ##############################################
 ## Txt file from RData
 
@@ -2602,7 +2780,7 @@ for (fName in fileList) {
 		
 		fmla=as.formula(paste(" ~ ", paste(colnames(x), collapse= "+")))
 		fit=prcomp(fmla, center=F, scale=F, data = x, scores=T)
-#fit=prcomp(x, center=F, scale=F)
+        #fit=prcomp(x, center=F, scale=F)
 		fit1=prcomp(t(x[y==0,]), center=F, scale=F)
 		fit1=prcomp(t(x[y==0,]), center=F, scale=F)
 		for (varId in which(names(clin)%in%c("Beadchip","caco","set"))) {
@@ -2622,8 +2800,8 @@ for (fName in fileList) {
 				}
 				pv=fit2$p.value
 				cat("PC",k,": ",pv,"\n",sep="")
-#print(fit2)
-#plot(sort(fit$x[k,]))
+                #print(fit2)
+                #plot(sort(fit$x[k,]))
 				if (names(clin)[varId]=="caco") {
 					j=which(fit$x[k,]>min(fit$x[k,],na.rm=T))
 					j=1:ncol(fit$x)
@@ -2631,11 +2809,11 @@ for (fName in fileList) {
 					j=1:ncol(fit$x)
 				}
 				j=which(fit$x[k,]>min(fit$x[k,],na.rm=T))
-#				fit2=kruskal.test(fit$x[k,]~as.factor(clin$caco))
-#				pv=fit2$p.value
-#				if (sum(!duplicated(clin[j,varId])))<11) {
+                #fit2=kruskal.test(fit$x[k,]~as.factor(clin$caco))
+                #pv=fit2$p.value
+                #if (sum(!duplicated(clin[j,varId])))<11) {
 				boxplot(fit$x[k,j]~as.factor(clin[j,varId]),main=paste(datName,"\n",testName," test p-value: ",signif(pv,2),sep=""),xlab=names(clin)[varId],ylab=paste("PC",k,sep=""))
-#				}
+                #}
 			}
 			dev.off()
 		}
@@ -3798,6 +3976,100 @@ fit2 <- stepAIC(fit, k=log(nrow(clin[j,])), trace = FALSE)
 fit2$anova
 summary(glm(classObs ~ nonPolG + nonPolR, family="binomial", data = clin[j,]))
 
+########################################################################
+########################################################################
+## Compare annotations
+
+ann1=read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+ann2=read.delim(paste("/Users/royr/Downloads/MethylationEPIC_v-1-0_B4.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+
+candGeneInfo=data.frame(gene=c("ETV6","RUNX1"),chr=c(12,21),start=c(11741404,36094724),end=c(12109710,36486970),stringsAsFactors=F)
+
+i1=i2=c()
+tbl1=tbl2=NULL
+for (k in 1:nrow(candGeneInfo)) {
+    for (assayFlag in c("450k","epic")) {
+        switch(assayFlag,
+            "450k"={
+                ann=ann1
+            },
+            "epic"={
+                ann=ann2
+            }
+        )
+        i=which(ann$CHR==candGeneInfo$chr[k] & ann$MAPINFO>=candGeneInfo$start[k]  & ann$MAPINFO<=candGeneInfo$end[k])
+        tbl=cbind(gene=rep(candGeneInfo$gene[k],length(i)),ann[i,c("IlmnID","CHR","MAPINFO","Relation_to_UCSC_CpG_Island")])
+        tbl$CHR=as.integer(tbl$CHR)
+        tbl=tbl[order(tbl$CHR,tbl$MAPINFO),]
+        switch(assayFlag,
+            "450k"={
+                i1=c(i1,i)
+                tbl1=rbind(tbl1,tbl)
+            },
+            "epic"={
+                i2=c(i2,i)
+                tbl2=rbind(tbl2,tbl)
+            }
+        )
+    }
+}
+table(tbl1$gene)
+table(tbl2$gene)
+
+
+## ---------------
+assayList=c("450k","epic")
+parList=list()
+grp=candGeneInfo$gene
+grpUniq=unique(grp)
+ann=rbind(tbl1,tbl2)
+x=c()
+for (gId in 1:length(grpUniq)) {
+    x2=range(ann$MAPINFO[which(ann$gene%in%grpUniq[gId])],na.rm=T)
+    x2=c(x2[1]-diff(x2)/20,x2[2]+diff(x2)/20)
+    x=c(x,x2)
+}
+parList=list(chr=c(12,21),xlimM=matrix(x,ncol=2,byrow=T),ylimM=c(0,2),xlabM=grpUniq)
+png("telamlRegion_450kVsEpic.png",width=2*480,height=480)
+par(mfrow=c(2,1))
+header=""
+iThis=i
+if ("ylimM"%in%names(parList)) yLim=parList$ylimM else yLim=NULL
+xLab=""; xLim=NULL
+if ("xlabM"%in%names(parList)) {xLab=parList$xlabM; xLim=parList$xlimM}
+for (p in 1:length(xLab)) {
+    plot(xLim[p,],yLim,xlab=paste(xLab[p],": Chromosome ",parList$chr[p],sep=""),xlim=xLim[p,],ylim=yLim,ylab="",pch=19,cex.axis=1.5,cex.lab=1.5,main=header,col="grey",type="n",yaxt="n")
+    k=0
+    abline(h=k)
+    nm=rep(NA,length(assayList))
+    for (assayFlag in assayList) {
+        switch(assayFlag,
+        "450k"={
+            ann=tbl1
+        },
+        "epic"={
+            ann=tbl2
+        }
+        )
+        iThis=which(ann$CHR==parList$chr[p] & ann$MAPINFO>=parList$xlimM[p,1] & ann$MAPINFO<=parList$xlimM[p,2])
+        for (i in 1:length(iThis)) {
+            lines(rep(ann$MAPINFO[iThis[i]],2),c(k,k+1),pch=19,col="red")
+        }
+        k=k+1
+        abline(h=k)
+        nm[k]=length(iThis)
+    }
+    axis(side=2,at=1:length(xLab)-0.5,tick=F,labels=paste(assayList,"\n(",nm,")",sep=""))
+    ann=rbind(tbl1,tbl2)
+    ann=ann[order(ann$CHR,ann$MAPINFO),]
+    iThis=which(ann$CHR==parList$chr[p] & ann$MAPINFO>=parList$xlimM[p,1] & ann$MAPINFO<=parList$xlimM[p,2])
+    ann=ann[iThis,]
+    #i=which(!duplicated(ann$Relation_to_UCSC_CpG_Island))
+    x=as.integer(as.factor(ann$Relation_to_UCSC_CpG_Island))
+    i=which(diff(x)!=0)-1
+    #axis(side=3,at=ann$MAPINFO[i],tick=T,labels=paste(" ",ann$Relation_to_UCSC_CpG_Island[i],sep=""))
+}
+dev.off()
 
 
 ########################################################################
@@ -4155,3 +4427,4 @@ det_PCB_170        det_PCB_180 logged_PCB_105_SRS logged_PCB_118_SRS
 logged_PCB_138_SRS logged_PCB_153_SRS logged_PCB_170_SRS logged_PCB_180_SRS
 4                  4                  4                  4
 "
+
