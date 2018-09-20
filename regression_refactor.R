@@ -106,10 +106,10 @@ transformFlag="_mVal"
 
 datType="_allGuthSet1"; subsetName2="_noNonRndChip"
 datType="_aml"; subsetName2=""
-datType="_allGuthSet1"; subsetName2=""
-datType="_allGuthSet2"; subsetName2=""
 datType="_allGuthSet1Set2"; subsetName2=""
 datType="_leuk"; subsetName2=""
+datType="_allGuthSet1"; subsetName2=""
+datType="_allGuthSet2"; subsetName2=""
 
 mediationFlag=T
 mediationFlag=F

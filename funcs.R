@@ -22,7 +22,8 @@ getClinData=function(setFlag,subsetFlag) {
         #fileList2=c("mDat_funNorm_set2","beta_funNorm_set2","beta_bmiq_allGuthSet2","wbcAdjustedMDat_allGuthSet2_leukChip","wbcAdjustedData_allGuthSet2_leukChip")
         #fName22="clin_guthrieSet2_20140619"
         fileList2=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2","_allGuthSet2"),sep="")
-        fName22="clin_allGuthSet2_20160928"
+        #fName22="clin_allGuthSet2_20160928"
+        fName22="clin_allGuthSet2_20180409"
         
         datType1="allGuth"
         datName1="ALL Guthrie, set1"
@@ -31,16 +32,18 @@ getClinData=function(setFlag,subsetFlag) {
         #fileList1=c("mDat_funNorm_set1","beta_funNorm_set1","beta_bmiq_allGuthSet1","wbcAdjustedMDat_allGuthSet1_leukChip","wbcAdjustedData_allGuthSet1_leukChip")
         #fName12="final"
         fileList1=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1","_allGuthSet1"),sep="")
-        fName12="clin_allGuthSet1_20160928"
+        #fName12="clin_allGuthSet1_20160928"
+        fName12="clin_allGuthSet1_20180409"
         
         datTypeL="allLeuk"
         datNameL="ALL Leukemia, set1"
         datadirL1="data/set1/"
         datadirL2=datadirL1
         fileListL=paste("beta",normFlag,"_leuk",sep="")
-        fNameL2="i.LEU.v2"
-        datadirL3=datadirL1
-        fNameL3="0708011 Sample_Sheet (Fetal blood)"
+        #fNameL2="i.LEU.v2"
+        fNameL2="clin_leuk_20180409"
+        #datadirL3=datadirL1
+        #fNameL3="0708011 Sample_Sheet (Fetal blood)"
         
         nRow=-1
     } else {
@@ -57,7 +60,8 @@ getClinData=function(setFlag,subsetFlag) {
         #fileList=c("beta_funNorm_set2")
         #fName22="clin_guthrieSet2_20140619"
         fileList2=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2","_allGuthSet2"),sep="")
-        fName22="clin_allGuthSet2_20160928"
+        #fName22="clin_allGuthSet2_20160928"
+        fName22="clin_allGuthSet2_20180409"
         
         datType1="allGuth"
         datName1="ALL Guthrie, set1"
@@ -66,16 +70,18 @@ getClinData=function(setFlag,subsetFlag) {
         #fileList=c("beta_funNorm_set1")
         #fName12="final"
         fileList1=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1","_allGuthSet1"),sep="")
-        fName12="clin_allGuthSet1_20160928"
+        #fName12="clin_allGuthSet1_20160928"
+        fName12="clin_allGuthSet1_20180409"
         
         datTypeL="allLeuk"
         datNameL="ALL Leukemia, set1"
         datadirL1="docs/all/set1/"
         datadirL2="docs/all/set1/LEU.data/"
         fileListL=paste("beta",normFlag,"_leuk",sep="")
-        fNameL2="i.LEU.v2"
-        datadirL3="docs/all/set1/preBcell/"
-        fNameL3="0708011 Sample_Sheet (Fetal blood)"
+        #fNameL2="i.LEU.v2"
+        fNameL2="clin_leuk_20180409"
+        #datadirL3="docs/all/set1/preBcell/"
+        #fNameL3="0708011 Sample_Sheet (Fetal blood)"
         
         nRow=1000
     }
