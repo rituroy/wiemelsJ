@@ -626,6 +626,50 @@ for (datType in c("_allGuthSet1","_allGuthSet2","_allGuthSet1Set2","_leuk")) {
     write.table(clin,file=paste("clin",datType,fName,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
 }
 
+## -----------------------------
+fName="_20181003"
+normFlag="_bmiq"
+
+for (datType in c("_allGuthSet1","_allGuthSet2","_allGuthSet1Set2")) {
+    cat("\n\n===================",datType,"\n")
+    dirCom="docs/all/"
+    switch(datType,
+        "_allGuthSet2"={
+            dirMeth=dirClin="docs/all/set2/"
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+            fNameClin="clin_allGuthSet2_20180409"
+        },
+        "_allGuthSet1"={
+            dirMeth=dirClin="docs/all/set1/"
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
+            fNameClin="clin_allGuthSet1_20180409"
+        },
+        "_allGuthSet1Set2"={
+            dirMeth=dirClin="docs/all/set1set2/"
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+            fNameClin="clin_allGuthSet1Set2_20180409"
+        }
+    )
+    clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    tbl=read.table(paste(dirCom,"CCLS_season_rev.csv",sep=""), sep=",", h=T, quote="", comment.char="",as.is=T,fill=T)
+    clin$season=""
+    j=match(clin$guthrieId,tbl$guthrieId); j1=which(!is.na(j)); j2=j[j1]
+    clin$season[j1]=tbl$season[j2]
+    clin$season[clin$season==""]=NA
+    switch(datType,
+        "_allGuthSet2"={
+            phen2=clin
+        },
+        "_allGuthSet1"={
+            phen1=clin
+        },
+        "_allGuthSet1Set2"={
+            phen12=clin
+        }
+    )
+    write.table(clin,file=paste("clin",datType,fName,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+}
+
 ##############################################
 ## Txt file from RData
 

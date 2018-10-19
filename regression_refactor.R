@@ -80,6 +80,7 @@ varThis=""
 varThis="telamlCtrl"
 varThis="telamlNonTelaml"
 varThis="hyperdipTelaml"
+varThis="season"
 
 cat("\n\n============================ regression_refactor.R ===========================\n\n",sep="")
 
@@ -108,8 +109,8 @@ datType="_allGuthSet1"; subsetName2="_noNonRndChip"
 datType="_aml"; subsetName2=""
 datType="_allGuthSet1Set2"; subsetName2=""
 datType="_leuk"; subsetName2=""
-datType="_allGuthSet1"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
+datType="_allGuthSet1"; subsetName2=""
 
 mediationFlag=T
 mediationFlag=F
@@ -140,10 +141,10 @@ subsetFlag="male"
 subsetFlag="hisp"
 subsetFlag="noHispWt"
 
-subsetFlag="ctrl"
-subsetFlag="case"
-
 subsetFlag=""
+
+subsetFlag="case"
+subsetFlag="ctrl"
 
 candGeneFlag=""
 if (varThis%in%c("hlaB","ahrr")) {
@@ -280,6 +281,9 @@ varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""; modelFlag=paste("m
 varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
 ## ---------------------------------
+varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+
+## ---------------------------------
 
 if (mediationFlag) {
     computeFlag=c("regression","")
@@ -307,8 +311,6 @@ covPCFlag="_covPrinComp1234"
 
 covESFlag=""
 covESFlag="_covEpStr"
-
-## ---------------------------------
 
 ## ---------------------------------
 
@@ -658,7 +660,7 @@ switch(datType,
         clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
         rm(clin2,tmp,id)
 
-        if (f) {
+        if (F) {
             clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
             names(clin2)[match(c("subjectID"),names(clin2))]="subjectId"
             id=clin$subjectId[!clin$subjectId%in%clin2$subjectId]
