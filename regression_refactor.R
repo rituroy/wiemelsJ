@@ -5,6 +5,10 @@
 
 argv=commandArgs(TRUE)
 varThis=argv[1]
+subsetFlag=argv[2]
+
+varThis="caco_covSexPlate"
+subsetFlag="dsal"
 
 if (F) {
     '
@@ -71,16 +75,26 @@ if (F) {
     varThis="smoke_fa_3months_N"
     varThis="smoke_mo_bf_N"
     varThis="smoke_mo_after_N"
- 
+    
+    varThis="ahrr"
+    varThis=""
+    varThis="telamlCtrl"
+    varThis="telamlNonTelaml"
+    varThis="hyperdipTelaml"
+    
+    varThis="season_covPlate"
+    varThis="season_covSexPlate"
+    varThis="season_covSexPlateCelltype"
 
+    varThis="caco_covSexPlate"
+    varThis="cacoXdsalPeri_covSexPlate"
+    varThis="dsalPeri_covSexPlate"
 }
 
-varThis="ahrr"
-varThis=""
-varThis="telamlCtrl"
-varThis="telamlNonTelaml"
-varThis="hyperdipTelaml"
-varThis="season"
+x=strsplit(varThis,"_")[[1]]
+varThis=x[1]
+k=which(substr(x,1,3)=="cov")
+if (length(k)==1) covThis=paste("_",x[k],sep="") else covThis=""
 
 cat("\n\n============================ regression_refactor.R ===========================\n\n",sep="")
 
@@ -107,10 +121,11 @@ transformFlag="_mVal"
 
 datType="_allGuthSet1"; subsetName2="_noNonRndChip"
 datType="_aml"; subsetName2=""
-datType="_allGuthSet1Set2"; subsetName2=""
 datType="_leuk"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
+datType="_allGuthSet1Set2"; subsetName2=""
+datType="_periDsal"; subsetName2=""
 
 mediationFlag=T
 mediationFlag=F
@@ -131,6 +146,7 @@ subsetFFlag=""
 
 setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
 
+if (F) {
 subsetFlag="hispCtrl"
 subsetFlag="noHispWtCtrl"
 
@@ -141,10 +157,15 @@ subsetFlag="male"
 subsetFlag="hisp"
 subsetFlag="noHispWt"
 
+subsetFlag="dsal"
+subsetFlag="peri"
+
 subsetFlag=""
 
 subsetFlag="case"
 subsetFlag="ctrl"
+}
+
 
 candGeneFlag=""
 if (varThis%in%c("hlaB","ahrr")) {
@@ -281,7 +302,18 @@ varFlag="_caco"; covFlag="_covEthn"; varName=""; termName=""; modelFlag=paste("m
 varFlag="_caco"; covFlag=""; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
 ## ---------------------------------
+
+varFlag="_season"; covFlag=covThis; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+
+## ---------------------------------
+
+varFlag="_cacoXdsalPeri"; covFlag=""; varName=""; termName=c("caco","dsalPeri","interaction")
+
+varFlag="_dsalPeri"; covFlag=covThis; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+
+## ---------------------------------
 varFlag="_caco"; covFlag="_covSexGestage"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
+varFlag="_caco"; covFlag="_covSexPlate"; varName=""; termName=""; modelFlag=paste("meth~",varThis,sep=""); computeFlag[2]="linear"
 
 ## ---------------------------------
 
@@ -346,9 +378,10 @@ if (subsetFlag!="") {
        "telaml"={varName=sub(")"," tel/aml1s)",varName)},
        "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)},
        "hispCtrl"={varName=sub(")"," hispanic controls)",varName)},
-       "noHispWtCtrl"={varName=sub(")"," non-hispanic white controls)",varName)}
-    )
-    if (datType=="_allGuthSet1Set2") subsetFNName=paste("_",subsetFlag,"SubsetFunNorm",sep="")
+       "peri"={varName=sub(")"," perinatal)",varName)},
+       "dsal"={varName=sub(")"," downsyndrome)",varName)}
+       )
+    #if (datType=="_allGuthSet1Set2") subsetFNName=paste("_",subsetFlag,"SubsetFunNorm",sep="")
 }
 
 candGeneName=""
@@ -391,11 +424,13 @@ if (computerFlag=="cluster") {
         },
         "_allGuthSet1Set2"={
             dirMeth=dirClin="data/set1set2/"
+            dirMeth=dirClin="data/set1set2/new/"
             #fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),sep="")
             fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),subsetFNName,subsetName,sep="")
             #fNameClin="clin_guthrieSet1Set2_20151022"
             #fNameClin="clin_allGuthSet1Set2_20160523"
-            fNameClin="clin_allGuthSet1Set2_20180409"
+            #fNameClin="clin_allGuthSet1Set2_20180409"
+            fNameClin="clin_allGuthSet1Set2_20181003"
         },
 		"_leuk"={
 		   dirMeth=dirClin=dirClin2="data/set1/"
@@ -415,7 +450,17 @@ if (computerFlag=="cluster") {
 		   dirClin=dirMeth=dirRefactor="data/aml/"
 		   fNameMeth=paste("beta",normFlag,"_aml",sep="")
 		   fNameClin=paste("clin_aml_20150114",sep="")
-		},
+        },
+        "_periDsal"={
+            dirMeth="/home/royr/project/JoeWiemels/normalize/results/"
+            dirClin=dirRefactor="/home/royr/project/JoeWiemels/data/periDsal/"
+            if (transformFlag=="_mVal") {
+                fNameMeth="mValBmiq.RData"
+            } else {
+                fNameMeth="betaBmiq.RData"
+            }
+            fNameClin="sampleInfo_periDsal_20181119"
+        },
 		"_ivorra"={
 		   dirMeth=dirClin="data/ivorra2014/"
 		   fNameMeth="beta_ivorra"
@@ -448,11 +493,13 @@ if (computerFlag=="cluster") {
        },
        "_allGuthSet1Set2"={
            dirMeth=dirClin="docs/all/set1set2/"
+           dirMeth=dirClin="docs/all/set1set2/new/"
            #fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),subsetFNName,subsetName,sep="")
            #fNameClin="clin_guthrieSet1Set2_20151022"
            #fNameClin="clin_allGuthSet1Set2_20160523"
-           fNameClin="clin_allGuthSet1Set2_20180409"
+           #fNameClin="clin_allGuthSet1Set2_20180409"
+           fNameClin="clin_allGuthSet1Set2_20181003"
            dirRefactor=dirClin
        },
 		"_leuk"={
@@ -473,6 +520,16 @@ if (computerFlag=="cluster") {
 		   fNameClin=paste("clin_aml_20150114",sep="")
            dirRefactor="docs/aml/refactor/"
         },
+        "_periDsal"={
+            dirMeth="/Users/royr/UCSF/JoeWiemels/leukMeth/epic/results/"
+            dirClin=dirRefactor="/Users/royr/UCSF/JoeWiemels/leukMeth/docs/periDsal/"
+            if (transformFlag=="_mVal") {
+                fNameMeth="mValBmiq.RData"
+            } else {
+                fNameMeth="betaBmiq.RData"
+            }
+            fNameClin="sampleInfo_periDsal_20181119"
+        },
 	   "_ivorra"={
 		   dirMeth=dirClin="docs/misc/ivorra2014/"
 		   fNameMeth="beta_ivorra"
@@ -486,6 +543,8 @@ if (datType%in%c("_allGuthSet1Set2") & subsetFlag!="") {
     samInfo=read.table(paste(dirClin,"summaryBeta_forSample",datType,subsetFNName,subsetName,".txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
 } else if (datType%in%c("_allGuthSet2","_allGuthSet1","_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
     samInfo=read.table(paste(dirCom,"summaryBeta_forSample.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+} else {
+    if (exists("samInfo")) rm(samInfo)
 }
 
 switch(datType,
@@ -731,6 +790,8 @@ switch(datType,
 	},
 	"_allGuthSet1Set2"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        #clin$Batch=factor(paste(clin$set,clin$Batch))
+        clin$Batch=paste(clin$set,clin$Batch)
         
         if (F) {
             bw=read.table(paste(dirBW,"pobw-2014-12-26.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
@@ -743,14 +804,27 @@ switch(datType,
             clin$pobw[j1]=bw$pobw[j2]
         }
         
-        clin2=read.table(paste(dirClin,"epistructure",datType,subsetFNName,subsetName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        id=clin$id[!clin$id%in%clin2$id]
-        tmp=clin2[1:length(id),]
-        for (k in 1:ncol(tmp)) tmp[,k]=NA
-        tmp$id=id
-        clin2=rbind(clin2,tmp)
-        clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
-        rm(clin2,tmp,id)
+        if (length(dir(dirClin,pattern=paste("epistructure",datType,subsetFNName,subsetName,".txt",sep="")))!=0) {
+            clin2=read.table(paste(dirClin,"epistructure",datType,subsetFNName,subsetName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            id=clin$id[!clin$id%in%clin2$id]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$id=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$id,clin2$id),grep("epistr",names(clin2))])
+            rm(clin2,tmp,id)
+        }
+        
+        if (length(dir(dirClin,pattern=paste("cellCount_minfi_cordBlood",datType,subsetFNName,subsetName,".txt",sep="")))!=0) {
+            clin2=read.table(paste(dirClin,"cellCount_minfi_cordBlood",datType,subsetFNName,subsetName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            id=clin$id[!clin$id%in%clin2$id]
+            tmp=clin2[1:length(id),]
+            for (k in 1:ncol(tmp)) tmp[,k]=NA
+            tmp$id=id
+            clin2=rbind(clin2,tmp)
+            clin=cbind(clin,clin2[match(clin$id,clin2$id),which(!names(clin2)%in%names(clin))])
+            rm(clin2,tmp,id)
+        }
         
         if (F) {
             clin2=read.table(paste(dirCom,"chemicals.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
@@ -807,11 +881,13 @@ switch(datType,
 		phen=clin
 		phen=phen[match(colnames(meth),phen$id),]
         
-        load(paste(dirRefactor,"Refactor_dat",datType,subsetFNName,subsetName,".RData",sep=""))
-        colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
-        j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
-        meth=meth[,j1]
-        phen=cbind(phen[j1,],Refactor_dat[j2,])
+        if (length(dir(dirRefactor,pattern=paste("Refactor_dat",datType,subsetFNName,subsetName,".RData",sep="")))!=0) {
+            load(paste(dirRefactor,"Refactor_dat",datType,subsetFNName,subsetName,".RData",sep=""))
+            colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
+            j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
+            meth=meth[,j1]
+            phen=cbind(phen[j1,],Refactor_dat[j2,])
+        }
 	},
 	"_allGuthSet1Set2Combat"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
@@ -874,9 +950,51 @@ switch(datType,
 		j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
 		meth=meth[,j1]
 		phen=cbind(phen[j1,],Refactor_dat[j2,])
-	},
-	"_ivorra"={
-		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    },
+    "_periDsal"={
+        phen=read.table(paste(dirClin,fNameClin,".txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+        #phen=phen[which(phen$keep==1),]
+        names(phen)[match(c("plate"),names(phen))]=c("Batch")
+        phen$caco=as.integer(phen$caco=="case")
+        
+        load(paste(dirMeth,fNameMeth,sep=""))
+        if (transformFlag=="_mVal") {
+            meth=mVal
+            rm(mVal)
+        } else {
+            meth=betaBmiq
+            rm(betaBmiq)
+        }
+        if (nProbe!=-1) meth=meth[1:nProbe,]
+        
+        j=match(colnames(meth),phen$id); j1=which(!is.na(j)); j2=j[j1]
+        meth=meth[,j1]
+        phen=phen[j2,]
+        
+        #samId=1:nrow(phen)
+        samId=which(phen$quality!="3. low from bmiq" & !is.na(phen$periDsal) & !is.na(phen$caco))
+        meth=meth[,samId]
+        phen=phen[samId,]
+        
+        clin2=read.table(paste(dirClin,"epistructure",datType,subsetName,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        #clin2=read.table(paste(dirClin,"epistructure",datType,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        id=phen$id[!phen$id%in%clin2$id]
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$id=id
+        clin2=rbind(clin2,tmp)
+        phen=cbind(phen,clin2[match(phen$id,clin2$id),grep("epistr",names(clin2))])
+        rm(clin2,tmp,id)
+        
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetName,".RData",sep=""))
+        #load(paste(dirRefactor,"Refactor_dat",datType,".RData",sep=""))
+        colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
+        j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
+        meth=meth[,j1]
+        phen=cbind(phen[j1,],Refactor_dat[j2,])
+    },
+    "_ivorra"={
+    clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 		
 		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
 		probeId=beta$probeId
@@ -970,8 +1088,10 @@ if (subsetFlag!="") {
 		   "telaml"={samId=which(phen$subtype=="telaml")},
 		   "noHypTelaml"={samId=which(phen$subtype=="nonHypTelaml")},
            "hispCtrl"={samId=which(phen$int_ch_ethnicity==1 & phen$caco==0)},
-           "noHispWtCtrl"={samId=which(phen$int_ch_ethnicity==2 & phen$caco==0)}
-	)
+           "noHispWtCtrl"={samId=which(phen$int_ch_ethnicity==2 & phen$caco==0)},
+           "peri"={samId=which(phen$periDsal=="peri")},
+           "dsal"={samId=which(phen$periDsal=="dsal")}
+           )
 	meth=meth[,samId]
 	phen=phen[samId,]
 	rm(samId)
@@ -1027,7 +1147,7 @@ for (k in which(names(phen)%in%c("caco","sex","Beadchip","race","ethn"))) {
 	phen[,k]=as.factor(phen[,k])
 }
 
-rm(clin)
+if (exists("clin")) rm(clin)
 #colnames(meth)=phen$Subject_ID
 switch(varFlag,
 	"_rasChip"={
@@ -1153,8 +1273,21 @@ switch(varFlag,
 	},
 	"_cacoXpobw"={
 		phen$predVar=phen$pobw
-	},
-	"_chipPos"={phen$caco=phen$Position}
+    },
+    "_chipPos"={phen$caco=phen$Position
+    },
+	"_season"={
+        phen$caco=phen$season
+        phen$caco[which(phen$season=="autumn")]="1_autumn"
+        phen$caco[which(phen$season=="winter")]="2_winter"
+        phen$caco[which(phen$season=="spring")]="3_spring"
+        phen$caco[which(phen$season=="summer")]="4_summer"
+    },
+    "_dsalPeri"={phen$caco=as.integer(phen$periDsal=="dsal")
+    },
+    "_cacoXdsalPeri"={
+        phen$predVar=as.integer(phen$periDsal=="dsal")
+    }
 )
 
 switch(varThis,
@@ -1175,6 +1308,8 @@ switch(varThis,
     "hyperdipTelaml"={
         phen$hyperdipTelaml=as.integer(phen$subtype=="hyperdiploid")
         phen$hyperdipTelaml[!phen$subtype%in%c("hyperdiploid","telaml")]=NA
+    },
+    "dsalPeri"={phen$dsalPeri=as.integer(phen$periDsal=="dsal")
     }
 )
 if (varFlag%in%paste("_smoke_",varSmoke$varOut,sep="")) {
@@ -1184,7 +1319,7 @@ if (varFlag%in%paste("_smoke_",varSmoke$varOut,sep="")) {
 }
 
 #phen=phen[,c("caco","Leukemia","sex","Beadchip")]
-if ("caco"%in%names(phen) & !varFlag%in%c("_dfeFood","_dfeFort","_dfeNat","_dfeTot",paste("_smoke_",c("mo3mN","moPregN","moAfterN","fa3mN","moBfN"),sep=""),"_smoke","_birthWt","_pobw","_cacoVbirthWt","_cacoXpobw")) {
+if ("caco"%in%names(phen) & !varFlag%in%c("_dfeFood","_dfeFort","_dfeNat","_dfeTot",paste("_smoke_",c("mo3mN","moPregN","moAfterN","fa3mN","moBfN"),sep=""),"_smoke","_birthWt","_pobw","_cacoVbirthWt","_cacoXpobw","_cacoXdsalPeri")) {
 	phen$caco=as.factor(phen$caco)
 }
 
@@ -1194,41 +1329,65 @@ if (F) {
 }
 
 ## ----------------------------------------------
-if (computerFlag=="") {
-    #load(file="ann.RData")
-    load(file="annAll.RData")
+if (datType=="_periDsal") {
+    load(paste(dirMeth,"ann850k.RData",sep=""))
+    ann=as.data.frame(ann850k)
+    rm(ann850k)
+    rownames(ann)=NULL
+    names(ann)[match(c("Name","chr","pos"),names(ann))]=c("IlmnID","CHR","MAPINFO")
+    ann$CHR[which(ann$CHR=="chrX")]="chr23"
+    ann$CHR[which(ann$CHR=="chrY")]="chr24"
+    ann$CHR=as.integer(sub("chr","",ann$CHR))
+    ann$snp=as.integer(!is.na(ann$Probe_rs))
+    
+    i=match(rownames(meth),ann[,"IlmnID"])
+    table(is.na(i))
+    ann=ann[i,]
+
+    #ann$keep=0; ann$keep[which(ann$snp==0 & ann$CHR%in%1:22)]=1
+    ann$keep=TRUE
+    
+    ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
+        strsplit(x,";")[[1]][1]
+    },USE.NAMES=F)
+    ann$geneSym[is.na(ann$geneSym)]=""
 } else {
-	if (computerFlag=="cluster") {
-		ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-		#snpVec=read.table(paste("data/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
-		snpVec=read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	} else {
-		ann=read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
-		#snpVec=read.table(paste("docs/ShwetaChoudhry/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
-		snpVec=read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-	}
-	ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
-	ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
-	ann[,"CHR"]=as.integer(ann[,"CHR"])
-	ann=ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
-	for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
-
-	snpVec=snpVec[,1]
-	ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
+    if (computerFlag=="") {
+        #load(file="ann.RData")
+        load(file="annAll.RData")
+    } else {
+        if (computerFlag=="cluster") {
+            ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+            #snpVec=read.table(paste("data/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
+            snpVec=read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        } else {
+            ann=read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+            #snpVec=read.table(paste("docs/ShwetaChoudhry/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
+            snpVec=read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        }
+        ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
+        ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
+        ann[,"CHR"]=as.integer(ann[,"CHR"])
+        ann=ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
+        for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
+        
+        snpVec=snpVec[,1]
+        ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
+    }
+    ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
+        strsplit(x,";")[[1]][1]
+    },USE.NAMES=F)
+    ann$geneSym[is.na(ann$geneSym)]=""
+    
+    i=match(rownames(meth),ann[,"IlmnID"])
+    table(is.na(i))
+    ann=ann[i,]
+    
+    #ann$keep=ann$CHR%in%1:22
+    ann$keep=ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
+    ann$keep=ann$snp==0 & ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
+    ann$keep=apply(meth,1,function(x) {any(!is.na(x))})
 }
-ann$geneSym=sapply(toupper(ann$UCSC_RefGene_Name),function(x) {
-    strsplit(x,";")[[1]][1]
-},USE.NAMES=F)
-ann$geneSym[is.na(ann$geneSym)]=""
-
-i=match(rownames(meth),ann[,"IlmnID"])
-table(is.na(i))
-ann=ann[i,]
-
-#ann$keep=ann$CHR%in%1:22
-ann$keep=ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
-ann$keep=ann$snp==0 & ann$CHR%in%1:22 & apply(meth,1,function(x) {any(!is.na(x))})
-ann$keep=apply(meth,1,function(x) {any(!is.na(x))})
 
 ## ----------------------------------------------
 
@@ -1322,12 +1481,41 @@ datObj=list(meth=meth,phen=phen,callG=callG)
 ################################################
 # Regression
 ################################################
+library(MASS) # rlm function for robust linear regression
+library(sandwich) # Huberís estimation of the standard error
+library(lmtest) # to use coeftest
+
+RLMtest.my=function(methcol,design) {
+    mod = try(rlm(design,maxit=200))
+    if ("try-error"%in%class(mod)){
+        print(paste("error thrown by column", methcol))
+        return(invisible(rep(NA, 9)))
+    } else {cf = try(coeftest(mod, vcov=vcovHC(mod, type="HC0")))}
+    if ("try-error"%in%class(cf)){
+        print(paste("error in coeftest by column", methcol,"setting values to NA"))
+        return(invisible(rep(NA,9)))
+    } else {
+        keep <- c("Estimate","Std. Error","Pr(>|z|)")
+        #  Pull out winter, spring, and summer.
+        output <- c(cf[2,keep],cf[3,keep],cf[4,keep])
+        names1 <- rownames(cf)[2:4]
+        names2 <- c("BETA","SE","P_VAL")
+        names_full=matrix(NA,nrow=length(names2),ncol=length(names1))
+        for (i in 1:length(names1)){
+            for (j in 1:length(names2)){
+                names_full[j,i] <- paste(names1[i],names2[j],sep="_")
+            }
+        }
+        names_full <- as.vector(names_full)
+        names(output) <- names_full
+        return(output)
+    }
+}
 
 colId=2
-if (varFlag%in%c("_cacoXbirthwt","_cacoXpobw")) {
+if (varFlag%in%c("_cacoXbirthwt","_cacoXpobw","_cacoXdsalPeri")) {
     ## CHECK !!!
     model1="~caco*predVar"
-    colId=match(c("caco1","predVar","caco1:predVar"),colnames(Xunadj))
 } else if (varFlag%in%c("_cacoXhlaB")) {
     ## CHECK !!!
     model1="~caco*hlaB"
@@ -1353,6 +1541,14 @@ if (varFlag%in%c("_cacoXbirthwt","_cacoXpobw")) {
     k=grep("Gestage",covFlag)
     if (length(k)==1) {
         model1=paste(model1,"+gestage",sep="")
+    }
+    k=grep("Plate",covFlag)
+    if (length(k)==1) {
+        model1=paste(model1,"+Batch",sep="")
+    }
+    k=grep("Celltype",covFlag)
+    if (length(k)==1) {
+        model1=paste(model1,"+nRBC+CD8T+CD4T+NK+Bcell+Mono+Gran",sep="")
     }
     k=grep("SnpPC",covFlag)
     if (length(k)==1) {
@@ -1380,6 +1576,9 @@ if (covESFlag!="") {
 model2=sub("meth*","",sub("meth+","",model1,fixed=T),fixed=T)
 model2=as.formula(model2)
 Xunadj=model.matrix(model2,data=phen)
+if (varFlag%in%c("_cacoXbirthwt","_cacoXpobw","_cacoXdsalPeri")) {
+    colId=match(c("caco1","predVar","caco1:predVar"),colnames(Xunadj))
+}
 samId=match(rownames(Xunadj),phen$id)
 meth=meth[ann$keep,samId]
 phen=phen[samId,]
@@ -1392,12 +1591,19 @@ if (candGeneFlag=="_hlaB") {
 }
 
 if (transformFlag=="_mVal") {
-    methInfo=read.table(paste(dirCom,"summaryBeta.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
-    k=which(methInfo$cohort==datType)
-    meth[which(meth==0)]=methInfo$minBeta*0.5; meth[which(meth==1)]=methInfo$maxBeta+(1-methInfo$maxBeta)*0.5
-    cat("Min meth:",min(meth),min(meth,na.rm=T),"\n")
-    cat("Max meth:",max(meth),max(meth,na.rm=T),"\n")
-    meth=log2(meth/(1-meth))
+    if (datType%in%c("_allGuthSet1","_allGuthSet2","_allGuthSet1Set2_ctrlSubset")) {
+        methInfo=read.table(paste(dirCom,"summaryBeta.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+        k=which(methInfo$cohort==datType)
+        meth[which(meth==0)]=methInfo$minBeta*0.5; meth[which(meth==1)]=methInfo$maxBeta+(1-methInfo$maxBeta)*0.5
+        cat("Min meth:",min(meth),min(meth,na.rm=T),"\n")
+        cat("Max meth:",max(meth),max(meth,na.rm=T),"\n")
+        meth=log2(meth/(1-meth))
+        
+    } else if (datType%in%c("_periDsal")) {
+    } else {
+        cat("Require m-value data !!! \n\n")
+        meth=NULL
+    }
 }
 
 timeStamp=Sys.time()
@@ -1433,6 +1639,13 @@ print(format(timeStamp, "%x %X"))
         } else {
             colIdA=c("cpgId")
             nm=c("intercept",strsplit(strsplit(sub("*","+",modelFlag,fixed=T),"~")[[1]][2],"+",fixed=T)[[1]])
+            if (substr(varThis,1,5)=="cacoX") varThis2=c("caco","predVar") else varThis2=varThis
+            for (k in 1:length(varThis2)) {
+                x=table(phen[,varThis2[k]])
+                if (length(x)>2) {
+                    nm=c(nm[which(nm!=varThis2[k])],paste(varThis2[k],names(x)[2:length(x)],sep=""))
+                }
+            }
             if (length(grep("*",modelFlag,fixed=T))) nm=c(nm,sub("*",":",strsplit(strsplit(modelFlag,"~")[[1]][2],"+",fixed=T)[[1]],fixed=T))
         }
         tmpMat=matrix(nrow=nrow(meth),ncol=length(nm),dimnames=list(rownames(meth),nm))
@@ -1472,6 +1685,47 @@ print(format(timeStamp, "%x %X"))
                         out$pValue[i,k1]=res[k2,4]
                     }
                 }
+            } else if (computeFlag[2]=="rlm") {
+                # Run robust linear regresssion model
+                for (i in 1:nrow(meth)) {
+                    j=j1 & !is.na(meth[i,])
+                    fit=try(rlm(model1, data=phen[j,],maxit=200))
+                    if (!inherits(fit,"try-error")) {
+                        cf = try(coeftest(fit,vcov=vcovHC(mod,type="HC0")))
+                        if (!inherits(cf,"try-error")) {
+                        }
+                        res=summary(fit)$coef
+                        k=match(colId,rownames(res)); k1=!is.na(k); k2=k[k1]
+                        out$coef[i,k1]=res[k2,1]
+                        out$se[i,k1]=res[k2,2]
+                        out$pValue[i,k1]=res[k2,4]
+                    }
+                }
+                mod = try(rlm(design,maxit=200))
+                if ("try-error"%in%class(mod)){
+                    print(paste("error thrown by column", methcol))
+                    return(invisible(rep(NA, 9)))
+                } else {cf = try(coeftest(mod, vcov=vcovHC(mod, type="HC0")))}
+                if ("try-error"%in%class(cf)){
+                    print(paste("error in coeftest by column", methcol,"setting values to NA"))
+                    return(invisible(rep(NA,9)))
+                } else {
+                    keep <- c("Estimate","Std. Error","Pr(>|z|)")
+                    #  Pull out winter, spring, and summer.
+                    output <- c(cf[2,keep],cf[3,keep],cf[4,keep])
+                    names1 <- rownames(cf)[2:4]
+                    names2 <- c("BETA","SE","P_VAL")
+                    names_full=matrix(NA,nrow=length(names2),ncol=length(names1))
+                    for (i in 1:length(names1)){
+                        for (j in 1:length(names2)){
+                            names_full[j,i] <- paste(names1[i],names2[j],sep="_")
+                        }
+                    }
+                    names_full <- as.vector(names_full)
+                    names(output) <- names_full
+                    return(output)
+                }
+                
             } else {
                 # Run logistic regresssion model
                 for (i in 1:nrow(meth)) {
