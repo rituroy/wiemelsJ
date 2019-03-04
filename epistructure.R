@@ -9,8 +9,8 @@ computerFlag="cluster"
 ## ---------------------------------
 
 nProbe=101
-nProbe=-1
 nProbe=10001
+nProbe=-1
 
 ## ---------------------------------
 subsetName2=""
@@ -24,17 +24,21 @@ datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
 datType="_allGuthSet1Set2"; subsetName2=""
+datType="_periDsal"; subsetName2=""
 
-setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
+#setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
 
 #subsetFlag="noHisp"
 subsetFlag="noHispWt"
 subsetFlag="hisp"
 
-subsetFlag=""
-
 subsetFlag="case"
 subsetFlag="ctrl"
+
+subsetFlag=""
+
+subsetFlag="peri"
+subsetFlag="dsal"
 
 covFlag=""
 mediationFlag=F
@@ -86,8 +90,10 @@ if (subsetFlag!="") {
 		   "noHisp"={varName=sub(")"," non-hispanics)",varName)},
 		   "hyperdip"={varName=sub(")"," hyperdiploids)",varName)},
 		   "telaml"={varName=sub(")"," tel/aml1s)",varName)},
-		   "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)}
-        )
+		   "noHypTelaml"={varName=sub(")"," non-hyperdiploids/non-tel/aml1s)",varName)},
+           "peri"={varName=sub(")"," perinatal)",varName)},
+           "dsal"={varName=sub(")"," downsyndrome)",varName)}
+           )
     }
     if (datType=="_allGuthSet1Set2") subsetFNName=paste("_",subsetFlag,"SubsetFunNorm",sep="")
 }
@@ -144,7 +150,13 @@ if (computerFlag=="cluster") {
 		   dirClin=dirMeth=dirRefactor="data/aml/"
 		   fNameMeth=paste("beta",normFlag,"_aml",subsetName,sep="")
 		   fNameClin=paste("clin_aml_20150114",sep="")
-		},
+        },
+        "_periDsal"={
+            dirMeth="/home/royr/project/JoeWiemels/normalize/results/"
+            dirClin=dirRefactor="/home/royr/project/JoeWiemels/data/periDsal/"
+            fNameMeth="betaBmiq.RData"
+            fNameClin="sampleInfo_periDsal_20181119"
+        },
 		"_ivorra"={
 		   dirMeth=dirClin="data/ivorra2014/"
 		   fNameMeth=paste("beta_ivorra",subsetName,sep="")
@@ -193,6 +205,12 @@ if (computerFlag=="cluster") {
 		   dirRefactor="docs/aml/refactor/"
 		   fNameMeth=paste("beta",normFlag,"_aml",subsetName,sep="")
 		   fNameClin=paste("clin_aml_20150114",sep="")
+        },
+        "_periDsal"={
+            dirMeth="/Users/royr/UCSF/JoeWiemels/leukMeth/epic/results/"
+            dirClin=dirRefactor="/Users/royr/UCSF/JoeWiemels/leukMeth/docs/periDsal/"
+            fNameMeth="betaBmiq.RData"
+            fNameClin="sampleInfo_periDsal_20181119"
 	   },
 	   "_ivorra"={
 		   dirMeth=dirClin="docs/misc/ivorra2014/"
@@ -207,6 +225,8 @@ if (datType%in%c("_allGuthSet1Set2") & subsetFlag!="") {
     samInfo=read.table(paste(dirClin,"summaryBeta_forSample",datType,subsetFNName,subsetName,".txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
 } else if (datType%in%c("_allGuthSet2","_allGuthSet1","_allGuthSet1Set2","_allGuthSet1Set2Combat")) {
     samInfo=read.table(paste(dirCom,"summaryBeta_forSample.txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+} else {
+    if (exists("samInfo")) rm(samInfo)
 }
 
 switch(datType,
@@ -472,8 +492,32 @@ switch(datType,
 		j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
 		meth=meth[,j1]
 		phen=cbind(phen[j1,],Refactor_dat[j2,])
-	},
-	"_ivorra"={
+    },
+    "_periDsal"={
+        phen=read.table(paste(dirClin,fNameClin,".txt",sep=""), sep="\t", h=T, quote="", comment.char="",as.is=T,fill=T)
+        #phen=phen[which(phen$keep==1),]
+        
+        load(paste(dirMeth,fNameMeth,sep=""))
+        meth=betaBmiq
+        rm(betaBmiq)
+        if (nProbe!=-1) meth=meth[1:nProbe,]
+
+        j=match(colnames(meth),phen$id); j1=which(!is.na(j)); j2=j[j1]
+        meth=meth[,j1]
+        phen=phen[j2,]
+
+        #samId=1:nrow(phen)
+        samId=which(phen$quality!="3. low from bmiq" & !is.na(phen$periDsal) & !is.na(phen$caco))
+        meth=meth[,samId]
+        phen=phen[samId,]
+        
+        load(paste(dirRefactor,"Refactor_dat",datType,subsetName,".RData",sep=""))
+        colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
+        j=match(colnames(meth),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
+        meth=meth[,j1]
+        phen=cbind(phen[j1,],Refactor_dat[j2,])
+    },
+    "_ivorra"={
 		clin=read.table(paste(dirClin,fNameClin,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 		
 		beta=read.table(paste(dirMeth,fNameMeth,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
@@ -512,8 +556,10 @@ if (subsetFlag!="") {
 		   },
 		   "hyperdip"={samId=which(phen$subtype=="hyperdiploid")},
 		   "telaml"={samId=which(phen$subtype=="telaml")},
-		   "noHypTelaml"={samId=which(phen$subtype=="nonHypTelaml")}
-	)
+		   "noHypTelaml"={samId=which(phen$subtype=="nonHypTelaml")},
+           "peri"={samId=which(phen$periDsal=="peri")},
+           "dsal"={samId=which(phen$periDsal=="dsal")}
+           )
 	meth=meth[,samId]
 	phen=phen[samId,]
 	rm(samId)
